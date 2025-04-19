@@ -1,0 +1,4 @@
+2025-04-19 19:54:25,811 - model_server - INFO - Threat detection model loaded successfully
+2025-04-19 19:54:25,812 - model_server - INFO - Anomaly detection model loaded successfully
+2025-04-19 19:54:25,813 - model_server - WARNING - Threat detection model not found. Run model_training.py to create it.
+2025-04-19 19:54:25,813 - model_server - WARNING - Anomaly detection model not found. Run model_training.py to create it.

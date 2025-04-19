@@ -1,5 +1,5 @@
 import api from './api';
-import jwt_decode from 'jwt-decode';
+import { jwtDecode } from 'jwt-decode';
 
 // Types
 interface RegisterData {
@@ -77,11 +77,9 @@ const AuthService = {
   // Check if user is logged in
   isLoggedIn: () => {
     const token = localStorage.getItem('token');
-    if (!token) return false;
-
-    try {
+    if (!token) return false;    try {
       // Check if token is expired
-      const decoded: any = jwt_decode(token);
+      const decoded: any = jwtDecode(token);
       return decoded.exp > Date.now() / 1000;
     } catch (error) {
       return false;

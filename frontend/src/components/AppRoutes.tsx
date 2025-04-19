@@ -13,7 +13,7 @@ import SecurityEvents from '../pages/SecurityEvents';
 import PhishingCheck from '../pages/PhishingCheck';
 
 // Protected route component
-const ProtectedRoute = ({ children }: { children: JSX.Element }) => {
+const ProtectedRoute = ({ children }: { children: React.ReactElement }) => {
   const { isAuthenticated, loading } = useContext(AuthContext);
 
   if (loading) {
