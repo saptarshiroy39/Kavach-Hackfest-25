@@ -4,13 +4,18 @@ const morgan = require('morgan');
 const cors = require('cors');
 const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
-const connectDB = require('./config/db');
+const mongoose = require('mongoose');
 
 // Load env vars
 dotenv.config();
 
-// Connect to DB
-connectDB();
+// Connect to DB - direct connection for simplicity
+mongoose.connect('mongodb+srv://hackfest:hackfest2025@cluster0.mongodb.net/hackfest?retryWrites=true&w=majority')
+  .then(() => console.log('MongoDB Connected'))
+  .catch(err => {
+    console.log('MongoDB connection error:', err.message);
+    console.log('Proceeding with limited functionality');
+  });
 
 // Initialize express
 const app = express();
