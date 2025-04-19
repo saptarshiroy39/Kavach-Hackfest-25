@@ -18,7 +18,7 @@ import {
 import SecurityIcon from '@mui/icons-material/Security';
 import { AuthContext } from '../contexts/AuthContext';
 import { getSecuritySettings, updateSecuritySettings, requestNewTOTP } from '../services/security';
-import QRCode from 'qrcode.react';
+import { QRCodeSVG } from 'qrcode.react';
 
 interface SecuritySettingsData {
   twoFactorEnabled: boolean;
@@ -160,12 +160,11 @@ const SecuritySettings = () => {
 
             {showTOTP && (
               <Card variant="outlined" sx={{ mb: 3 }}>
-                <CardContent>
-                  <Typography variant="subtitle1" gutterBottom>
+                <CardContent>                  <Typography variant="subtitle1" gutterBottom>
                     Scan this QR code with your authenticator app
                   </Typography>
                   <Box sx={{ display: 'flex', justifyContent: 'center', my: 2 }}>
-                    <QRCode value={totpQrUrl} size={180} />
+                    <QRCodeSVG value={totpQrUrl} size={180} />
                   </Box>
                   <Typography variant="body2">
                     Or enter this code manually: <strong>{totpSecret}</strong>

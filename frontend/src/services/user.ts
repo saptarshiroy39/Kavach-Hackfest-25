@@ -61,3 +61,12 @@ const UserService = {
 };
 
 export default UserService;
+
+// Export individual functions for components that import them directly
+export const getUserProfile = async () => {
+  return UserService.getProfile();
+};
+
+export const updateUserProfile = async (data: UpdateProfileData) => {
+  return UserService.updateProfile(data);
+};

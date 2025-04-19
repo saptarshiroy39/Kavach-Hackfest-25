@@ -66,3 +66,25 @@ const SecurityService = {
 };
 
 export default SecurityService;
+
+// Export individual functions for components that import them directly
+export const checkPhishingUrl = async (url: string) => {
+  return SecurityService.checkPhishing({ content: url, contentType: 'url' });
+};
+
+export const getSecuritySettings = async () => {
+  const response = await api.get('/security/settings');
+  return response.data.data;
+};
+
+export const updateSecuritySettings = async (settings: any) => {
+  const response = await api.put('/security/settings', settings);
+  return response.data.data;
+};
+
+export const requestNewTOTP = async () => {
+  const response = await api.post('/security/totp/new');
+  return response.data.data;
+};
+
+export const getSecurityEvents = SecurityService.getSecurityEvents;

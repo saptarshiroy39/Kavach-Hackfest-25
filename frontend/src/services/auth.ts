@@ -94,3 +94,8 @@ const AuthService = {
 };
 
 export default AuthService;
+
+// Export individual functions for components that import them directly
+export const register = (data: RegisterData) => {
+  return AuthService.register(data);
+};

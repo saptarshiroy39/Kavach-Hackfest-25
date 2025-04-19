@@ -101,10 +101,9 @@ const Dashboard = () => {
       <Typography variant="h4" sx={{ mb: 4 }}>
         Digital Persona Guardian Dashboard
       </Typography>
-
       <Grid container spacing={3}>
         {/* Security Score Card */}
-        <Grid item xs={12} md={4}>
+        <Grid xs={12} md={4}>
           <Paper sx={{ p: 3, height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
             <Typography variant="h6" sx={{ mb: 2 }}>
               Security Score
@@ -142,9 +141,8 @@ const Dashboard = () => {
             </Button>
           </Paper>
         </Grid>
-
         {/* Recent Security Events */}
-        <Grid item xs={12} md={4}>
+        <Grid xs={12} md={4}>
           <Paper sx={{ p: 3, height: '100%' }}>
             <Typography variant="h6" sx={{ mb: 2 }}>
               Recent Security Events
@@ -186,14 +184,14 @@ const Dashboard = () => {
         </Grid>
 
         {/* Security Metrics & Recommendations */}
-        <Grid item xs={12} md={4}>
+        <Grid xs={12} md={4}>
           <Paper sx={{ p: 3, height: '100%' }}>
             <Typography variant="h6" sx={{ mb: 2 }}>
               Security Status
             </Typography>
             <Box sx={{ mb: 3 }}>
               <Grid container spacing={2}>
-                <Grid item xs={6}>
+                <Grid xs={6}>
                   <Paper 
                     elevation={0}
                     sx={{ 
@@ -207,7 +205,7 @@ const Dashboard = () => {
                     <Typography variant="body2">High Risk Events</Typography>
                   </Paper>
                 </Grid>
-                <Grid item xs={6}>
+                <Grid xs={6}>
                   <Paper 
                     elevation={0}
                     sx={{ 
