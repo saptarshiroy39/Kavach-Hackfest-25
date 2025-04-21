@@ -1,5 +1,5 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { useSearchContext } from '@/context/SearchContext';
 import { 
   AlertCircle, 
@@ -11,8 +11,13 @@ import {
   Settings,
   Bell,
   Clock,
-  PieChart
+  PieChart,
+  Lock,
+  Check,
+  Scan,
+  ArrowRight
 } from 'lucide-react';
+import { motion } from 'framer-motion';
 
 interface SearchResultsProps {
   onResultClick: () => void;
@@ -39,7 +44,13 @@ const ResultIcon = ({ type }: { type: string }) => {
     case 'dashboard':
       return <PieChart className="h-4 w-4 text-indigo-500" />;
     case 'setting':
-      return <Settings className="h-4 w-4 text-gray-500" />;
+      return <Settings className="h-4 w-4 text-security-primary" />;
+    case 'password':
+      return <Lock className="h-4 w-4 text-yellow-500" />;
+    case 'event':
+      return <Bell className="h-4 w-4 text-purple-500" />;
+    case 'security':
+      return <Scan className="h-4 w-4 text-security-primary" />;
     default:
       return <AlertCircle className="h-4 w-4" />;
   }
@@ -48,48 +59,75 @@ const ResultIcon = ({ type }: { type: string }) => {
 const SearchResults: React.FC<SearchResultsProps> = ({
   onResultClick,
 }) => {
-  const { searchResults, isSearching } = useSearchContext();
+  const { searchResults, isSearching, clearSearch, searchTerm } = useSearchContext();
+  const navigate = useNavigate();
 
   if (isSearching) {
     return (
-      <div className="bg-white dark:bg-gray-800 rounded-md shadow-lg border border-gray-200 dark:border-gray-700 max-h-96 overflow-y-auto z-50 p-2">
-        <div className="flex items-center justify-center p-4">
-          <Loader2 className="h-5 w-5 animate-spin text-gray-500" />
-          <span className="ml-2 text-sm text-gray-500">Searching...</span>
-        </div>
+      <div className="bg-sidebar rounded-md shadow-lg border border-sidebar-border p-6 text-center">
+        <Loader2 className="h-6 w-6 animate-spin mx-auto mb-2 text-security-primary" />
+        <p className="text-sm text-sidebar-foreground">Searching...</p>
       </div>
     );
   }
 
-  if (searchResults.length === 0) {
+  if (searchResults.length === 0 && searchTerm) {
     return (
-      <div className="bg-white dark:bg-gray-800 rounded-md shadow-lg border border-gray-200 dark:border-gray-700 p-4 text-center">
-        <p className="text-sm text-gray-500">No results found</p>
+      <div className="bg-sidebar rounded-md shadow-lg border border-sidebar-border p-6 text-center">
+        <p className="text-sidebar-foreground mb-2">No results found for "{searchTerm}"</p>
+        <button 
+          onClick={clearSearch}
+          className="text-sm text-security-primary hover:underline"
+        >
+          Clear search
+        </button>
       </div>
     );
   }
+
+  const handleResultClick = (url: string) => {
+    onResultClick();
+    clearSearch();
+    navigate(url);
+  };
 
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-md shadow-lg border border-gray-200 dark:border-gray-700 max-h-96 overflow-y-auto z-50">
-      <ul className="py-2">
-        {searchResults.map((result) => (
-          <li key={result.id} className="px-3">
-            <Link 
-              to={result.url || '#'}
-              className="flex items-start gap-3 p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md transition-colors"
-              onClick={onResultClick}
+    <div className="bg-sidebar rounded-md shadow-lg border border-sidebar-border overflow-hidden">
+      <div className="px-4 py-3 border-b border-sidebar-border">
+        <p className="text-sm font-medium text-sidebar-foreground">
+          {searchResults.length} result{searchResults.length !== 1 ? 's' : ''} found
+        </p>
+      </div>
+
+      <ul className="divide-y divide-sidebar-border max-h-[60vh] overflow-y-auto scrollbar-hide">
+        {searchResults.map((result, index) => (
+          <motion.li 
+            key={result.id}
+            initial={{ opacity: 0, y: 5 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.2, delay: index * 0.03 }}
+          >
+            <button 
+              onClick={() => handleResultClick(result.url || '/')}
+              className="w-full flex items-center gap-3 p-4 hover:bg-sidebar-accent transition-colors text-left"
             >
-              <div className="flex-shrink-0 mt-1">
+              <div className="flex-shrink-0 h-8 w-8 rounded-full bg-sidebar-accent flex items-center justify-center">
                 <ResultIcon type={result.type} />
               </div>
-              <div>
-                <h4 className="text-sm font-medium">{result.title}</h4>
+              <div className="flex-1 min-w-0">
+                <h4 className="text-sm font-medium truncate text-sidebar-foreground">{result.title}</h4>
                 {result.description && (
-                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{result.description}</p>
+                  <p className="text-xs text-sidebar-foreground/70 mt-0.5 truncate">{result.description}</p>
                 )}
+                <div className="flex items-center mt-1">
+                  <span className="text-[10px] px-2 py-0.5 rounded-full bg-security-primary/20 text-security-primary uppercase font-semibold tracking-wider">
+                    {result.type}
+                  </span>
+                </div>
               </div>
-            </Link>
-          </li>
+              <ArrowRight className="h-4 w-4 text-security-primary" />
+            </button>
+          </motion.li>
         ))}
       </ul>
     </div>

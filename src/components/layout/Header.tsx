@@ -2,18 +2,21 @@ import React, { useState, useRef, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Bell, Search, User, X } from 'lucide-react';
 import SearchResults from '@/components/search/SearchResults';
-import { useSearch } from '@/hooks/use-search';
+import { useSearchContext } from '@/context/SearchContext';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { currentUser } from '@/lib/mockDb';
 import { useLanguage } from '@/hooks/use-language';
 import md5 from 'md5';
+import { Button } from '@/components/ui/button';
+import { Dialog, DialogContent } from '@/components/ui/dialog';
 
 const Header = () => {
   const navigate = useNavigate();
   const isMobile = useIsMobile();
   const searchRef = useRef<HTMLDivElement>(null);
   const { t } = useLanguage();
+  const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
   
   const { 
     searchTerm, 
@@ -21,7 +24,7 @@ const Header = () => {
     handleSearchChange: onSearchChange, 
     clearSearch, 
     toggleResults 
-  } = useSearch();
+  } = useSearchContext();
 
   // Handle clicks outside the search area
   useEffect(() => {
@@ -80,6 +83,11 @@ const Header = () => {
       </div>
 
       <div className="flex items-center space-x-4">
+        {isMobile && (
+          <Button variant="ghost" size="icon" onClick={() => setMobileSearchOpen(true)}>
+            <Search className="w-5 h-5" />
+          </Button>
+        )}
         <Link to="/notifications" className="relative p-2 rounded-full hover:bg-muted transition-colors">
           <Bell className="w-5 h-5" />
           <span className="absolute top-1 right-1 w-2 h-2 bg-security-danger rounded-full"></span>
@@ -99,6 +107,47 @@ const Header = () => {
           </Link>
         </div>
       </div>
+
+      {/* Mobile Search Dialog */}
+      {isMobile && (
+        <Dialog open={mobileSearchOpen} onOpenChange={setMobileSearchOpen}>
+          <DialogContent className="p-0 gap-0 sm:max-w-lg max-h-[80vh]">
+            <div className="p-4 border-b">
+              <div className="relative search-container w-full">
+                <Search className="search-icon" size={16} />
+                <input
+                  type="search"
+                  autoFocus
+                  placeholder={t('search')}
+                  className="security-input text-sm w-full"
+                  value={searchTerm}
+                  onChange={handleInputChange}
+                />
+                {searchTerm && (
+                  <button
+                    className="absolute right-3 top-1/2 transform -translate-y-1/2 z-10"
+                    onClick={clearSearch}
+                  >
+                    <X className="text-muted-foreground w-4 h-4" />
+                  </button>
+                )}
+              </div>
+            </div>
+            <div className="max-h-[60vh] overflow-y-auto">
+              {searchTerm ? (
+                <SearchResults onResultClick={() => {
+                  setMobileSearchOpen(false);
+                  clearSearch();
+                }} />
+              ) : (
+                <div className="p-6 text-center text-muted-foreground">
+                  <p>Enter search terms to find content</p>
+                </div>
+              )}
+            </div>
+          </DialogContent>
+        </Dialog>
+      )}
     </header>
   );
 };

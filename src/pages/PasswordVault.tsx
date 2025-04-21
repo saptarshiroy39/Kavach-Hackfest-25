@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import MainLayout from '@/components/layout/MainLayout';
 import SecurityCard from '@/components/security/SecurityCard';
@@ -13,16 +12,38 @@ import {
   Edit,
   Trash,
   Star,
-  Search,
   Filter,
-  SortAsc
+  SortAsc,
+  SortDesc,
+  Calendar,
+  LayoutList,
+  Clock,
+  Shield
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
+import { SearchInput } from '@/components/ui/search-input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Checkbox } from '@/components/ui/checkbox';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+
+// Type for sort options
+type SortField = 'title' | 'createdAt' | 'strength';
+type SortDirection = 'asc' | 'desc';
+
+// Type for filter options
+interface FilterOptions {
+  showFavorites: boolean;
+  strengthLevels: {
+    weak: boolean;
+    medium: boolean;
+    strong: boolean;
+  };
+}
 
 const PasswordVault = () => {
   const [passwordEntries, setPasswordEntries] = useState<PasswordEntry[]>([]);
@@ -33,6 +54,21 @@ const PasswordVault = () => {
   const [revealedPasswords, setRevealedPasswords] = useState<Set<string>>(new Set());
   const [searchTerm, setSearchTerm] = useState('');
   const [categoryFilter, setCategoryFilter] = useState<string>('all');
+  
+  // New state for sort and filter
+  const [sortConfig, setSortConfig] = useState<{field: SortField, direction: SortDirection}>({
+    field: 'title',
+    direction: 'asc'
+  });
+  const [filterOptions, setFilterOptions] = useState<FilterOptions>({
+    showFavorites: false,
+    strengthLevels: {
+      weak: true,
+      medium: true,
+      strong: true
+    }
+  });
+  
   const { toast } = useToast();
   
   const [formData, setFormData] = useState({
@@ -154,14 +190,67 @@ const PasswordVault = () => {
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
+  const toggleFilterOption = (option: keyof FilterOptions, value?: boolean) => {
+    if (option === 'showFavorites') {
+      setFilterOptions(prev => ({ ...prev, showFavorites: value !== undefined ? value : !prev.showFavorites }));
+    }
+  };
+
+  const toggleStrengthFilter = (strength: keyof FilterOptions['strengthLevels'], value?: boolean) => {
+    setFilterOptions(prev => ({
+      ...prev,
+      strengthLevels: {
+        ...prev.strengthLevels,
+        [strength]: value !== undefined ? value : !prev.strengthLevels[strength]
+      }
+    }));
+  };
+
+  const handleSort = (field: SortField) => {
+    setSortConfig(prev => ({
+      field,
+      direction: prev.field === field && prev.direction === 'asc' ? 'desc' : 'asc'
+    }));
+  };
+
+  const getSortIcon = (field: SortField) => {
+    if (sortConfig.field !== field) return <SortAsc className="h-4 w-4 opacity-50" />;
+    return sortConfig.direction === 'asc' ? <SortAsc className="h-4 w-4" /> : <SortDesc className="h-4 w-4" />;
+  };
+
   const filteredPasswords = passwordEntries.filter(entry => {
+    // Search filter
     const matchesSearch = entry.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
                           entry.username.toLowerCase().includes(searchTerm.toLowerCase()) ||
                           (entry.url && entry.url.toLowerCase().includes(searchTerm.toLowerCase()));
     
+    // Category filter
     const matchesCategory = categoryFilter === 'all' || entry.category === categoryFilter;
     
-    return matchesSearch && matchesCategory;
+    // Favorites filter
+    const matchesFavorites = filterOptions.showFavorites ? entry.isFavorite : true;
+    
+    // Strength filter
+    const matchesStrength = filterOptions.strengthLevels[entry.strength as keyof FilterOptions['strengthLevels']];
+    
+    return matchesSearch && matchesCategory && matchesFavorites && matchesStrength;
+  }).sort((a, b) => {
+    // Apply sorting
+    if (sortConfig.field === 'title') {
+      return sortConfig.direction === 'asc' 
+        ? a.title.localeCompare(b.title)
+        : b.title.localeCompare(a.title);
+    } else if (sortConfig.field === 'createdAt') {
+      return sortConfig.direction === 'asc'
+        ? new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+        : new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+    } else if (sortConfig.field === 'strength') {
+      const strengthOrder = { weak: 1, medium: 2, strong: 3 };
+      const aStrength = strengthOrder[a.strength as keyof typeof strengthOrder] || 0;
+      const bStrength = strengthOrder[b.strength as keyof typeof strengthOrder] || 0;
+      return sortConfig.direction === 'asc' ? aStrength - bStrength : bStrength - aStrength;
+    }
+    return 0;
   });
 
   const categories = Array.from(new Set(passwordEntries.map(entry => entry.category)));
@@ -193,15 +282,12 @@ const PasswordVault = () => {
         </div>
 
         <div className="flex flex-col md:flex-row gap-4">
-          <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
-            <Input 
-              placeholder="Search passwords..." 
-              className="pl-10"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-            />
-          </div>
+          <SearchInput 
+            placeholder="Search passwords..." 
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            aria-label="Search passwords"
+          />
           <Select value={categoryFilter} onValueChange={setCategoryFilter}>
             <SelectTrigger className="w-full md:w-[180px]">
               <SelectValue placeholder="Category" />
@@ -221,12 +307,98 @@ const PasswordVault = () => {
           subtitle={`${filteredPasswords.length} passwords found`}
           action={
             <div className="flex space-x-2">
-              <Button variant="outline" size="sm">
-                <Filter className="h-4 w-4 mr-1" /> Filter
-              </Button>
-              <Button variant="outline" size="sm">
-                <SortAsc className="h-4 w-4 mr-1" /> Sort
-              </Button>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button variant="outline" size="sm">
+                    <Filter className="h-4 w-4 mr-1" /> Filter
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-72" align="end">
+                  <div className="space-y-4">
+                    <h4 className="font-medium">Filter Options</h4>
+                    
+                    <div className="space-y-2">
+                      <div className="flex items-center space-x-2">
+                        <Checkbox 
+                          id="filter-favorites" 
+                          checked={filterOptions.showFavorites}
+                          onCheckedChange={(checked) => toggleFilterOption('showFavorites', checked as boolean)}
+                        />
+                        <Label htmlFor="filter-favorites" className="text-sm">Show favorites only</Label>
+                      </div>
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <h5 className="text-sm font-medium">Password Strength</h5>
+                      <div className="space-y-1">
+                        <div className="flex items-center space-x-2">
+                          <Checkbox 
+                            id="filter-strong" 
+                            checked={filterOptions.strengthLevels.strong}
+                            onCheckedChange={(checked) => toggleStrengthFilter('strong', checked as boolean)}
+                          />
+                          <Label htmlFor="filter-strong" className="text-sm">Strong</Label>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <Checkbox 
+                            id="filter-medium" 
+                            checked={filterOptions.strengthLevels.medium}
+                            onCheckedChange={(checked) => toggleStrengthFilter('medium', checked as boolean)}
+                          />
+                          <Label htmlFor="filter-medium" className="text-sm">Medium</Label>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <Checkbox 
+                            id="filter-weak" 
+                            checked={filterOptions.strengthLevels.weak}
+                            onCheckedChange={(checked) => toggleStrengthFilter('weak', checked as boolean)}
+                          />
+                          <Label htmlFor="filter-weak" className="text-sm">Weak</Label>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </PopoverContent>
+              </Popover>
+              
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button variant="outline" size="sm">
+                    {sortConfig.direction === 'asc' ? <SortAsc className="h-4 w-4 mr-1" /> : <SortDesc className="h-4 w-4 mr-1" />} Sort
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-72" align="end">
+                  <div className="space-y-4">
+                    <h4 className="font-medium">Sort By</h4>
+                    <RadioGroup 
+                      value={sortConfig.field}
+                      onValueChange={(value) => handleSort(value as SortField)}
+                    >
+                      <div className="flex items-center space-x-2">
+                        <RadioGroupItem value="title" id="sort-name" />
+                        <Label htmlFor="sort-name" className="flex items-center">
+                          <LayoutList className="h-4 w-4 mr-2" /> Name {sortConfig.field === 'title' && 
+                            (sortConfig.direction === 'asc' ? <SortAsc className="h-4 w-4 ml-2" /> : <SortDesc className="h-4 w-4 ml-2" />)}
+                        </Label>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <RadioGroupItem value="createdAt" id="sort-date" />
+                        <Label htmlFor="sort-date" className="flex items-center">
+                          <Calendar className="h-4 w-4 mr-2" /> Date Added {sortConfig.field === 'createdAt' && 
+                            (sortConfig.direction === 'asc' ? <SortAsc className="h-4 w-4 ml-2" /> : <SortDesc className="h-4 w-4 ml-2" />)}
+                        </Label>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <RadioGroupItem value="strength" id="sort-strength" />
+                        <Label htmlFor="sort-strength" className="flex items-center">
+                          <Shield className="h-4 w-4 mr-2" /> Password Strength {sortConfig.field === 'strength' && 
+                            (sortConfig.direction === 'asc' ? <SortAsc className="h-4 w-4 ml-2" /> : <SortDesc className="h-4 w-4 ml-2" />)}
+                        </Label>
+                      </div>
+                    </RadioGroup>
+                  </div>
+                </PopoverContent>
+              </Popover>
             </div>
           }
         >

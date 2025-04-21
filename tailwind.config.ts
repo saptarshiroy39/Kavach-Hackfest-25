@@ -104,11 +104,20 @@ export default {
 					'50%': { opacity: '0.5' },
 				},
 				'shield-glow': {
-					'0%, 100%': {
-						filter: 'drop-shadow(0 0 0.75rem rgba(10, 132, 255, 0.5))'
+					'0%': {
+						filter: 'drop-shadow(0 0 0.5rem rgba(10, 132, 255, 0.3))'
+					},
+					'25%': {
+						filter: 'drop-shadow(0 0 1rem rgba(10, 132, 255, 0.5))'
 					},
 					'50%': {
-						filter: 'drop-shadow(0 0 1.5rem rgba(10, 132, 255, 0.8))'
+						filter: 'drop-shadow(0 0 2rem rgba(10, 132, 255, 0.9))'
+					},
+					'75%': {
+						filter: 'drop-shadow(0 0 1rem rgba(10, 132, 255, 0.5))'
+					},
+					'100%': {
+						filter: 'drop-shadow(0 0 0.5rem rgba(10, 132, 255, 0.3))'
 					}
 				},
         'bounce': {
@@ -126,6 +135,20 @@ export default {
         'bob': {
           '0%, 100%': { transform: 'rotate(-3deg)' },
           '50%': { transform: 'rotate(3deg)' }
+        },
+        'shield-appear': {
+          '0%': { 
+            opacity: '0',
+            transform: 'scale(0.7)'
+          },
+          '70%': {
+            opacity: '1',
+            transform: 'scale(1.1)'
+          },
+          '100%': {
+            opacity: '1',
+            transform: 'scale(1)'
+          }
         }
 			},
 			animation: {
@@ -133,6 +156,7 @@ export default {
 				'accordion-up': 'accordion-up 0.2s ease-out',
 				'pulse-slow': 'pulse-slow 3s infinite',
 				'shield-glow': 'shield-glow 4s infinite',
+        'shield-appear-glow': 'shield-appear 1s ease-out forwards, shield-glow 4s 1s infinite',
         'bounce': 'bounce 2s infinite ease-in-out',
         'float': 'float 3s infinite ease-in-out',
         'spin-slow': 'spin-slow 8s linear infinite',
