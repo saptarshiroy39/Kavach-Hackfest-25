@@ -1,0 +1,361 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 210 100% 98%;
+    --foreground: 222.2 84% 4.9%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 222.2 84% 4.9%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 222.2 84% 4.9%;
+
+    --primary: 212 100% 47%;
+    --primary-foreground: 210 40% 98%;
+
+    --secondary: 142 52% 50%;
+    --secondary-foreground: 222.2 47.4% 11.2%;
+
+    --muted: 210 40% 96.1%;
+    --muted-foreground: 215.4 16.3% 46.9%;
+
+    --accent: 200 98% 39%;
+    --accent-foreground: 222.2 47.4% 11.2%;
+
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 210 40% 98%;
+
+    --border: 214.3 31.8% 91.4%;
+    --input: 214.3 31.8% 91.4%;
+    --ring: 212 100% 47%;
+
+    --radius: 0.75rem;
+
+    --sidebar-background: 214 37% 10%;
+    --sidebar-foreground: 210 40% 98%;
+    --sidebar-primary: 212 100% 47%;
+    --sidebar-primary-foreground: 0 0% 98%;
+    --sidebar-accent: 217 33% 18%;
+    --sidebar-accent-foreground: 210 40% 98%;
+    --sidebar-border: 217 33% 18%;
+    --sidebar-ring: 212 100% 47%;
+  }
+
+  .dark {
+    --background: 214 37% 10%;
+    --foreground: 210 40% 98%;
+
+    --card: 217 33% 18%;
+    --card-foreground: 210 40% 98%;
+
+    --popover: 217 33% 18%;
+    --popover-foreground: 210 40% 98%;
+
+    --primary: 212 100% 47%;
+    --primary-foreground: 210 40% 98%;
+
+    --secondary: 142 52% 50%;
+    --secondary-foreground: 210 40% 98%;
+
+    --muted: 217.2 32.6% 17.5%;
+    --muted-foreground: 215 20.2% 65.1%;
+
+    --accent: 200 98% 39%;
+    --accent-foreground: 210 40% 98%;
+
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 210 40% 98%;
+
+    --border: 217.2 32.6% 17.5%;
+    --input: 217.2 32.6% 17.5%;
+    --ring: 212 100% 47%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground bg-gradient-to-br from-background to-background/70 font-montserrat;
+    font-feature-settings: "ss01", "ss02", "cv01", "cv02", "cv03";
+  }
+  
+  html {
+    @apply scroll-smooth;
+  }
+}
+
+@layer components {
+  .security-card {
+    @apply relative backdrop-blur-xl bg-white/80 dark:bg-card/50 rounded-xl shadow-lg overflow-hidden border border-white/20 dark:border-white/5 hover:shadow-xl transition-all duration-300 hover:translate-y-[-5px];
+  }
+  
+  .security-button {
+    @apply flex items-center justify-center gap-2 rounded-lg font-medium transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-security-primary/50 active:scale-95 hover:scale-105;
+  }
+  
+  .security-button-primary {
+    @apply security-button bg-security-primary text-white hover:bg-security-primary/90;
+  }
+  
+  .security-button-secondary {
+    @apply security-button bg-security-secondary text-white hover:bg-security-secondary/90;
+  }
+  
+  .security-button-danger {
+    @apply security-button bg-security-danger text-white hover:bg-security-danger/90;
+  }
+  
+  .security-button-outline {
+    @apply security-button border border-white/20 bg-transparent backdrop-blur-xl text-foreground hover:bg-muted/50;
+  }
+  
+  .security-input {
+    @apply block w-full rounded-lg border border-white/20 bg-white/20 dark:bg-white/5 backdrop-blur-xl px-4 py-2 text-foreground shadow-sm focus:outline-none focus:ring-2 focus:ring-security-primary/50;
+  }
+
+  .security-gradient-text {
+    @apply bg-clip-text text-transparent bg-security-gradient;
+  }
+  
+  .glass-card {
+    @apply backdrop-blur-xl bg-white/20 dark:bg-black/20 border border-white/10 dark:border-white/5 shadow-lg;
+  }
+  
+  .glass-effect {
+    @apply backdrop-blur-xl bg-white/50 dark:bg-black/30 border border-white/20 dark:border-white/10 shadow-lg;
+  }
+  
+  .floating {
+    animation: floating 3s ease-in-out infinite;
+  }
+  
+  .bounce-hover {
+    @apply transition-transform duration-300 hover:scale-105 active:scale-95;
+  }
+
+  .pop-in {
+    animation: pop-in 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+  }
+
+  .slide-in {
+    animation: slide-in 0.5s ease-out forwards;
+  }
+
+  .fade-in {
+    animation: fade-in 0.5s ease-out forwards;
+  }
+
+  .bobble {
+    animation: bobble 2s infinite ease-in-out;
+    transform-origin: center bottom;
+  }
+}
+
+@keyframes pop-in {
+  0% {
+    opacity: 0;
+    transform: scale(0.8);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes slide-in {
+  0% {
+    opacity: 0;
+    transform: translateX(-20px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes fade-in {
+  0% {
+    opacity: 0;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+
+@keyframes floating {
+  0% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+  100% {
+    transform: translateY(0px);
+  }
+}
+
+@keyframes bobble {
+  0% {
+    transform: translateY(0) rotate(0deg);
+  }
+  25% {
+    transform: translateY(-5px) rotate(-2deg);
+  }
+  50% {
+    transform: translateY(0) rotate(0deg);
+  }
+  75% {
+    transform: translateY(-3px) rotate(2deg);
+  }
+  100% {
+    transform: translateY(0) rotate(0deg);
+  }
+}
+
+@keyframes pulse-slow {
+  0%, 100% { 
+    opacity: 1; 
+  }
+  50% { 
+    opacity: 0.5; 
+  }
+}
+
+@keyframes shield-glow {
+  0%, 100% {
+    filter: drop-shadow(0 0 0.75rem rgba(10, 132, 255, 0.5));
+  }
+  50% {
+    filter: drop-shadow(0 0 1.5rem rgba(10, 132, 255, 0.8));
+  }
+}
+
+@keyframes bob {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-5px);
+  }
+}
+
+.animate-bob {
+  animation: bob 2s ease-in-out infinite;
+}
+
+.animate-pulse-slow {
+  animation: pulse-slow 3s infinite;
+}
+
+.animate-shield-glow {
+  animation: shield-glow 4s infinite;
+}
+
+.theme-transition {
+  @apply transition-colors duration-300;
+}
+
+.card-hover {
+  @apply transition-all duration-300 hover:translate-y-[-5px] hover:shadow-lg;
+}
+
+/* Mobile Optimizations */
+@media (max-width: 768px) {
+  .mobile-menu {
+    @apply fixed inset-0 z-50 flex;
+  }
+  
+  .mobile-friendly-padding {
+    @apply px-3 py-2;
+  }
+  
+  .mobile-full-width {
+    @apply w-full;
+  }
+
+  .security-card {
+    @apply p-4;
+  }
+
+  body {
+    @apply text-sm;
+  }
+
+  .hide-on-mobile {
+    @apply hidden;
+  }
+
+  .show-on-mobile {
+    @apply block;
+  }
+}
+
+/* Montserrat font utility classes with different weights */
+.montserrat-thin {
+  font-family: "Montserrat", sans-serif;
+  font-optical-sizing: auto;
+  font-weight: 100;
+  font-style: normal;
+}
+
+.montserrat-extralight {
+  font-family: "Montserrat", sans-serif;
+  font-optical-sizing: auto;
+  font-weight: 200;
+  font-style: normal;
+}
+
+.montserrat-light {
+  font-family: "Montserrat", sans-serif;
+  font-optical-sizing: auto;
+  font-weight: 300;
+  font-style: normal;
+}
+
+.montserrat-regular {
+  font-family: "Montserrat", sans-serif;
+  font-optical-sizing: auto;
+  font-weight: 400;
+  font-style: normal;
+}
+
+.montserrat-medium {
+  font-family: "Montserrat", sans-serif;
+  font-optical-sizing: auto;
+  font-weight: 500;
+  font-style: normal;
+}
+
+.montserrat-semibold {
+  font-family: "Montserrat", sans-serif;
+  font-optical-sizing: auto;
+  font-weight: 600;
+  font-style: normal;
+}
+
+.montserrat-bold {
+  font-family: "Montserrat", sans-serif;
+  font-optical-sizing: auto;
+  font-weight: 700;
+  font-style: normal;
+}
+
+.montserrat-extrabold {
+  font-family: "Montserrat", sans-serif;
+  font-optical-sizing: auto;
+  font-weight: 800;
+  font-style: normal;
+}
+
+.montserrat-black {
+  font-family: "Montserrat", sans-serif;
+  font-optical-sizing: auto;
+  font-weight: 900;
+  font-style: normal;
+}

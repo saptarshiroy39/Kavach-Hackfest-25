@@ -1,0 +1,526 @@
+import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import MainLayout from '@/components/layout/MainLayout';
+import SecurityCard from '@/components/security/SecurityCard';
+import { 
+  Settings as SettingsIcon,
+  User,
+  Lock,
+  Bell,
+  Database,
+  Monitor,
+  Download,
+  Smartphone,
+  Globe,
+  Moon,
+  LogOut,
+  Shield,
+  Save
+} from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Switch } from '@/components/ui/switch';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { currentUser } from '@/lib/mockDb';
+import { useToast } from '@/hooks/use-toast';
+import { motion } from 'framer-motion';
+import { ThemeToggle } from '@/components/ui/theme-toggle';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { useLanguage, Language, languageNames } from '@/hooks/use-language';
+
+const Settings = () => {
+  const { toast } = useToast();
+  const navigate = useNavigate();
+  const { language, setLanguage, t } = useLanguage();
+  const [isEditingProfile, setIsEditingProfile] = useState(false);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+
+  const handleSave = () => {
+    toast({
+      title: "Settings saved",
+      description: "Your preferences have been updated successfully",
+    });
+    setIsEditingProfile(false);
+  };
+
+  const handleSignOut = () => {
+    // Clear authentication data from localStorage
+    localStorage.removeItem('auth-token');
+    localStorage.removeItem('user-role');
+    
+    // Dispatch event to notify App component about auth state change
+    window.dispatchEvent(new Event('auth-state-changed'));
+    
+    // Show toast notification
+    toast({
+      title: "Signed out",
+      description: "You have been signed out successfully",
+    });
+    
+    // Redirect to login page
+    navigate('/login');
+  };
+
+  const handleDeleteAccount = () => {
+    // Close the dialog
+    setShowDeleteDialog(false);
+    
+    // Clear authentication data from localStorage
+    localStorage.removeItem('auth-token');
+    localStorage.removeItem('user-role');
+    
+    // Dispatch event to notify App component about auth state change
+    window.dispatchEvent(new Event('auth-state-changed'));
+    
+    // Show toast notification
+    toast({
+      title: "Account deleted",
+      description: "Your account has been deleted successfully",
+      variant: "destructive"
+    });
+    
+    // Redirect to login page
+    navigate('/login');
+  };
+
+  const handleLanguageChange = (value: string) => {
+    setLanguage(value as Language);
+    toast({
+      title: "Language changed",
+      description: `Language has been changed to ${languageNames[value as Language]}`,
+    });
+  };
+
+  const cardVariants = {
+    hidden: { opacity: 0, y: 20 },
+    visible: (i: number) => ({
+      opacity: 1,
+      y: 0,
+      transition: {
+        delay: i * 0.1,
+        duration: 0.5,
+        type: "spring",
+        bounce: 0.4
+      }
+    })
+  };
+
+  return (
+    <MainLayout>
+      <div className="space-y-6">
+        <motion.div
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4 }}
+        >
+          <h1 className="text-3xl font-bold">{t('settingsTitle')}</h1>
+          <p className="text-muted-foreground mt-1">
+            {t('settingsSubtitle')}
+          </p>
+        </motion.div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div className="lg:col-span-2 space-y-6">
+            <motion.div
+              custom={0}
+              initial="hidden"
+              animate="visible"
+              variants={cardVariants}
+            >
+              <SecurityCard
+                title={t('accountSettings')}
+                icon={<User className="w-5 h-5 text-security-primary" />}
+              >
+                <div className="space-y-6">
+                  <div className="flex flex-col sm:flex-row sm:items-center gap-6">
+                    <div className="w-24 h-24 rounded-full bg-security-primary text-white flex items-center justify-center text-4xl font-bold">
+                      {currentUser.name.charAt(0)}
+                    </div>
+                    <div className="space-y-1">
+                      <h3 className="text-xl font-bold">{currentUser.name}</h3>
+                      <p className="text-muted-foreground">{currentUser.email}</p>
+                      <p className="text-sm">
+                        <span className="inline-block px-2 py-1 bg-security-primary/10 text-security-primary rounded text-xs font-medium">
+                          {currentUser.subscriptionTier.charAt(0).toUpperCase() + currentUser.subscriptionTier.slice(1)} Plan
+                        </span>
+                      </p>
+                      <div className="pt-2">
+                        <Button 
+                          variant="outline" 
+                          size="sm"
+                          className="glass-effect dark:bg-sidebar-accent/30"
+                        >
+                          {t('changePfp')}
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="grid gap-4 pt-4">
+                    <div className="grid gap-2">
+                      <label htmlFor="name" className="text-sm font-medium">
+                        {t('name')}
+                      </label>
+                      <input
+                        id="name"
+                        type="text"
+                        className="security-input"
+                        defaultValue={currentUser.name}
+                      />
+                    </div>
+                    <div className="grid gap-2">
+                      <label htmlFor="email" className="text-sm font-medium">
+                        {t('email')}
+                      </label>
+                      <input
+                        id="email"
+                        type="email"
+                        className="security-input"
+                        defaultValue={currentUser.email}
+                      />
+                    </div>
+                    <div className="grid gap-2">
+                      <label htmlFor="phone" className="text-sm font-medium">
+                        {t('phone')}
+                      </label>
+                      <input
+                        id="phone"
+                        type="tel"
+                        className="security-input"
+                        defaultValue={currentUser.phone}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="flex justify-end pt-4">
+                    <Button onClick={handleSave} className="bg-security-primary hover:bg-security-primary/90">
+                      <Save className="mr-2 h-4 w-4" />
+                      {t('saveChanges')}
+                    </Button>
+                  </div>
+                </div>
+              </SecurityCard>
+            </motion.div>
+
+            <motion.div
+              custom={1}
+              initial="hidden"
+              animate="visible"
+              variants={cardVariants}
+            >
+              <SecurityCard
+                title={t('securitySettings')}
+                icon={<Lock className="w-5 h-5 text-security-primary" />}
+              >
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="font-medium">{t('changePassword')}</p>
+                      <p className="text-sm text-muted-foreground">{t('lastChanged')}: {new Date(currentUser.passwordLastChanged).toLocaleDateString()}</p>
+                    </div>
+                    <Button variant="outline" className="glass-effect dark:bg-sidebar-accent/30">
+                      {t('update')}
+                    </Button>
+                  </div>
+
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="font-medium">{t('twoFactor')}</p>
+                      <p className="text-sm text-muted-foreground">{t('twoFactorDesc')}</p>
+                    </div>
+                    <Switch checked={currentUser.hasTwoFactor} />
+                  </div>
+
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="font-medium">{t('biometric')}</p>
+                      <p className="text-sm text-muted-foreground">{t('biometricDesc')}</p>
+                    </div>
+                    <Switch checked={currentUser.hasBiometrics} />
+                  </div>
+
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="font-medium">{t('autoLock')}</p>
+                      <p className="text-sm text-muted-foreground">{t('autoLockDesc')}</p>
+                    </div>
+                    <Select defaultValue="5">
+                      <SelectTrigger className="w-[120px] glass-effect dark:bg-sidebar-accent/30">
+                        <SelectValue placeholder="Select" />
+                      </SelectTrigger>
+                      <SelectContent className="glass-effect dark:bg-sidebar-accent/80 border-white/10 z-50">
+                        <SelectItem value="1">1 {t('minute')}</SelectItem>
+                        <SelectItem value="5">5 {t('minutes')}</SelectItem>
+                        <SelectItem value="15">15 {t('minutes')}</SelectItem>
+                        <SelectItem value="30">30 {t('minutes')}</SelectItem>
+                        <SelectItem value="0">{t('never')}</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="font-medium">{t('loginAlerts')}</p>
+                      <p className="text-sm text-muted-foreground">{t('loginAlertsDesc')}</p>
+                    </div>
+                    <Switch defaultChecked />
+                  </div>
+                </div>
+              </SecurityCard>
+            </motion.div>
+
+            <motion.div
+              custom={2}
+              initial="hidden"
+              animate="visible"
+              variants={cardVariants}
+            >
+              <SecurityCard
+                title={t('dataManagement')}
+                icon={<Database className="w-5 h-5 text-security-primary" />}
+              >
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="font-medium">{t('exportData')}</p>
+                      <p className="text-sm text-muted-foreground">{t('exportDesc')}</p>
+                    </div>
+                    <Button variant="outline" className="glass-effect dark:bg-sidebar-accent/30">
+                      <Download className="mr-2 h-4 w-4" /> {t('export')}
+                    </Button>
+                  </div>
+
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="font-medium">{t('syncFrequency')}</p>
+                      <p className="text-sm text-muted-foreground">{t('syncDesc')}</p>
+                    </div>
+                    <Select defaultValue="auto">
+                      <SelectTrigger className="w-[120px] glass-effect dark:bg-sidebar-accent/30">
+                        <SelectValue placeholder="Select" />
+                      </SelectTrigger>
+                      <SelectContent className="glass-effect dark:bg-sidebar-accent/80 border-white/10 z-50">
+                        <SelectItem value="auto">{t('automatic')}</SelectItem>
+                        <SelectItem value="15">{t('every')} 15m</SelectItem>
+                        <SelectItem value="30">{t('every')} 30m</SelectItem>
+                        <SelectItem value="60">{t('every')} {t('hour')}</SelectItem>
+                        <SelectItem value="manual">{t('manual')}</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="font-medium">{t('clearData')}</p>
+                      <p className="text-sm text-muted-foreground">{t('clearDataDesc')}</p>
+                    </div>
+                    <Button variant="outline" className="text-security-danger glass-effect dark:bg-sidebar-accent/30">
+                      {t('clearData')}
+                    </Button>
+                  </div>
+                </div>
+              </SecurityCard>
+            </motion.div>
+          </div>
+
+          <div className="space-y-6">
+            <motion.div
+              custom={3}
+              initial="hidden"
+              animate="visible"
+              variants={cardVariants}
+            >
+              <SecurityCard
+                title={t('applicationSettings')}
+                icon={<SettingsIcon className="w-5 h-5 text-security-primary" />}
+              >
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center">
+                      <Moon className="w-4 h-4 mr-2" />
+                      <span>{t('themeMode')}</span>
+                    </div>
+                    <ThemeToggle />
+                  </div>
+
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center">
+                      <Bell className="w-4 h-4 mr-2" />
+                      <span>{t('notifications')}</span>
+                    </div>
+                    <Switch defaultChecked />
+                  </div>
+
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center">
+                      <Globe className="w-4 h-4 mr-2" />
+                      <span>{t('language')}</span>
+                    </div>
+                    <Select 
+                      value={language} 
+                      onValueChange={handleLanguageChange}
+                    >
+                      <SelectTrigger className="w-[110px] glass-effect dark:bg-sidebar-accent/30">
+                        <SelectValue placeholder="Select" />
+                      </SelectTrigger>
+                      <SelectContent className="glass-effect dark:bg-sidebar-accent/80 border-white/10 z-50">
+                        <SelectItem value="en">{languageNames.en}</SelectItem>
+                        <SelectItem value="es">{languageNames.es}</SelectItem>
+                        <SelectItem value="fr">{languageNames.fr}</SelectItem>
+                        <SelectItem value="de">{languageNames.de}</SelectItem>
+                        <SelectItem value="ja">{languageNames.ja}</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+              </SecurityCard>
+            </motion.div>
+
+            <motion.div
+              custom={4}
+              initial="hidden"
+              animate="visible"
+              variants={cardVariants}
+            >
+              <SecurityCard
+                title={t('connectedDevices')}
+                icon={<Smartphone className="w-5 h-5 text-security-primary" />}
+              >
+                <div className="space-y-4">
+                  <motion.div 
+                    className="p-3 border border-muted rounded-lg glass-effect dark:bg-sidebar-accent/10"
+                    whileHover={{ scale: 1.02 }}
+                    transition={{ type: "spring", stiffness: 400 }}
+                  >
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center">
+                        <Monitor className="w-5 h-5 text-security-primary mr-2" />
+                        <div>
+                          <p className="text-sm font-medium">Windows PC</p>
+                          <p className="text-xs text-muted-foreground">{t('currentDevice')}</p>
+                        </div>
+                      </div>
+                      <Button variant="outline" size="sm" disabled className="glass-effect dark:bg-sidebar-accent/30">
+                        {t('active')}
+                      </Button>
+                    </div>
+                  </motion.div>
+
+                  <motion.div 
+                    className="p-3 border border-muted rounded-lg glass-effect dark:bg-sidebar-accent/10"
+                    whileHover={{ scale: 1.02 }}
+                    transition={{ type: "spring", stiffness: 400 }}
+                  >
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center">
+                        <Smartphone className="w-5 h-5 text-security-primary mr-2" />
+                        <div>
+                          <p className="text-sm font-medium">iPhone 13</p>
+                          <p className="text-xs text-muted-foreground">Last active: 1 hour ago</p>
+                        </div>
+                      </div>
+                      <Button variant="outline" size="sm" className="glass-effect dark:bg-sidebar-accent/30">
+                        Remove
+                      </Button>
+                    </div>
+                  </motion.div>
+
+                  <motion.div 
+                    className="p-3 border border-muted rounded-lg glass-effect dark:bg-sidebar-accent/10"
+                    whileHover={{ scale: 1.02 }}
+                    transition={{ type: "spring", stiffness: 400 }}
+                  >
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center">
+                        <Monitor className="w-5 h-5 text-security-primary mr-2" />
+                        <div>
+                          <p className="text-sm font-medium">MacBook Pro</p>
+                          <p className="text-xs text-muted-foreground">Last active: 3 days ago</p>
+                        </div>
+                      </div>
+                      <Button variant="outline" size="sm" className="glass-effect dark:bg-sidebar-accent/30">
+                        Remove
+                      </Button>
+                    </div>
+                  </motion.div>
+                </div>
+              </SecurityCard>
+            </motion.div>
+
+            <motion.div
+              custom={5}
+              initial="hidden"
+              animate="visible"
+              variants={cardVariants}
+            >
+              <SecurityCard
+                title={t('accountManagement')}
+                icon={<User className="w-5 h-5 text-security-primary" />}
+              >
+                <div className="space-y-4">
+                  <motion.div 
+                    className="p-3 border border-security-secondary/20 bg-security-secondary/5 rounded-lg glass-effect dark:bg-sidebar-accent/10"
+                    whileHover={{ scale: 1.02 }}
+                    transition={{ type: "spring", stiffness: 400 }}
+                  >
+                    <div className="flex items-start">
+                      <Shield className="w-5 h-5 text-security-secondary mt-0.5 mr-3" />
+                      <div>
+                        <p className="font-medium">{t('premiumPlan')}</p>
+                        <p className="text-sm text-muted-foreground">{t('planRenews')}</p>
+                        <Button variant="outline" size="sm" className="mt-2 glass-effect dark:bg-sidebar-accent/30">
+                          {t('manageSubscription')}
+                        </Button>
+                      </div>
+                    </div>
+                  </motion.div>
+
+                  <Button 
+                    className="w-full glass-effect dark:bg-sidebar-accent/30" 
+                    variant="outline"
+                    onClick={handleSignOut}
+                  >
+                    <LogOut className="mr-2 h-4 w-4" />
+                    {t('signOut')}
+                  </Button>
+
+                  <Button 
+                    className="w-full text-security-danger glass-effect dark:bg-sidebar-accent/30" 
+                    variant="outline"
+                    onClick={() => setShowDeleteDialog(true)}
+                  >
+                    {t('deleteAccount')}
+                  </Button>
+                </div>
+              </SecurityCard>
+            </motion.div>
+          </div>
+        </div>
+      </div>
+
+      <Dialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+        <DialogContent className="sm:max-w-md glass-effect dark:bg-sidebar/90">
+          <DialogHeader>
+            <DialogTitle>{t('deleteAccount')}</DialogTitle>
+            <DialogDescription>
+              {t('deleteConfirm')}
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="flex flex-col sm:flex-row sm:justify-between gap-2">
+            <Button variant="outline" onClick={() => setShowDeleteDialog(false)}>
+              {t('cancel')}
+            </Button>
+            <Button 
+              variant="destructive" 
+              onClick={handleDeleteAccount}
+              className="bg-security-danger hover:bg-security-danger/90"
+            >
+              {t('deleteAccount')}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </MainLayout>
+  );
+};
+
+export default Settings;
