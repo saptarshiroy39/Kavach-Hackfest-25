@@ -72,6 +72,7 @@ const App = () => {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="flex flex-col items-center">
+          <div className="text-5xl mb-4">🌀</div>
           <div className="w-16 h-16 border-t-4 border-security-primary rounded-full animate-spin"></div>
           <p className="mt-4 text-muted-foreground">Loading Kavach...</p>
         </div>

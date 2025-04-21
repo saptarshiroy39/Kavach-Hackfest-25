@@ -89,7 +89,7 @@ const Login = () => {
       <div className="bg-sidebar md:w-1/2 p-8 flex items-center justify-center">
         <div className="max-w-md w-full space-y-8">
           <div className="text-center">
-            <Shield className="mx-auto h-20 w-20 text-security-primary animate-shield-glow" />
+            <div className="mx-auto text-6xl text-security-primary">🌀</div>
             <h1 className="mt-4 text-3xl font-bold text-white">Kavach</h1>
             <p className="mt-2 text-security-info">
               Advanced security for your digital identity

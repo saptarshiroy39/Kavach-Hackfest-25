@@ -126,7 +126,7 @@ const SignUp = () => {
           variants={containerVariants}
         >
           <motion.div className="text-center" variants={itemVariants}>
-            <Shield className="mx-auto h-20 w-20 text-security-primary animate-shield-glow" />
+            <div className="mx-auto text-6xl text-security-primary">🌀</div>
             <h1 className="mt-4 text-3xl font-bold text-white">Kavach</h1>
             <p className="mt-2 text-security-info">
               Advanced security for your digital identity

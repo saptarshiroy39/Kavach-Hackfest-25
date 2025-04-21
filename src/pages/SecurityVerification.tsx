@@ -14,7 +14,9 @@ import {
   Lock,
   Zap,
   Shield,
-  AlertCircle
+  AlertCircle,
+  Plus,
+  X
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
@@ -23,6 +25,9 @@ import { motion } from 'framer-motion';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Progress } from '@/components/ui/progress';
 import { useLanguage } from '@/hooks/use-language';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Badge } from '@/components/ui/badge';
 
 // Mock blockchain verification result
 interface VerificationResult {
@@ -31,6 +36,39 @@ interface VerificationResult {
   blockchainId?: string;
   details?: string;
 }
+
+// Protected email interface
+interface ProtectedEmail {
+  id: string;
+  email: string;
+  status: 'verified' | 'suspicious' | 'pending';
+}
+
+// Protected phone interface
+interface ProtectedPhone {
+  id: string;
+  phoneNumber: string;
+  status: 'verified' | 'suspicious' | 'pending';
+}
+
+// Social media platform interface
+interface ProtectedSocialMedia {
+  id: string;
+  platform: string;
+  username: string;
+  status: 'verified' | 'suspicious' | 'pending';
+}
+
+// Social media platform options
+const socialMediaPlatforms = [
+  'Facebook',
+  'Twitter',
+  'Instagram',
+  'LinkedIn',
+  'TikTok',
+  'YouTube',
+  'Reddit'
+];
 
 const SecurityVerification = () => {
   const { toast } = useToast();
@@ -42,6 +80,30 @@ const SecurityVerification = () => {
   const [smsProtection, setSmsProtection] = useState(false);
   const [socialMediaProtection, setSocialMediaProtection] = useState(false);
   const [biometricVerification, setBiometricVerification] = useState(false);
+  
+  // Dialog states
+  const [showAddEmailDialog, setShowAddEmailDialog] = useState(false);
+  const [newEmail, setNewEmail] = useState('');
+  const [showAddPhoneDialog, setShowAddPhoneDialog] = useState(false);
+  const [newPhone, setNewPhone] = useState('');
+  const [showAddSocialDialog, setShowAddSocialDialog] = useState(false);
+  const [newSocialPlatform, setNewSocialPlatform] = useState('Facebook');
+  const [newSocialUsername, setNewSocialUsername] = useState('');
+  
+  // Protected items
+  const [protectedEmails, setProtectedEmails] = useState<ProtectedEmail[]>([
+    { id: '1', email: 'user@example.com', status: 'verified' },
+    { id: '2', email: 'work@company.com', status: 'verified' }
+  ]);
+  
+  const [protectedPhones, setProtectedPhones] = useState<ProtectedPhone[]>([
+    { id: '1', phoneNumber: '+1 (555) 123-4567', status: 'verified' }
+  ]);
+  
+  const [protectedSocialAccounts, setProtectedSocialAccounts] = useState<ProtectedSocialMedia[]>([
+    { id: '1', platform: 'Twitter', username: '@example_user', status: 'verified' },
+    { id: '2', platform: 'Instagram', username: 'example.user', status: 'suspicious' }
+  ]);
   
   // Mock verification results
   const [emailVerification, setEmailVerification] = useState<VerificationResult>({
@@ -75,6 +137,167 @@ const SecurityVerification = () => {
     timestamp: '',
     details: 'No biometric data registered'
   });
+  
+  // Add new email
+  const handleAddEmail = () => {
+    if (!newEmail || !newEmail.includes('@')) {
+      toast({
+        title: "Invalid email",
+        description: "Please enter a valid email address",
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    // Add new email to protected list
+    setProtectedEmails([
+      ...protectedEmails,
+      {
+        id: `email_${Date.now()}`,
+        email: newEmail,
+        status: 'pending'
+      }
+    ]);
+    
+    // Clear form and close dialog
+    setNewEmail('');
+    setShowAddEmailDialog(false);
+    
+    // Show success message
+    toast({
+      title: "Email added",
+      description: "The email has been added to your protected accounts",
+    });
+    
+    // Simulate verification after a short delay
+    setTimeout(() => {
+      setProtectedEmails(prev => 
+        prev.map(item => 
+          item.email === newEmail 
+            ? { ...item, status: 'verified' } 
+            : item
+        )
+      );
+    }, 2000);
+  };
+  
+  // Remove email from protection
+  const handleRemoveEmail = (id: string) => {
+    setProtectedEmails(prev => prev.filter(email => email.id !== id));
+    
+    toast({
+      title: "Email removed",
+      description: "The email has been removed from protection",
+    });
+  };
+  
+  // Add new phone number
+  const handleAddPhone = () => {
+    if (!newPhone || newPhone.length < 6) {
+      toast({
+        title: "Invalid phone number",
+        description: "Please enter a valid phone number",
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    // Add new phone to protected list
+    setProtectedPhones([
+      ...protectedPhones,
+      {
+        id: `phone_${Date.now()}`,
+        phoneNumber: newPhone,
+        status: 'pending'
+      }
+    ]);
+    
+    // Clear form and close dialog
+    setNewPhone('');
+    setShowAddPhoneDialog(false);
+    
+    // Show success message
+    toast({
+      title: "Phone number added",
+      description: "The phone number has been added to your protected accounts",
+    });
+    
+    // Simulate verification after a short delay
+    setTimeout(() => {
+      setProtectedPhones(prev => 
+        prev.map(item => 
+          item.phoneNumber === newPhone 
+            ? { ...item, status: 'verified' } 
+            : item
+        )
+      );
+    }, 2000);
+  };
+  
+  // Remove phone from protection
+  const handleRemovePhone = (id: string) => {
+    setProtectedPhones(prev => prev.filter(phone => phone.id !== id));
+    
+    toast({
+      title: "Phone number removed",
+      description: "The phone number has been removed from protection",
+    });
+  };
+  
+  // Add new social media account
+  const handleAddSocialAccount = () => {
+    if (!newSocialUsername || newSocialUsername.length < 3) {
+      toast({
+        title: "Invalid username",
+        description: "Please enter a valid username for the platform",
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    // Add new social media account to protected list
+    setProtectedSocialAccounts([
+      ...protectedSocialAccounts,
+      {
+        id: `social_${Date.now()}`,
+        platform: newSocialPlatform,
+        username: newSocialUsername,
+        status: 'pending'
+      }
+    ]);
+    
+    // Clear form and close dialog
+    setNewSocialUsername('');
+    setNewSocialPlatform('Facebook');
+    setShowAddSocialDialog(false);
+    
+    // Show success message
+    toast({
+      title: "Social media account added",
+      description: `Your ${newSocialPlatform} account has been added to protection`,
+    });
+    
+    // Simulate verification after a short delay
+    setTimeout(() => {
+      setProtectedSocialAccounts(prev => 
+        prev.map(item => 
+          (item.platform === newSocialPlatform && item.username === newSocialUsername)
+            ? { ...item, status: Math.random() > 0.7 ? 'suspicious' : 'verified' } 
+            : item
+        )
+      );
+    }, 2000);
+  };
+  
+  // Remove social media account from protection
+  const handleRemoveSocialAccount = (id: string) => {
+    setProtectedSocialAccounts(prev => prev.filter(account => account.id !== id));
+    
+    toast({
+      title: "Social media account removed",
+      description: "The account has been removed from protection",
+    });
+  };
   
   // Mock scan function
   const performScan = (type: string) => {
@@ -242,6 +465,49 @@ const SecurityVerification = () => {
                     </Button>
                   </div>
                   
+                  {/* Protected Emails Section */}
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between">
+                      <h3 className="text-sm font-medium">Protected Email Addresses</h3>
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        className="h-8 px-2 text-xs"
+                        onClick={() => setShowAddEmailDialog(true)}
+                        disabled={!emailProtection}
+                      >
+                        <Plus className="h-3.5 w-3.5 mr-1" />
+                        Add Email
+                      </Button>
+                    </div>
+                    
+                    {protectedEmails.length === 0 ? (
+                      <div className="text-sm text-muted-foreground italic p-2 text-center">
+                        No protected emails added yet
+                      </div>
+                    ) : (
+                      <div className="space-y-2">
+                        {protectedEmails.map(email => (
+                          <div 
+                            key={email.id} 
+                            className="flex items-center justify-between p-2 border rounded-md"
+                          >
+                            <div className="flex items-center">
+                              <StatusIndicator status={email.status} />
+                              <span className="ml-2 text-sm">{email.email}</span>
+                            </div>
+                            <button 
+                              className="text-destructive-foreground hover:bg-destructive/10 p-1 rounded"
+                              onClick={() => handleRemoveEmail(email.id)}
+                            >
+                              <X className="h-4 w-4" />
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                  
                   {emailVerification.blockchainId && (
                     <div className="text-xs text-muted-foreground border-t pt-2">
                       Blockchain verification ID: {emailVerification.blockchainId}
@@ -289,6 +555,49 @@ const SecurityVerification = () => {
                     >
                       Verify Number
                     </Button>
+                  </div>
+                  
+                  {/* Protected Phone Numbers Section */}
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between">
+                      <h3 className="text-sm font-medium">Protected Phone Numbers</h3>
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        className="h-8 px-2 text-xs"
+                        onClick={() => setShowAddPhoneDialog(true)}
+                        disabled={!phoneProtection}
+                      >
+                        <Plus className="h-3.5 w-3.5 mr-1" />
+                        Add Phone
+                      </Button>
+                    </div>
+                    
+                    {protectedPhones.length === 0 ? (
+                      <div className="text-sm text-muted-foreground italic p-2 text-center">
+                        No protected phone numbers added yet
+                      </div>
+                    ) : (
+                      <div className="space-y-2">
+                        {protectedPhones.map(phone => (
+                          <div 
+                            key={phone.id} 
+                            className="flex items-center justify-between p-2 border rounded-md"
+                          >
+                            <div className="flex items-center">
+                              <StatusIndicator status={phone.status} />
+                              <span className="ml-2 text-sm">{phone.phoneNumber}</span>
+                            </div>
+                            <button 
+                              className="text-destructive-foreground hover:bg-destructive/10 p-1 rounded"
+                              onClick={() => handleRemovePhone(phone.id)}
+                            >
+                              <X className="h-4 w-4" />
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    )}
                   </div>
                   
                   {phoneVerification.blockchainId && (
@@ -387,6 +696,50 @@ const SecurityVerification = () => {
                     >
                       Scan Accounts
                     </Button>
+                  </div>
+                  
+                  {/* Protected Social Media Accounts Section */}
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between">
+                      <h3 className="text-sm font-medium">Protected Social Media Accounts</h3>
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        className="h-8 px-2 text-xs"
+                        onClick={() => setShowAddSocialDialog(true)}
+                        disabled={!socialMediaProtection}
+                      >
+                        <Plus className="h-3.5 w-3.5 mr-1" />
+                        Add Account
+                      </Button>
+                    </div>
+                    
+                    {protectedSocialAccounts.length === 0 ? (
+                      <div className="text-sm text-muted-foreground italic p-2 text-center">
+                        No protected social media accounts added yet
+                      </div>
+                    ) : (
+                      <div className="space-y-2">
+                        {protectedSocialAccounts.map(account => (
+                          <div 
+                            key={account.id} 
+                            className="flex items-center justify-between p-2 border rounded-md"
+                          >
+                            <div className="flex items-center">
+                              <StatusIndicator status={account.status} />
+                              <Badge className="ml-2 mr-2" variant="outline">{account.platform}</Badge>
+                              <span className="text-sm">{account.username}</span>
+                            </div>
+                            <button 
+                              className="text-destructive-foreground hover:bg-destructive/10 p-1 rounded"
+                              onClick={() => handleRemoveSocialAccount(account.id)}
+                            >
+                              <X className="h-4 w-4" />
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    )}
                   </div>
                   
                   {socialMediaVerification.blockchainId && (
@@ -573,6 +926,120 @@ const SecurityVerification = () => {
           </TabsContent>
         </Tabs>
       </div>
+      
+      {/* Add Email Dialog */}
+      <Dialog open={showAddEmailDialog} onOpenChange={setShowAddEmailDialog}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Add Email for Protection</DialogTitle>
+            <DialogDescription>
+              Enter an email address to protect from phishing and attacks
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <div className="space-y-2">
+              <label htmlFor="email" className="text-sm font-medium">
+                Email Address
+              </label>
+              <Input
+                id="email"
+                placeholder="example@domain.com"
+                value={newEmail}
+                onChange={(e) => setNewEmail(e.target.value)}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowAddEmailDialog(false)}>
+              Cancel
+            </Button>
+            <Button onClick={handleAddEmail}>
+              Add Email
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+      
+      {/* Add Phone Dialog */}
+      <Dialog open={showAddPhoneDialog} onOpenChange={setShowAddPhoneDialog}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Add Phone Number for Protection</DialogTitle>
+            <DialogDescription>
+              Enter a phone number to protect from fraud and spam
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <div className="space-y-2">
+              <label htmlFor="phone" className="text-sm font-medium">
+                Phone Number
+              </label>
+              <Input
+                id="phone"
+                placeholder="+1 (555) 123-4567"
+                value={newPhone}
+                onChange={(e) => setNewPhone(e.target.value)}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowAddPhoneDialog(false)}>
+              Cancel
+            </Button>
+            <Button onClick={handleAddPhone}>
+              Add Phone Number
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+      
+      {/* Add Social Media Dialog */}
+      <Dialog open={showAddSocialDialog} onOpenChange={setShowAddSocialDialog}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Add Social Media Account</DialogTitle>
+            <DialogDescription>
+              Select a platform and enter your username to protect your social media accounts
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <div className="space-y-2">
+              <label htmlFor="platform" className="text-sm font-medium">
+                Platform
+              </label>
+              <select
+                id="platform"
+                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                value={newSocialPlatform}
+                onChange={(e) => setNewSocialPlatform(e.target.value)}
+              >
+                {socialMediaPlatforms.map(platform => (
+                  <option key={platform} value={platform}>{platform}</option>
+                ))}
+              </select>
+            </div>
+            <div className="space-y-2">
+              <label htmlFor="username" className="text-sm font-medium">
+                Username
+              </label>
+              <Input
+                id="username"
+                placeholder="yourusername"
+                value={newSocialUsername}
+                onChange={(e) => setNewSocialUsername(e.target.value)}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowAddSocialDialog(false)}>
+              Cancel
+            </Button>
+            <Button onClick={handleAddSocialAccount}>
+              Add Account
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </MainLayout>
   );
 };

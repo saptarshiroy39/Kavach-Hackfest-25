@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import { 
@@ -12,7 +12,6 @@ import {
   Lock, 
   Menu, 
   X,
-  Shield as ShieldIcon,
   LogOut,
   Fingerprint
 } from 'lucide-react';
@@ -43,8 +42,41 @@ const Sidebar = () => {
     { titleKey: 'settings', path: '/settings', icon: Settings },
   ];
 
+  // Close sidebar on mobile when clicking outside
+  useEffect(() => {
+    if (!isMobile) return;
+    
+    const handleClickOutside = (e: MouseEvent) => {
+      const sidebar = document.getElementById('mobile-sidebar');
+      const hamburgerBtn = document.getElementById('sidebar-toggle');
+      
+      if (
+        isOpen && 
+        sidebar && 
+        hamburgerBtn && 
+        !sidebar.contains(e.target as Node) && 
+        !hamburgerBtn.contains(e.target as Node)
+      ) {
+        setIsOpen(false);
+      }
+    };
+    
+    document.addEventListener('mousedown', handleClickOutside);
+    
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [isOpen, isMobile]);
+
   const toggleSidebar = () => {
     setIsOpen(!isOpen);
+  };
+
+  const handleNavigation = (path: string) => {
+    navigate(path);
+    if (isMobile) {
+      setIsOpen(false);
+    }
   };
 
   const handleSignOut = () => {
@@ -57,12 +89,18 @@ const Sidebar = () => {
     
     // Redirect to login page
     navigate('/login');
+    
+    // Close sidebar on mobile after signing out
+    if (isMobile) {
+      setIsOpen(false);
+    }
   };
 
   return (
     <>
       {isMobile && (
         <button 
+          id="sidebar-toggle"
           onClick={toggleSidebar} 
           className="fixed top-4 left-2 z-50 p-1 rounded-md bg-security-primary text-white flex items-center justify-center w-8 h-8"
         >
@@ -71,6 +109,7 @@ const Sidebar = () => {
       )}
       
       <aside
+        id="mobile-sidebar"
         className={cn(
           "flex flex-col h-screen bg-sidebar text-sidebar-foreground border-r border-sidebar-border transition-all duration-300",
           isOpen ? "w-64" : isMobile ? "w-0" : "w-20",
@@ -82,7 +121,7 @@ const Sidebar = () => {
             "flex items-center",
             !isOpen && !isMobile && "justify-center"
           )}>
-            <ShieldIcon className="text-security-primary w-8 h-8 animate-shield-glow" />
+            <span className="text-security-primary text-2xl">🌀</span>
             {(isOpen || isMobile) && (
               <div className="ml-3">
                 <h1 className="text-xl montserrat-semibold">Kavach</h1>
@@ -94,11 +133,11 @@ const Sidebar = () => {
 
         <nav className="flex-1 px-4 space-y-2 py-4 overflow-y-auto">
           {sidebarItems.map((item) => (
-            <Link
+            <button
               key={item.path}
-              to={item.path}
+              onClick={() => handleNavigation(item.path)}
               className={cn(
-                "flex items-center px-4 py-3 rounded-lg transition-colors",
+                "flex w-full items-center px-4 py-3 rounded-lg transition-colors text-left",
                 location.pathname === item.path 
                   ? "bg-sidebar-accent text-sidebar-accent-foreground" 
                   : "hover:bg-sidebar-accent/50",
@@ -107,7 +146,7 @@ const Sidebar = () => {
             >
               <item.icon className={cn("w-5 h-5", location.pathname === item.path && "text-security-primary")} />
               {(isOpen || isMobile) && <span className="ml-3 normal-case">{t(item.titleKey)}</span>}
-            </Link>
+            </button>
           ))}
         </nav>
 

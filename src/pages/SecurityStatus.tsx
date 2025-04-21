@@ -1,4 +1,3 @@
-
 import React from 'react';
 import MainLayout from '@/components/layout/MainLayout';
 import SecurityCard from '@/components/security/SecurityCard';
@@ -14,8 +13,11 @@ import {
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { securityStatus } from '@/lib/mockDb';
+import { useNavigate } from 'react-router-dom';
 
 const SecurityStatus = () => {
+  const navigate = useNavigate();
+
   return (
     <MainLayout>
       <div className="space-y-6">
@@ -154,7 +156,12 @@ const SecurityStatus = () => {
                   <p className="text-sm text-muted-foreground mt-1">
                     Your account will be more secure with an additional verification step.
                   </p>
-                  <Button variant="outline" size="sm" className="mt-3">
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    className="mt-3"
+                    onClick={() => navigate('/authentication')}
+                  >
                     Enable 2FA Now
                   </Button>
                 </div>
@@ -169,7 +176,12 @@ const SecurityStatus = () => {
                   <p className="text-sm text-muted-foreground mt-1">
                     2 of your passwords are weak and should be updated for better security.
                   </p>
-                  <Button variant="outline" size="sm" className="mt-3">
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    className="mt-3"
+                    onClick={() => navigate('/password-vault')}
+                  >
                     Fix Now
                   </Button>
                 </div>
@@ -184,7 +196,12 @@ const SecurityStatus = () => {
                   <p className="text-sm text-muted-foreground mt-1">
                     You've completed 7 out of 10 security steps for full protection.
                   </p>
-                  <Button variant="outline" size="sm" className="mt-3">
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    className="mt-3"
+                    onClick={() => navigate('/security-verification')}
+                  >
                     Continue Checklist
                   </Button>
                 </div>
