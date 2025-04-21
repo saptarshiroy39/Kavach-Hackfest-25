@@ -1,15 +1,17 @@
 import { useState, useCallback, useEffect } from 'react';
+import { passwordEntries, securityEvents, securityStatus, users } from '@/lib/mockDb';
 
 export interface SearchResult {
   id: string;
   title: string;
   description?: string;
-  type: 'threat' | 'incident' | 'vulnerability' | 'policy' | 'control' | 'dashboard' | 'setting';
+  type: 'threat' | 'incident' | 'vulnerability' | 'policy' | 'control' | 'dashboard' | 'setting' | 'password' | 'event' | 'user' | 'security';
   url?: string;
 }
 
-// Mock data for demonstration
+// Comprehensive project data for search
 const mockData: SearchResult[] = [
+  // Original entries
   {
     id: '1',
     title: 'Ransomware Attack',
@@ -52,7 +54,6 @@ const mockData: SearchResult[] = [
     type: 'dashboard',
     url: '/'
   },
-  // Added settings-related items
   {
     id: '7',
     title: 'Theme Settings',
@@ -108,8 +109,141 @@ const mockData: SearchResult[] = [
     description: 'Log out from your account',
     type: 'setting',
     url: '/settings'
+  },
+  
+  // Pages
+  {
+    id: 'page_1',
+    title: 'Dashboard',
+    description: 'Main dashboard with security overview',
+    type: 'dashboard',
+    url: '/'
+  },
+  {
+    id: 'page_2',
+    title: 'Login',
+    description: 'User authentication page',
+    type: 'setting',
+    url: '/login'
+  },
+  {
+    id: 'page_3',
+    title: 'Security Verification',
+    description: 'Verify your identity with multiple factors',
+    type: 'security',
+    url: '/security-verification'
+  },
+  {
+    id: 'page_4',
+    title: 'Security Status',
+    description: 'Overview of your current security posture',
+    type: 'security',
+    url: '/security-status'
+  },
+  {
+    id: 'page_5',
+    title: 'Sign Up',
+    description: 'Create a new account',
+    type: 'setting',
+    url: '/signup'
+  },
+  {
+    id: 'page_6',
+    title: 'Settings',
+    description: 'Configure application settings',
+    type: 'setting',
+    url: '/settings'
+  },
+  {
+    id: 'page_7',
+    title: 'Security Scanner',
+    description: 'Scan for security vulnerabilities',
+    type: 'security',
+    url: '/security-scanner'
+  },
+  {
+    id: 'page_8',
+    title: 'Payment Scanner',
+    description: 'Detect payment fraud and security issues',
+    type: 'security',
+    url: '/payment-scanner'
+  },
+  {
+    id: 'page_9',
+    title: 'Phishing Detection',
+    description: 'Detect and prevent phishing attempts',
+    type: 'security',
+    url: '/phishing-detection'
+  },
+  {
+    id: 'page_10',
+    title: 'Notifications',
+    description: 'Security alerts and notifications',
+    type: 'setting',
+    url: '/notifications'
+  },
+  {
+    id: 'page_11',
+    title: 'Password Vault',
+    description: 'Securely store and manage passwords',
+    type: 'password',
+    url: '/password-vault'
+  },
+  {
+    id: 'page_12',
+    title: 'Blockchain Verification',
+    description: 'Verify identity using blockchain',
+    type: 'security',
+    url: '/blockchain-verify'
+  },
+  {
+    id: 'page_13',
+    title: 'Authentication',
+    description: 'Multi-factor authentication settings',
+    type: 'security',
+    url: '/authentication'
   }
 ];
+
+// Add dynamic data from mockDb
+function getDynamicSearchData(): SearchResult[] {
+  const results: SearchResult[] = [];
+  
+  // Add password entries
+  passwordEntries.forEach(entry => {
+    results.push({
+      id: `pwd_${entry.id}`,
+      title: entry.title,
+      description: `${entry.username} - ${entry.url || 'No URL'}`,
+      type: 'password',
+      url: '/password-vault'
+    });
+  });
+  
+  // Add security events
+  securityEvents.forEach(event => {
+    results.push({
+      id: `evt_${event.id}`,
+      title: event.description,
+      description: `${event.timestamp} - ${event.severity} severity`,
+      type: 'event',
+      url: '/notifications'
+    });
+  });
+  
+  // Add users
+  users.forEach(user => {
+    results.push({
+      id: `usr_${user.id}`,
+      title: user.name,
+      description: `${user.email} - ${user.role}`,
+      type: 'user',
+      url: '/settings'
+    });
+  });
+  
+  return results;
+}
 
 export function useSearch() {
   const [searchTerm, setSearchTerm] = useState('');
@@ -122,7 +256,7 @@ export function useSearch() {
     setIsSearching(true);
     
     // Simulate network delay
-    await new Promise(resolve => setTimeout(resolve, 500));
+    await new Promise(resolve => setTimeout(resolve, 300));
     
     if (!term) {
       setSearchResults([]);
@@ -130,12 +264,28 @@ export function useSearch() {
       return;
     }
 
-    // Filter mock data based on search term with improved matching
-    const results = mockData.filter(item => 
-      item.title.toLowerCase().includes(term.toLowerCase()) || 
-      (item.description && item.description.toLowerCase().includes(term.toLowerCase())) ||
-      item.type.toLowerCase().includes(term.toLowerCase())
-    );
+    // Combine static and dynamic data
+    const allSearchData = [...mockData, ...getDynamicSearchData()];
+    
+    // Filter combined data with improved matching
+    const results = allSearchData.filter(item => {
+      const searchLower = term.toLowerCase();
+      const titleMatch = item.title.toLowerCase().includes(searchLower);
+      const descMatch = item.description?.toLowerCase().includes(searchLower) || false;
+      const typeMatch = item.type.toLowerCase().includes(searchLower);
+      
+      return titleMatch || descMatch || typeMatch;
+    });
+    
+    // Sort by relevance - title matches first
+    results.sort((a, b) => {
+      const aTitle = a.title.toLowerCase().includes(term.toLowerCase());
+      const bTitle = b.title.toLowerCase().includes(term.toLowerCase());
+      
+      if (aTitle && !bTitle) return -1;
+      if (!aTitle && bTitle) return 1;
+      return 0;
+    });
     
     setSearchResults(results);
     setIsSearching(false);

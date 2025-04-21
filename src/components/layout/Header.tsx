@@ -49,14 +49,12 @@ const Header = () => {
   return (
     <header className="flex items-center justify-between px-6 py-4 bg-background border-b border-border">
       {!isMobile && (
-        <div className="relative flex items-center" ref={searchRef}>
-          <div className="absolute left-3 top-1/2 transform -translate-y-1/2 z-10">
-            <Search className="text-muted-foreground w-5 h-5" />
-          </div>
+        <div className="relative search-container" ref={searchRef}>
+          <Search className="search-icon" size={16} />
           <input
-            type="text"
+            type="search"
             placeholder={t('search')}
-            className="security-input py-2 pl-10 pr-4 w-64"
+            className="security-input text-sm"
             value={searchTerm}
             onChange={handleInputChange}
             onFocus={() => toggleResults(searchTerm.length > 0)}

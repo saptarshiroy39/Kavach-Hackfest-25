@@ -28,6 +28,11 @@ export const translations: Record<Language, Record<string, string>> = {
     protected: 'Protected',
     lastScan: 'Last scan',
     
+    // Admin Menu
+    adminDashboard: 'Control',
+    adminUsers: 'Users',
+    adminSettings: 'Settings',
+    
     // Dashboard
     welcomeBack: 'Welcome back',
     securityDashboard: 'Your security dashboard',

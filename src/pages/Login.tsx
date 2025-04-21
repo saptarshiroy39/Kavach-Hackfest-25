@@ -29,10 +29,11 @@ const Login = () => {
     setIsLoading(true);
 
     try {
-      if (!showTwoFactor) {
-        const result = await mockApi.login(email, password);
+      if (!showTwoFactor) {        const result = await mockApi.login(email, password);
         if (result.success) {
           setShowTwoFactor(true);
+          // Store the email temporarily to identify the user during 2FA verification
+          localStorage.setItem('user-email', email);
           toast({
             title: "Login successful",
             description: "Please verify your identity with two-factor authentication.",
@@ -51,14 +52,13 @@ const Login = () => {
             title: "Authentication successful",
             description: "Welcome back to Kavach.",
           });
-          
-          // Store the authentication token and role in localStorage
+            // Store the authentication token and role in localStorage
           localStorage.setItem('auth-token', result.token || 'mock-jwt-token-' + Math.random().toString(36).substring(2, 15));
-          localStorage.setItem('user-role', 'user');
+          localStorage.setItem('user-role', result.userRole || 'user');
+          localStorage.setItem('user-email', email); // Store email to identify the user
           
           // Dispatch event to notify App component about auth state change
           window.dispatchEvent(new Event('auth-state-changed'));
-          
           // Navigate programmatically using navigate function
           navigate('/');
         } else {
@@ -89,7 +89,7 @@ const Login = () => {
       <div className="bg-sidebar md:w-1/2 p-8 flex items-center justify-center">
         <div className="max-w-md w-full space-y-8">
           <div className="text-center">
-            <div className="mx-auto text-6xl text-security-primary">🌀</div>
+            <Shield className="mx-auto h-20 w-20 text-security-primary animate-shield-glow" />
             <h1 className="mt-4 text-3xl font-bold text-white">Kavach</h1>
             <p className="mt-2 text-security-info">
               Advanced security for your digital identity

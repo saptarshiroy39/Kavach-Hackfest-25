@@ -13,13 +13,16 @@ import {
   ArrowRight, 
   ExternalLink,
   Lock,
-  User as UserIcon
+  User as UserIcon,
+  Scan,
+  Loader2
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { useToast } from '@/hooks/use-toast';
 import { motion, useAnimation, AnimatePresence } from 'framer-motion';
 import { useLanguage } from '@/hooks/use-language';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog';
 
 const Dashboard = () => {
   const navigate = useNavigate();
@@ -29,6 +32,14 @@ const Dashboard = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [animateScore, setAnimateScore] = useState(0);
   const [animatePasswordHealth, setAnimatePasswordHealth] = useState(0);
+  const [isScanningDialogOpen, setIsScanningDialogOpen] = useState(false);
+  const [scanProgress, setScanProgress] = useState(0);
+  const [scanStatus, setScanStatus] = useState<'idle' | 'scanning' | 'complete'>('idle');
+  const [scanReport, setScanReport] = useState<{
+    issues: number;
+    recommendations: string[];
+    newScore: number;
+  } | null>(null);
   const scoreAnimationControls = useAnimation();
   const passwordHealthAnimationControls = useAnimation();
   const { toast } = useToast();
@@ -129,6 +140,99 @@ const Dashboard = () => {
     });
   };
 
+  const handleRunScan = () => {
+    setIsScanningDialogOpen(true);
+    setScanStatus('scanning');
+    setScanProgress(0);
+    
+    // Simulate a security scan with progress updates
+    const scanSteps = [
+      "Scanning passwords...",
+      "Checking for vulnerable accounts...",
+      "Analyzing authentication methods...",
+      "Looking for suspicious activities...",
+      "Validating security settings...",
+      "Scanning for malware...",
+      "Checking for data breaches...",
+      "Finalizing security report..."
+    ];
+    
+    let currentStep = 0;
+    const interval = setInterval(() => {
+      currentStep++;
+      setScanProgress(prev => {
+        const newProgress = Math.min(Math.round((currentStep / scanSteps.length) * 100), 100);
+        return newProgress;
+      });
+      
+      if (currentStep >= scanSteps.length) {
+        clearInterval(interval);
+        setTimeout(() => {
+          setScanStatus('complete');
+          
+          // Create a mock scan result report
+          const newScore = Math.min(securityStatus?.overallScore ? securityStatus.overallScore + 5 : 85, 100);
+          setScanReport({
+            issues: 3,
+            recommendations: [
+              "Enable two-factor authentication on all accounts",
+              "Update weak passwords for better security",
+              "Review and remove unused third-party app connections"
+            ],
+            newScore: newScore
+          });
+          
+          // Update security status with new date and score
+          if (securityStatus) {
+            setSecurityStatus({
+              ...securityStatus,
+              lastScanDate: new Date().toISOString(),
+              overallScore: newScore
+            });
+          }
+        }, 500);
+      }
+    }, 600);
+  };
+
+  const handleScanComplete = () => {
+    setIsScanningDialogOpen(false);
+    setScanStatus('idle');
+    
+    // Show toast notification
+    toast({
+      title: "Security scan complete",
+      description: "Your security status has been updated.",
+    });
+    
+    // Re-animate the security score
+    if (securityStatus && scanReport) {
+      scoreAnimationControls.start({
+        strokeDasharray: [`0 283`, `${scanReport.newScore * 2.83} 283`],
+        transition: { duration: 1.5, ease: "easeOut" }
+      });
+      
+      // Animate the score number
+      const duration = 1500;
+      const frameDuration = 1000 / 60;
+      const totalFrames = Math.round(duration / frameDuration);
+      const finalValue = scanReport.newScore;
+      
+      let frame = 0;
+      const counter = setInterval(() => {
+        frame++;
+        const progress = frame / totalFrames;
+        const currentValue = Math.round(progress * finalValue);
+        
+        setAnimateScore(currentValue);
+        
+        if (frame === totalFrames) {
+          clearInterval(counter);
+        }
+      }, frameDuration);
+    }
+  };
+
   if (isLoading) {
     return (
       <MainLayout>
@@ -146,17 +250,98 @@ const Dashboard = () => {
         {/* Welcome section */}
         <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-8">
           <div>
-            <h1 className="text-3xl font-bold">{t('welcomeBack')}, {user?.name}</h1>
+            <h1 className="text-3xl font-bold">{t('welcomeBack')}, User</h1>
             <p className="text-muted-foreground mt-1">
               {t('securityDashboard')} - {t('lastUpdated')} {formatDate(securityStatus?.lastScanDate || '')}
             </p>
           </div>
           <div className="flex mt-4 md:mt-0">
-            <Button className="bg-security-primary hover:bg-security-primary/90">
+            <Button 
+              className="bg-security-primary hover:bg-security-primary/90"
+              onClick={handleRunScan}
+            >
               {t('runSecurityScan')}
             </Button>
           </div>
         </div>
+
+        {/* Security scan dialog */}
+        <Dialog open={isScanningDialogOpen} onOpenChange={setIsScanningDialogOpen}>
+          <DialogContent className="sm:max-w-md">
+            <DialogHeader>
+              <DialogTitle>
+                {scanStatus === 'scanning' ? 'Running Security Scan...' : 'Security Scan Complete'}
+              </DialogTitle>
+              <DialogDescription>
+                {scanStatus === 'scanning' 
+                  ? 'Please wait while we analyze your security status and check for vulnerabilities.' 
+                  : 'Your security scan has finished. Review the results below.'}
+              </DialogDescription>
+            </DialogHeader>
+            
+            <div className="py-4">
+              {scanStatus === 'scanning' ? (
+                <div className="space-y-4">
+                  <div className="flex items-center justify-center mb-4">
+                    <div className="w-16 h-16 relative">
+                      <Scan className="w-8 h-8 text-security-primary absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2" />
+                      <div className="w-16 h-16 border-4 border-security-primary/30 border-t-security-primary rounded-full animate-spin absolute inset-0"></div>
+                    </div>
+                  </div>
+                  <Progress value={scanProgress} className="h-2" />
+                  <p className="text-center text-sm text-muted-foreground">{scanProgress}% complete</p>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  <div className="flex items-center justify-center mb-4">
+                    <div className="w-16 h-16 rounded-full bg-security-primary/10 flex items-center justify-center">
+                      <CheckCircle2 className="w-10 h-10 text-security-primary" />
+                    </div>
+                  </div>
+                  
+                  <div className="rounded-lg border p-4 space-y-3">
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm font-medium">Security Score</span>
+                      <span className={`font-bold ${scanReport?.newScore && scanReport.newScore >= 80 ? 'text-security-primary' : 'text-security-warning'}`}>
+                        {scanReport?.newScore}%
+                      </span>
+                    </div>
+                    
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm font-medium">Issues Found</span>
+                      <span className="font-bold text-security-danger">{scanReport?.issues}</span>
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <h4 className="text-sm font-medium">Recommendations:</h4>
+                      <ul className="text-sm space-y-1">
+                        {scanReport?.recommendations.map((rec, i) => (
+                          <li key={i} className="flex items-start">
+                            <span className="mr-2">•</span>
+                            <span>{rec}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+            
+            <DialogFooter>
+              {scanStatus === 'scanning' ? (
+                <Button variant="outline" disabled>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Scanning...
+                </Button>
+              ) : (
+                <Button onClick={handleScanComplete}>
+                  Close and Apply Updates
+                </Button>
+              )}
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
 
         {/* Security score */}
         <SecurityCard
@@ -383,10 +568,10 @@ const Dashboard = () => {
                   </div>
                   <div className="flex-1">
                     <div className="flex justify-between items-start mb-1">
-                      <h4 className="font-medium text-sm">{event.title}</h4>
-                      <span className="text-xs text-muted-foreground">{formatDate(event.date)}</span>
+                      <h4 className="font-medium text-sm">{event.description}</h4>
+                      <span className="text-xs text-muted-foreground">{formatDate(event.timestamp)}</span>
                     </div>
-                    <p className="text-sm text-muted-foreground">{event.description}</p>
+                    <p className="text-sm text-muted-foreground">{event.type} - {event.location}</p>
                   </div>
                 </div>
               ))

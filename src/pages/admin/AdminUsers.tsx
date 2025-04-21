@@ -12,7 +12,8 @@ import {
   UserMinus,
   ShieldAlert,
   Mail,
-  ArrowLeft
+  ArrowLeft,
+  X
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -33,6 +34,14 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { motion } from 'framer-motion';
 
 const usersList = [
@@ -122,7 +131,51 @@ const AdminUsers = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [roleFilter, setRoleFilter] = useState('all');
+  const [showAddUserDialog, setShowAddUserDialog] = useState(false);
+  const [newUser, setNewUser] = useState({
+    name: '',
+    email: '',
+    role: 'User',
+    password: ''
+  });
   const { toast } = useToast();
+
+  const handleAddUser = () => {
+    // Validate form
+    if (!newUser.name || !newUser.email || !newUser.password) {
+      toast({
+        title: "Missing information",
+        description: "Please fill in all required fields.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    // In a real app, this would send the data to the server
+    // For the demo, we'll just show success and close the dialog
+    toast({
+      title: "User added",
+      description: `Successfully added ${newUser.name} as a ${newUser.role.toLowerCase()}.`,
+    });
+
+    // Reset form and close dialog
+    setNewUser({
+      name: '',
+      email: '',
+      role: 'User',
+      password: ''
+    });
+    setShowAddUserDialog(false);
+  };
+  
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setNewUser(prev => ({ ...prev, [name]: value }));
+  };
+  
+  const handleRoleChange = (role: string) => {
+    setNewUser(prev => ({ ...prev, role }));
+  };
 
   // Filter users based on search and filters
   const filteredUsers = usersList.filter(user => {
@@ -177,8 +230,7 @@ const AdminUsers = () => {
             <p className="text-muted-foreground mt-1">
               Manage user accounts and permissions
             </p>
-          </div>
-          <Button className="bg-security-primary hover:bg-security-primary/90">
+          </div>          <Button className="bg-security-primary hover:bg-security-primary/90" onClick={() => setShowAddUserDialog(true)}>
             <UserPlus className="h-4 w-4 mr-2" />
             Add User
           </Button>

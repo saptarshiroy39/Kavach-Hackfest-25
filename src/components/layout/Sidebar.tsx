@@ -12,8 +12,16 @@ import {
   Lock, 
   Menu, 
   X,
+  Shield as ShieldIcon,
   LogOut,
-  Fingerprint
+  Fingerprint,
+  UserCog,
+  Users,
+  LayoutDashboard,
+  ChevronsUpDown,
+  Database,
+  ServerCog,
+  Sliders
 } from 'lucide-react';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useLanguage } from '@/hooks/use-language';
@@ -22,6 +30,7 @@ type SidebarItem = {
   titleKey: string;
   path: string;
   icon: React.ElementType;
+  adminOnly?: boolean;
 };
 
 const Sidebar = () => {
@@ -30,6 +39,23 @@ const Sidebar = () => {
   const isMobile = useIsMobile();
   const [isOpen, setIsOpen] = useState(!isMobile);
   const navigate = useNavigate();
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [adminExpanded, setAdminExpanded] = useState(false);
+  
+  useEffect(() => {
+    // Check if the user is an admin
+    const userRole = localStorage.getItem('user-role');
+    setIsAdmin(userRole === 'admin');
+    
+    // Listen for auth state changes
+    const handleAuthChange = () => {
+      const newUserRole = localStorage.getItem('user-role');
+      setIsAdmin(newUserRole === 'admin');
+    };
+    
+    window.addEventListener('auth-state-changed', handleAuthChange);
+    return () => window.removeEventListener('auth-state-changed', handleAuthChange);
+  }, []);
 
   const sidebarItems: SidebarItem[] = [
     { titleKey: 'dashboard', path: '/', icon: Home },
@@ -41,42 +67,19 @@ const Sidebar = () => {
     { titleKey: 'notifications', path: '/notifications', icon: Bell },
     { titleKey: 'settings', path: '/settings', icon: Settings },
   ];
-
-  // Close sidebar on mobile when clicking outside
-  useEffect(() => {
-    if (!isMobile) return;
-    
-    const handleClickOutside = (e: MouseEvent) => {
-      const sidebar = document.getElementById('mobile-sidebar');
-      const hamburgerBtn = document.getElementById('sidebar-toggle');
-      
-      if (
-        isOpen && 
-        sidebar && 
-        hamburgerBtn && 
-        !sidebar.contains(e.target as Node) && 
-        !hamburgerBtn.contains(e.target as Node)
-      ) {
-        setIsOpen(false);
-      }
-    };
-    
-    document.addEventListener('mousedown', handleClickOutside);
-    
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
-  }, [isOpen, isMobile]);
+  
+  const adminItems: SidebarItem[] = [
+    { titleKey: 'adminDashboard', path: '/admin', icon: LayoutDashboard, adminOnly: true },
+    { titleKey: 'adminUsers', path: '/admin/users', icon: Users, adminOnly: true },
+    { titleKey: 'adminSettings', path: '/admin/settings', icon: Sliders, adminOnly: true },
+  ];
 
   const toggleSidebar = () => {
     setIsOpen(!isOpen);
   };
-
-  const handleNavigation = (path: string) => {
-    navigate(path);
-    if (isMobile) {
-      setIsOpen(false);
-    }
+  
+  const toggleAdminMenu = () => {
+    setAdminExpanded(!adminExpanded);
   };
 
   const handleSignOut = () => {
@@ -89,18 +92,12 @@ const Sidebar = () => {
     
     // Redirect to login page
     navigate('/login');
-    
-    // Close sidebar on mobile after signing out
-    if (isMobile) {
-      setIsOpen(false);
-    }
   };
 
   return (
     <>
       {isMobile && (
         <button 
-          id="sidebar-toggle"
           onClick={toggleSidebar} 
           className="fixed top-4 left-2 z-50 p-1 rounded-md bg-security-primary text-white flex items-center justify-center w-8 h-8"
         >
@@ -109,7 +106,6 @@ const Sidebar = () => {
       )}
       
       <aside
-        id="mobile-sidebar"
         className={cn(
           "flex flex-col h-screen bg-sidebar text-sidebar-foreground border-r border-sidebar-border transition-all duration-300",
           isOpen ? "w-64" : isMobile ? "w-0" : "w-20",
@@ -121,7 +117,7 @@ const Sidebar = () => {
             "flex items-center",
             !isOpen && !isMobile && "justify-center"
           )}>
-            <span className="text-security-primary text-2xl">🌀</span>
+            <ShieldIcon className="text-security-primary w-8 h-8 animate-shield-glow" />
             {(isOpen || isMobile) && (
               <div className="ml-3">
                 <h1 className="text-xl montserrat-semibold">Kavach</h1>
@@ -130,14 +126,13 @@ const Sidebar = () => {
             )}
           </div>
         </div>
-
         <nav className="flex-1 px-4 space-y-2 py-4 overflow-y-auto">
           {sidebarItems.map((item) => (
-            <button
+            <Link
               key={item.path}
-              onClick={() => handleNavigation(item.path)}
+              to={item.path}
               className={cn(
-                "flex w-full items-center px-4 py-3 rounded-lg transition-colors text-left",
+                "flex items-center px-4 py-3 rounded-lg transition-colors relative",
                 location.pathname === item.path 
                   ? "bg-sidebar-accent text-sidebar-accent-foreground" 
                   : "hover:bg-sidebar-accent/50",
@@ -145,9 +140,74 @@ const Sidebar = () => {
               )}
             >
               <item.icon className={cn("w-5 h-5", location.pathname === item.path && "text-security-primary")} />
-              {(isOpen || isMobile) && <span className="ml-3 normal-case">{t(item.titleKey)}</span>}
-            </button>
+              {(isOpen || isMobile) && (
+                <span className="ml-3 normal-case font-medium tracking-wide">{t(item.titleKey)}</span>
+              )}
+            </Link>
           ))}
+          
+          {isAdmin && (
+            <div className="mt-6">
+              <div 
+                className={cn(
+                  "flex items-center px-4 py-2 mb-2",
+                  !isOpen && !isMobile && "justify-center"
+                )}
+              >
+                {(isOpen || isMobile) ? (
+                  <div className="flex items-center justify-between w-full">
+                    <div className="flex items-center">
+                      <ServerCog className="w-5 h-5 text-security-primary" />
+                      <span className="ml-3 text-sm font-semibold uppercase tracking-wider text-security-primary">
+                        Admin
+                      </span>
+                    </div>
+                    <button onClick={toggleAdminMenu} className="p-1 rounded hover:bg-sidebar-accent">
+                      <ChevronsUpDown className={cn(
+                        "h-4 w-4 text-muted-foreground transition-transform", 
+                        adminExpanded && "transform rotate-180"
+                      )} />
+                    </button>
+                  </div>
+                ) : (
+                  <span className="inline-flex items-center justify-center h-6 w-6 rounded-full bg-security-primary text-xs font-bold text-white">
+                    A
+                  </span>
+                )}
+              </div>
+              
+              <div className={cn(
+                "space-y-1",
+                !adminExpanded && !isOpen && "hidden",
+                !adminExpanded && isOpen && "hidden"
+              )}>
+                {adminItems.map((item) => (
+                  <Link
+                    key={item.path}
+                    to={item.path}
+                    className={cn(
+                      "flex items-center px-4 py-3 rounded-lg transition-colors",
+                      location.pathname === item.path 
+                        ? "bg-sidebar-accent text-sidebar-accent-foreground" 
+                        : "hover:bg-sidebar-accent/50",
+                      !isOpen && !isMobile && "justify-center px-0",
+                      "ml-2"
+                    )}
+                  >
+                    <item.icon className={cn("w-5 h-5", location.pathname === item.path && "text-security-primary")} />
+                    {(isOpen || isMobile) && (
+                      <div className="flex items-center justify-between w-full">
+                        <span className="ml-3 normal-case font-medium tracking-wide">{t(item.titleKey)}</span>
+                        <span className="ml-auto px-1.5 py-0.5 text-[10px] bg-security-primary text-white rounded font-medium">
+                          Admin
+                        </span>
+                      </div>
+                    )}
+                  </Link>
+                ))}
+              </div>
+            </div>
+          )}
         </nav>
 
         <div className="px-4 mb-4">
@@ -159,7 +219,7 @@ const Sidebar = () => {
             )}
           >
             <LogOut className="w-5 h-5" />
-            {(isOpen || isMobile) && <span className="ml-3 normal-case">{t('signOut')}</span>}
+            {(isOpen || isMobile) && <span className="ml-3 normal-case tracking-wide">{t('signOut')}</span>}
           </button>
         </div>
 
@@ -171,7 +231,7 @@ const Sidebar = () => {
             <Lock className="w-5 h-5 text-security-primary" />
             {(isOpen || isMobile) && (
               <div className="ml-3">
-                <div className="text-sm font-medium normal-case">{t('protected')}</div>
+                <div className="text-sm font-medium normal-case tracking-wide">{t('protected')}</div>
                 <div className="text-xs text-sidebar-foreground/70">{t('lastScan')}: 2h ago</div>
               </div>
             )}

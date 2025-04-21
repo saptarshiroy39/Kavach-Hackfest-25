@@ -99,7 +99,20 @@ export const users: User[] = [
   }
 ];
 
-export const currentUser: User = users[0];
+// Function to get the current user based on stored email
+export const getCurrentUserFromStorage = (): User => {
+  const userEmail = localStorage.getItem('user-email');
+  const user = users.find(u => u.email === userEmail);
+  return user || users[0]; // Default to first user if not found
+};
+
+// Current user will now be determined dynamically
+export const getCurrentUser = (): User => {
+  return getCurrentUserFromStorage();
+};
+
+// For backward compatibility
+export const currentUser = getCurrentUserFromStorage();
 
 // Mock Data
 export const passwordEntries: PasswordEntry[] = [
@@ -247,7 +260,7 @@ export const securityStatus: SecurityStatus = {
 export const mockApi = {
   getCurrentUser: (): Promise<User> => {
     return new Promise((resolve) => {
-      setTimeout(() => resolve(currentUser), 300);
+      setTimeout(() => resolve(getCurrentUserFromStorage()), 300);
     });
   },
   
@@ -341,14 +354,18 @@ export const mockApi = {
       }, 800);
     });
   },
-  
-  verifyTwoFactor: (code: string): Promise<{success: boolean, token?: string, error?: string}> => {
+    verifyTwoFactor: (code: string): Promise<{success: boolean, token?: string, userRole?: string, error?: string}> => {
     return new Promise((resolve) => {
       setTimeout(() => {
+        // Get the email from localStorage to determine which user is logging in
+        const email = localStorage.getItem('user-email');
+        const userRole = email === 'admin@example.com' ? 'admin' : 'user';
+        
         if (code === '123456') {
           resolve({
             success: true,
-            token: 'mock-jwt-token-' + Math.random().toString(36).substring(2, 15)
+            token: 'mock-jwt-token-' + Math.random().toString(36).substring(2, 15),
+            userRole: userRole
           });
         } else {
           resolve({success: false, error: 'Invalid verification code'});

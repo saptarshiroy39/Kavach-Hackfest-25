@@ -42,6 +42,18 @@
     --sidebar-accent-foreground: 210 40% 98%;
     --sidebar-border: 217 33% 18%;
     --sidebar-ring: 212 100% 47%;
+    
+    --security-primary: #0a84ff;
+    --security-secondary: #30d158;
+    --security-warning: #ff9f0a;
+    --security-danger: #ff453a;
+    --security-info: #64d2ff;
+    --security-dark: #1c1c1e;
+    --security-light: #f2f2f7;
+    
+    --shadow-color: rgba(10, 132, 255, 0.1);
+    --border-color: rgba(10, 132, 255, 0.2);
+    --focus-ring: rgba(10, 132, 255, 0.5);
   }
 
   .dark {
@@ -72,6 +84,10 @@
     --border: 217.2 32.6% 17.5%;
     --input: 217.2 32.6% 17.5%;
     --ring: 212 100% 47%;
+    
+    --shadow-color: rgba(0, 0, 0, 0.2);
+    --border-color: rgba(255, 255, 255, 0.1);
+    --focus-ring: rgba(10, 132, 255, 0.6);
   }
 }
 
@@ -358,4 +374,89 @@
   font-optical-sizing: auto;
   font-weight: 900;
   font-style: normal;
+}
+
+/* Form inputs with grey transparent background */
+input[type="text"],
+input[type="email"],
+input[type="tel"],
+input[type="password"],
+input[type="search"],
+input:not([type]),
+textarea,
+select {
+  background-color: rgba(180, 180, 180, 0.1) !important;
+  border: 1px solid rgba(180, 180, 180, 0.2) !important;
+  border-radius: 0.5rem;
+  padding: 0.75rem 1rem;
+  color: inherit;
+  font-size: 0.95rem;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.dark input[type="text"],
+.dark input[type="email"],
+.dark input[type="tel"],
+.dark input[type="password"],
+.dark input[type="search"],
+.dark input:not([type]),
+.dark textarea,
+.dark select {
+  background-color: rgba(40, 40, 40, 0.2) !important;
+  border-color: rgba(80, 80, 80, 0.3) !important;
+}
+
+input[type="text"]:focus,
+input[type="email"]:focus,
+input[type="tel"]:focus,
+input[type="password"]:focus,
+input[type="search"]:focus,
+input:not([type]):focus,
+textarea:focus,
+select:focus {
+  outline: none;
+  border-color: var(--primary) !important;
+  box-shadow: 0 0 0 1px rgba(var(--ring), 0.3);
+}
+
+/* Search input styling */
+[type="search"]::-webkit-search-cancel-button,
+[type="search"]::-webkit-search-decoration {
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+.search-container {
+  position: relative;
+  display: flex;
+  align-items: center;
+  width: 300px;
+  max-width: 100%;
+}
+
+.search-icon {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--muted-foreground);
+  pointer-events: none;
+  z-index: 10;
+  width: 16px;
+  height: 16px;
+  opacity: 0.7;
+}
+
+.security-input {
+  padding-left: 40px !important;
+  width: 100%;
+  height: 40px;
+  font-size: 0.9rem;
+}
+
+input[type="search"] {
+  padding-left: 40px !important;
+  padding-top: 0.5rem !important;
+  padding-bottom: 0.5rem !important;
+  text-indent: 0;
 }

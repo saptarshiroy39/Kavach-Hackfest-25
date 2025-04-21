@@ -1,4 +1,6 @@
+
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import MainLayout from '@/components/layout/MainLayout';
 import SecurityCard from '@/components/security/SecurityCard';
 import { 
@@ -13,11 +15,10 @@ import {
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { securityStatus } from '@/lib/mockDb';
-import { useNavigate } from 'react-router-dom';
 
 const SecurityStatus = () => {
   const navigate = useNavigate();
-
+  
   return (
     <MainLayout>
       <div className="space-y-6">
@@ -151,12 +152,10 @@ const SecurityStatus = () => {
             <div className="p-4 border border-security-danger/30 bg-security-danger/5 rounded-lg">
               <div className="flex items-start">
                 <AlertCircle className="w-5 h-5 text-security-danger mr-3 mt-0.5" />
-                <div>
-                  <h3 className="font-medium">Enable Two-Factor Authentication</h3>
+                <div>                  <h3 className="font-medium">Enable Two-Factor Authentication</h3>
                   <p className="text-sm text-muted-foreground mt-1">
                     Your account will be more secure with an additional verification step.
-                  </p>
-                  <Button 
+                  </p>                  <Button 
                     variant="outline" 
                     size="sm" 
                     className="mt-3"
@@ -171,12 +170,10 @@ const SecurityStatus = () => {
             <div className="p-4 border border-security-warning/30 bg-security-warning/5 rounded-lg">
               <div className="flex items-start">
                 <Info className="w-5 h-5 text-security-warning mr-3 mt-0.5" />
-                <div>
-                  <h3 className="font-medium">Update Weak Passwords</h3>
+                <div>                  <h3 className="font-medium">Update Weak Passwords</h3>
                   <p className="text-sm text-muted-foreground mt-1">
                     2 of your passwords are weak and should be updated for better security.
-                  </p>
-                  <Button 
+                  </p>                  <Button 
                     variant="outline" 
                     size="sm" 
                     className="mt-3"
@@ -191,12 +188,10 @@ const SecurityStatus = () => {
             <div className="p-4 border border-security-warning/30 bg-security-warning/5 rounded-lg">
               <div className="flex items-start">
                 <FileText className="w-5 h-5 text-security-warning mr-3 mt-0.5" />
-                <div>
-                  <h3 className="font-medium">Complete Security Checklist</h3>
+                <div>                  <h3 className="font-medium">Complete Security Checklist</h3>
                   <p className="text-sm text-muted-foreground mt-1">
                     You've completed 7 out of 10 security steps for full protection.
-                  </p>
-                  <Button 
+                  </p>                  <Button 
                     variant="outline" 
                     size="sm" 
                     className="mt-3"

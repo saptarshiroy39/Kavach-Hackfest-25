@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import MainLayout from '@/components/layout/MainLayout';
 import SecurityCard from '@/components/security/SecurityCard';
 import { 
@@ -16,7 +16,18 @@ import {
   Shield,
   AlertCircle,
   Plus,
-  X
+  X,
+  Twitter,
+  Linkedin,
+  Facebook,
+  Instagram,
+  UserPlus,
+  Users,
+  UserCog,
+  User,
+  ArrowRight,
+  Save,
+  Bell
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
@@ -27,7 +38,8 @@ import { Progress } from '@/components/ui/progress';
 import { useLanguage } from '@/hooks/use-language';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
-import { Badge } from '@/components/ui/badge';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { mockApi, users, User as UserType } from '@/lib/mockDb';
 
 // Mock blockchain verification result
 interface VerificationResult {
@@ -37,42 +49,17 @@ interface VerificationResult {
   details?: string;
 }
 
-// Protected email interface
-interface ProtectedEmail {
-  id: string;
-  email: string;
-  status: 'verified' | 'suspicious' | 'pending';
-}
-
-// Protected phone interface
-interface ProtectedPhone {
-  id: string;
-  phoneNumber: string;
-  status: 'verified' | 'suspicious' | 'pending';
-}
-
-// Social media platform interface
-interface ProtectedSocialMedia {
-  id: string;
-  platform: string;
-  username: string;
-  status: 'verified' | 'suspicious' | 'pending';
-}
-
-// Social media platform options
-const socialMediaPlatforms = [
-  'Facebook',
-  'Twitter',
-  'Instagram',
-  'LinkedIn',
-  'TikTok',
-  'YouTube',
-  'Reddit'
-];
-
 const SecurityVerification = () => {
   const { toast } = useToast();
   const { t } = useLanguage();
+  
+  // Check if user is admin (in a real app, this would be from auth context)
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [currentUser, setCurrentUser] = useState<UserType | null>(null);
+  const [nonAdminUsers, setNonAdminUsers] = useState<UserType[]>([]);
+  const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
+  const [showAdminNotification, setShowAdminNotification] = useState(false);
+  const [showUserSelector, setShowUserSelector] = useState(false);
   
   // States for different protections
   const [emailProtection, setEmailProtection] = useState(true);
@@ -81,29 +68,44 @@ const SecurityVerification = () => {
   const [socialMediaProtection, setSocialMediaProtection] = useState(false);
   const [biometricVerification, setBiometricVerification] = useState(false);
   
+  // Fetch user data on component mount
+  useEffect(() => {
+    // Simulate fetching current user from localStorage/auth context
+    const userRole = localStorage.getItem('user-role');
+    const isUserAdmin = userRole === 'admin';
+    setIsAdmin(isUserAdmin);
+    
+    // In a real app, you would fetch this from an API
+    if (isUserAdmin) {
+      // Get admin user and non-admin users
+      const adminUser = users.find(user => user.role === 'admin');
+      const regularUsers = users.filter(user => user.role === 'user');
+      
+      setCurrentUser(adminUser || null);
+      setNonAdminUsers(regularUsers);
+    } else {
+      // Get regular user
+      const regularUser = users.find(user => user.role === 'user');
+      setCurrentUser(regularUser || null);
+    }
+  }, []);
+  
+  // Added protected items
+  const [protectedEmails, setProtectedEmails] = useState<string[]>(['user@example.com', 'work@company.com']);
+  const [protectedPhones, setProtectedPhones] = useState<string[]>(['+1 (555) 123-4567']);
+  const [protectedSocialAccounts, setProtectedSocialAccounts] = useState<{platform: string, username: string}[]>([
+    { platform: 'Twitter', username: '@user123' },
+    { platform: 'LinkedIn', username: 'username' }
+  ]);
+  
   // Dialog states
   const [showAddEmailDialog, setShowAddEmailDialog] = useState(false);
-  const [newEmail, setNewEmail] = useState('');
   const [showAddPhoneDialog, setShowAddPhoneDialog] = useState(false);
-  const [newPhone, setNewPhone] = useState('');
   const [showAddSocialDialog, setShowAddSocialDialog] = useState(false);
-  const [newSocialPlatform, setNewSocialPlatform] = useState('Facebook');
+  const [newEmail, setNewEmail] = useState('');
+  const [newPhone, setNewPhone] = useState('');
+  const [newSocialPlatform, setNewSocialPlatform] = useState('Twitter');
   const [newSocialUsername, setNewSocialUsername] = useState('');
-  
-  // Protected items
-  const [protectedEmails, setProtectedEmails] = useState<ProtectedEmail[]>([
-    { id: '1', email: 'user@example.com', status: 'verified' },
-    { id: '2', email: 'work@company.com', status: 'verified' }
-  ]);
-  
-  const [protectedPhones, setProtectedPhones] = useState<ProtectedPhone[]>([
-    { id: '1', phoneNumber: '+1 (555) 123-4567', status: 'verified' }
-  ]);
-  
-  const [protectedSocialAccounts, setProtectedSocialAccounts] = useState<ProtectedSocialMedia[]>([
-    { id: '1', platform: 'Twitter', username: '@example_user', status: 'verified' },
-    { id: '2', platform: 'Instagram', username: 'example.user', status: 'suspicious' }
-  ]);
   
   // Mock verification results
   const [emailVerification, setEmailVerification] = useState<VerificationResult>({
@@ -137,167 +139,6 @@ const SecurityVerification = () => {
     timestamp: '',
     details: 'No biometric data registered'
   });
-  
-  // Add new email
-  const handleAddEmail = () => {
-    if (!newEmail || !newEmail.includes('@')) {
-      toast({
-        title: "Invalid email",
-        description: "Please enter a valid email address",
-        variant: "destructive"
-      });
-      return;
-    }
-    
-    // Add new email to protected list
-    setProtectedEmails([
-      ...protectedEmails,
-      {
-        id: `email_${Date.now()}`,
-        email: newEmail,
-        status: 'pending'
-      }
-    ]);
-    
-    // Clear form and close dialog
-    setNewEmail('');
-    setShowAddEmailDialog(false);
-    
-    // Show success message
-    toast({
-      title: "Email added",
-      description: "The email has been added to your protected accounts",
-    });
-    
-    // Simulate verification after a short delay
-    setTimeout(() => {
-      setProtectedEmails(prev => 
-        prev.map(item => 
-          item.email === newEmail 
-            ? { ...item, status: 'verified' } 
-            : item
-        )
-      );
-    }, 2000);
-  };
-  
-  // Remove email from protection
-  const handleRemoveEmail = (id: string) => {
-    setProtectedEmails(prev => prev.filter(email => email.id !== id));
-    
-    toast({
-      title: "Email removed",
-      description: "The email has been removed from protection",
-    });
-  };
-  
-  // Add new phone number
-  const handleAddPhone = () => {
-    if (!newPhone || newPhone.length < 6) {
-      toast({
-        title: "Invalid phone number",
-        description: "Please enter a valid phone number",
-        variant: "destructive"
-      });
-      return;
-    }
-    
-    // Add new phone to protected list
-    setProtectedPhones([
-      ...protectedPhones,
-      {
-        id: `phone_${Date.now()}`,
-        phoneNumber: newPhone,
-        status: 'pending'
-      }
-    ]);
-    
-    // Clear form and close dialog
-    setNewPhone('');
-    setShowAddPhoneDialog(false);
-    
-    // Show success message
-    toast({
-      title: "Phone number added",
-      description: "The phone number has been added to your protected accounts",
-    });
-    
-    // Simulate verification after a short delay
-    setTimeout(() => {
-      setProtectedPhones(prev => 
-        prev.map(item => 
-          item.phoneNumber === newPhone 
-            ? { ...item, status: 'verified' } 
-            : item
-        )
-      );
-    }, 2000);
-  };
-  
-  // Remove phone from protection
-  const handleRemovePhone = (id: string) => {
-    setProtectedPhones(prev => prev.filter(phone => phone.id !== id));
-    
-    toast({
-      title: "Phone number removed",
-      description: "The phone number has been removed from protection",
-    });
-  };
-  
-  // Add new social media account
-  const handleAddSocialAccount = () => {
-    if (!newSocialUsername || newSocialUsername.length < 3) {
-      toast({
-        title: "Invalid username",
-        description: "Please enter a valid username for the platform",
-        variant: "destructive"
-      });
-      return;
-    }
-    
-    // Add new social media account to protected list
-    setProtectedSocialAccounts([
-      ...protectedSocialAccounts,
-      {
-        id: `social_${Date.now()}`,
-        platform: newSocialPlatform,
-        username: newSocialUsername,
-        status: 'pending'
-      }
-    ]);
-    
-    // Clear form and close dialog
-    setNewSocialUsername('');
-    setNewSocialPlatform('Facebook');
-    setShowAddSocialDialog(false);
-    
-    // Show success message
-    toast({
-      title: "Social media account added",
-      description: `Your ${newSocialPlatform} account has been added to protection`,
-    });
-    
-    // Simulate verification after a short delay
-    setTimeout(() => {
-      setProtectedSocialAccounts(prev => 
-        prev.map(item => 
-          (item.platform === newSocialPlatform && item.username === newSocialUsername)
-            ? { ...item, status: Math.random() > 0.7 ? 'suspicious' : 'verified' } 
-            : item
-        )
-      );
-    }, 2000);
-  };
-  
-  // Remove social media account from protection
-  const handleRemoveSocialAccount = (id: string) => {
-    setProtectedSocialAccounts(prev => prev.filter(account => account.id !== id));
-    
-    toast({
-      title: "Social media account removed",
-      description: "The account has been removed from protection",
-    });
-  };
   
   // Mock scan function
   const performScan = (type: string) => {
@@ -342,13 +183,75 @@ const SecurityVerification = () => {
           });
           break;
       }
-      
-      toast({
+        toast({
         title: `${type} scan complete`,
-        description: "Results verified on blockchain.",
-        variant: "success"
+        description: "Results verified on blockchain."
       });
     }, 3000);
+  };
+  
+  // Handle adding a new protected email
+  const handleAddEmail = () => {
+    if (!newEmail || !newEmail.includes('@')) {
+      toast({
+        title: "Invalid email address",
+        description: "Please enter a valid email address"
+      });
+      return;
+    }
+    
+    setProtectedEmails([...protectedEmails, newEmail]);
+    setNewEmail('');
+    setShowAddEmailDialog(false);
+    
+    toast({
+      title: "Email added for protection",
+      description: "The email address will now be monitored for phishing attempts"
+    });
+  };
+  
+  // Handle adding a new protected phone number
+  const handleAddPhone = () => {
+    if (!newPhone || newPhone.length < 10) {
+      toast({
+        title: "Invalid phone number",
+        description: "Please enter a valid phone number"
+      });
+      return;
+    }
+    
+    setProtectedPhones([...protectedPhones, newPhone]);
+    setNewPhone('');
+    setShowAddPhoneDialog(false);
+    
+    toast({
+      title: "Phone number added for protection",
+      description: "The phone number will now be monitored for fraud attempts"
+    });
+  };
+  
+  // Handle adding a new protected social media account
+  const handleAddSocialAccount = () => {
+    if (!newSocialUsername) {
+      toast({
+        title: "Invalid username",
+        description: "Please enter a valid username for the selected platform"
+      });
+      return;
+    }
+    
+    setProtectedSocialAccounts([...protectedSocialAccounts, {
+      platform: newSocialPlatform,
+      username: newSocialUsername.startsWith('@') ? newSocialUsername : `@${newSocialUsername}`
+    }]);
+    setNewSocialPlatform('Twitter');
+    setNewSocialUsername('');
+    setShowAddSocialDialog(false);
+    
+    toast({
+      title: "Social media account added for protection",
+      description: "The account will now be monitored for impersonation"
+    });
   };
   
   // Register biometric data
@@ -371,10 +274,99 @@ const SecurityVerification = () => {
       
       toast({
         title: "Biometric registered",
-        description: "Your biometric data has been securely hashed and stored with 12-bit salting.",
-        variant: "success"
+        description: "Your biometric data has been securely hashed and stored with 12-bit salting."
       });
+      
+      // Show admin notification if an admin is modifying user data
+      if (isAdmin && selectedUserId) {
+        showAdminModificationNotification();
+      }
     }, 4000);
+  };
+  
+  // Function to handle when an admin user modifies a non-admin user's data
+  const showAdminModificationNotification = () => {
+    setShowAdminNotification(true);
+    
+    toast({
+      title: "User has been notified",
+      description: "The user has been notified of changes to their security settings.",
+    });
+    
+    // Hide the notification after 5 seconds
+    setTimeout(() => {
+      setShowAdminNotification(false);
+    }, 5000);
+  };
+  
+  // Function to switch between users (admin only)
+  const handleUserChange = (userId: string) => {
+    setSelectedUserId(userId);
+    
+    // Find the selected user
+    const selectedUser = nonAdminUsers.find(user => user.id === userId);
+    
+    if (selectedUser) {
+      toast({
+        title: `Viewing ${selectedUser.name}'s settings`,
+        description: "You can now view and modify this user's security verification settings."
+      });
+      
+      // Reset states when switching users
+      setEmailProtection(Math.random() > 0.5);
+      setPhoneProtection(Math.random() > 0.5);
+      setSmsProtection(Math.random() > 0.5);
+      setSocialMediaProtection(Math.random() > 0.5);
+      setBiometricVerification(Math.random() > 0.5);
+      
+      // Set random verification statuses
+      setEmailVerification({
+        status: Math.random() > 0.7 ? 'verified' : (Math.random() > 0.5 ? 'suspicious' : 'pending'),
+        timestamp: new Date().toISOString(),
+        blockchainId: Math.random() > 0.5 ? `0x${Math.random().toString(16).substring(2, 34)}` : undefined,
+        details: 'User data loaded'
+      });
+      
+      setPhoneVerification({
+        status: Math.random() > 0.7 ? 'verified' : (Math.random() > 0.5 ? 'suspicious' : 'pending'),
+        timestamp: Math.random() > 0.5 ? new Date().toISOString() : '',
+        blockchainId: Math.random() > 0.5 ? `0x${Math.random().toString(16).substring(2, 34)}` : undefined,
+        details: Math.random() > 0.5 ? 'No threats detected' : 'Not yet verified'
+      });
+      
+      setSmsVerification({
+        status: Math.random() > 0.7 ? 'verified' : (Math.random() > 0.5 ? 'suspicious' : 'pending'),
+        timestamp: Math.random() > 0.5 ? new Date().toISOString() : '',
+        blockchainId: Math.random() > 0.5 ? `0x${Math.random().toString(16).substring(2, 34)}` : undefined,
+        details: Math.random() > 0.5 ? 'No threats detected' : 'Not yet verified'
+      });
+      
+      setSocialMediaVerification({
+        status: Math.random() > 0.7 ? 'verified' : (Math.random() > 0.5 ? 'suspicious' : 'pending'),
+        timestamp: Math.random() > 0.5 ? new Date().toISOString() : '',
+        blockchainId: Math.random() > 0.5 ? `0x${Math.random().toString(16).substring(2, 34)}` : undefined,
+        details: Math.random() > 0.5 ? 'No threats detected' : 'Not yet verified'
+      });
+      
+      setBiometricStatus({
+        status: Math.random() > 0.7 ? 'verified' : (Math.random() > 0.5 ? 'suspicious' : 'pending'),
+        timestamp: Math.random() > 0.5 ? new Date().toISOString() : '',
+        blockchainId: Math.random() > 0.5 ? `0x${Math.random().toString(16).substring(2, 34)}` : undefined,
+        details: Math.random() > 0.5 ? 'Fingerprint registered' : 'Not yet registered'
+      });
+    }
+  };
+  
+  // Function to save admin changes to user settings
+  const saveUserSettings = () => {
+    if (isAdmin && selectedUserId) {
+      toast({
+        title: "Settings saved",
+        description: "User's security settings have been updated."
+      });
+      
+      showAdminModificationNotification();
+    }
   };
   
   const StatusIndicator = ({ status }: { status: string }) => {
@@ -412,10 +404,63 @@ const SecurityVerification = () => {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.4 }}
         >
-          <h1 className="text-3xl font-bold">Advanced Security Verification</h1>
-          <p className="text-muted-foreground mt-1">
-            Protect your digital identity with blockchain-verified security
-          </p>
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-3xl font-bold">Advanced Security Verification</h1>
+              <p className="text-muted-foreground mt-1">
+                Protect your digital identity with blockchain-verified security
+              </p>
+            </div>
+            
+            {/* Admin User Selection Controls */}
+            {isAdmin && (
+              <div className="flex items-center space-x-2">
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  className="flex items-center gap-2"
+                  onClick={() => setShowUserSelector(true)}
+                >
+                  <Users className="w-4 h-4" />
+                  {selectedUserId ? nonAdminUsers.find(u => u.id === selectedUserId)?.name || 'Select User' : 'Select User'}
+                </Button>
+                
+                {selectedUserId && (
+                  <Button 
+                    className="bg-security-primary hover:bg-security-primary/90 h-9"
+                    size="sm"
+                    onClick={saveUserSettings}
+                  >
+                    <Save className="w-4 h-4 mr-2" />
+                    Save Changes
+                  </Button>
+                )}
+              </div>
+            )}
+          </div>
+          
+          {/* Admin Notification Banner */}
+          {isAdmin && showAdminNotification && (
+            <motion.div 
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              className="mt-4 p-3 bg-security-primary/20 border border-security-primary rounded-md flex items-center justify-between"
+            >
+              <div className="flex items-center">
+                <Bell className="w-5 h-5 text-security-primary mr-2" />
+                <span>The user has been notified of changes to their security settings.</span>
+              </div>
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                className="h-7 w-7 p-0" 
+                onClick={() => setShowAdminNotification(false)}
+              >
+                <X className="w-4 h-4" />
+              </Button>
+            </motion.div>
+          )}
         </motion.div>
         
         <Tabs defaultValue="protection" className="w-full">
@@ -464,55 +509,54 @@ const SecurityVerification = () => {
                       Scan Now
                     </Button>
                   </div>
-                  
-                  {/* Protected Emails Section */}
-                  <div className="space-y-3">
-                    <div className="flex items-center justify-between">
-                      <h3 className="text-sm font-medium">Protected Email Addresses</h3>
-                      <Button 
-                        variant="outline" 
-                        size="sm"
-                        className="h-8 px-2 text-xs"
-                        onClick={() => setShowAddEmailDialog(true)}
-                        disabled={!emailProtection}
-                      >
-                        <Plus className="h-3.5 w-3.5 mr-1" />
-                        Add Email
-                      </Button>
-                    </div>
-                    
-                    {protectedEmails.length === 0 ? (
-                      <div className="text-sm text-muted-foreground italic p-2 text-center">
-                        No protected emails added yet
-                      </div>
-                    ) : (
-                      <div className="space-y-2">
-                        {protectedEmails.map(email => (
-                          <div 
-                            key={email.id} 
-                            className="flex items-center justify-between p-2 border rounded-md"
-                          >
-                            <div className="flex items-center">
-                              <StatusIndicator status={email.status} />
-                              <span className="ml-2 text-sm">{email.email}</span>
-                            </div>
-                            <button 
-                              className="text-destructive-foreground hover:bg-destructive/10 p-1 rounded"
-                              onClick={() => handleRemoveEmail(email.id)}
-                            >
-                              <X className="h-4 w-4" />
-                            </button>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                  
-                  {emailVerification.blockchainId && (
+                    {emailVerification.blockchainId && (
                     <div className="text-xs text-muted-foreground border-t pt-2">
                       Blockchain verification ID: {emailVerification.blockchainId}
                     </div>
                   )}
+                  
+                  {/* Added section to show protected email addresses */}
+                  <div className="mt-4 border-t pt-4">
+                    <div className="flex items-center justify-between mb-3">
+                      <h3 className="text-sm font-medium">Protected Email Addresses</h3>
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        onClick={() => setShowAddEmailDialog(true)}
+                        className="flex items-center"
+                      >
+                        <Plus className="w-4 h-4 mr-1" />
+                        Add Email
+                      </Button>
+                    </div>
+                    
+                    <div className="space-y-2">
+                      {protectedEmails.length === 0 ? (
+                        <p className="text-sm text-muted-foreground">No email addresses added for protection.</p>
+                      ) : (
+                        protectedEmails.map((email, index) => (
+                          <div key={index} className="flex items-center justify-between p-2 bg-muted/50 rounded">
+                            <div className="flex items-center">
+                              <Mail className="w-4 h-4 mr-2 text-security-primary" />
+                              <span className="text-sm">{email}</span>
+                            </div>
+                            <Button 
+                              variant="ghost" 
+                              size="sm" 
+                              className="h-7 w-7 p-0"
+                              onClick={() => {
+                                const newEmails = [...protectedEmails];
+                                newEmails.splice(index, 1);
+                                setProtectedEmails(newEmails);
+                              }}
+                            >
+                              <X className="w-4 h-4" />
+                            </Button>
+                          </div>
+                        ))
+                      )}
+                    </div>
+                  </div>
                 </div>
               </SecurityCard>
             </motion.div>
@@ -556,55 +600,54 @@ const SecurityVerification = () => {
                       Verify Number
                     </Button>
                   </div>
-                  
-                  {/* Protected Phone Numbers Section */}
-                  <div className="space-y-3">
-                    <div className="flex items-center justify-between">
-                      <h3 className="text-sm font-medium">Protected Phone Numbers</h3>
-                      <Button 
-                        variant="outline" 
-                        size="sm"
-                        className="h-8 px-2 text-xs"
-                        onClick={() => setShowAddPhoneDialog(true)}
-                        disabled={!phoneProtection}
-                      >
-                        <Plus className="h-3.5 w-3.5 mr-1" />
-                        Add Phone
-                      </Button>
-                    </div>
-                    
-                    {protectedPhones.length === 0 ? (
-                      <div className="text-sm text-muted-foreground italic p-2 text-center">
-                        No protected phone numbers added yet
-                      </div>
-                    ) : (
-                      <div className="space-y-2">
-                        {protectedPhones.map(phone => (
-                          <div 
-                            key={phone.id} 
-                            className="flex items-center justify-between p-2 border rounded-md"
-                          >
-                            <div className="flex items-center">
-                              <StatusIndicator status={phone.status} />
-                              <span className="ml-2 text-sm">{phone.phoneNumber}</span>
-                            </div>
-                            <button 
-                              className="text-destructive-foreground hover:bg-destructive/10 p-1 rounded"
-                              onClick={() => handleRemovePhone(phone.id)}
-                            >
-                              <X className="h-4 w-4" />
-                            </button>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                  
-                  {phoneVerification.blockchainId && (
+                    {phoneVerification.blockchainId && (
                     <div className="text-xs text-muted-foreground border-t pt-2">
                       Blockchain verification ID: {phoneVerification.blockchainId}
                     </div>
                   )}
+                  
+                  {/* Added section to show protected phone numbers */}
+                  <div className="mt-4 border-t pt-4">
+                    <div className="flex items-center justify-between mb-3">
+                      <h3 className="text-sm font-medium">Protected Phone Numbers</h3>
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        onClick={() => setShowAddPhoneDialog(true)}
+                        className="flex items-center"
+                      >
+                        <Plus className="w-4 h-4 mr-1" />
+                        Add Phone
+                      </Button>
+                    </div>
+                    
+                    <div className="space-y-2">
+                      {protectedPhones.length === 0 ? (
+                        <p className="text-sm text-muted-foreground">No phone numbers added for protection.</p>
+                      ) : (
+                        protectedPhones.map((phone, index) => (
+                          <div key={index} className="flex items-center justify-between p-2 bg-muted/50 rounded">
+                            <div className="flex items-center">
+                              <Phone className="w-4 h-4 mr-2 text-security-primary" />
+                              <span className="text-sm">{phone}</span>
+                            </div>
+                            <Button 
+                              variant="ghost" 
+                              size="sm" 
+                              className="h-7 w-7 p-0"
+                              onClick={() => {
+                                const newPhones = [...protectedPhones];
+                                newPhones.splice(index, 1);
+                                setProtectedPhones(newPhones);
+                              }}
+                            >
+                              <X className="w-4 h-4" />
+                            </Button>
+                          </div>
+                        ))
+                      )}
+                    </div>
+                  </div>
                 </div>
               </SecurityCard>
             </motion.div>
@@ -697,56 +740,62 @@ const SecurityVerification = () => {
                       Scan Accounts
                     </Button>
                   </div>
-                  
-                  {/* Protected Social Media Accounts Section */}
-                  <div className="space-y-3">
-                    <div className="flex items-center justify-between">
-                      <h3 className="text-sm font-medium">Protected Social Media Accounts</h3>
-                      <Button 
-                        variant="outline" 
-                        size="sm"
-                        className="h-8 px-2 text-xs"
-                        onClick={() => setShowAddSocialDialog(true)}
-                        disabled={!socialMediaProtection}
-                      >
-                        <Plus className="h-3.5 w-3.5 mr-1" />
-                        Add Account
-                      </Button>
-                    </div>
-                    
-                    {protectedSocialAccounts.length === 0 ? (
-                      <div className="text-sm text-muted-foreground italic p-2 text-center">
-                        No protected social media accounts added yet
-                      </div>
-                    ) : (
-                      <div className="space-y-2">
-                        {protectedSocialAccounts.map(account => (
-                          <div 
-                            key={account.id} 
-                            className="flex items-center justify-between p-2 border rounded-md"
-                          >
-                            <div className="flex items-center">
-                              <StatusIndicator status={account.status} />
-                              <Badge className="ml-2 mr-2" variant="outline">{account.platform}</Badge>
-                              <span className="text-sm">{account.username}</span>
-                            </div>
-                            <button 
-                              className="text-destructive-foreground hover:bg-destructive/10 p-1 rounded"
-                              onClick={() => handleRemoveSocialAccount(account.id)}
-                            >
-                              <X className="h-4 w-4" />
-                            </button>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                  
-                  {socialMediaVerification.blockchainId && (
+                    {socialMediaVerification.blockchainId && (
                     <div className="text-xs text-muted-foreground border-t pt-2">
                       Blockchain verification ID: {socialMediaVerification.blockchainId}
                     </div>
                   )}
+                  
+                  {/* Added section to show protected social media accounts */}
+                  <div className="mt-4 border-t pt-4">
+                    <div className="flex items-center justify-between mb-3">
+                      <h3 className="text-sm font-medium">Protected Social Media Accounts</h3>
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        onClick={() => setShowAddSocialDialog(true)}
+                        className="flex items-center"
+                      >
+                        <Plus className="w-4 h-4 mr-1" />
+                        Add Account
+                      </Button>
+                    </div>
+                    
+                    <div className="space-y-2">
+                      {protectedSocialAccounts.length === 0 ? (
+                        <p className="text-sm text-muted-foreground">No social media accounts added for protection.</p>
+                      ) : (
+                        protectedSocialAccounts.map((account, index) => (
+                          <div key={index} className="flex items-center justify-between p-2 bg-muted/50 rounded">
+                            <div className="flex items-center">
+                              {account.platform === 'Twitter' && <Twitter className="w-4 h-4 mr-2 text-blue-400" />}
+                              {account.platform === 'LinkedIn' && <Linkedin className="w-4 h-4 mr-2 text-blue-600" />}
+                              {account.platform === 'Facebook' && <Facebook className="w-4 h-4 mr-2 text-blue-500" />}
+                              {account.platform === 'Instagram' && <Instagram className="w-4 h-4 mr-2 text-pink-500" />}
+                              {!['Twitter', 'LinkedIn', 'Facebook', 'Instagram'].includes(account.platform) && 
+                                <Globe className="w-4 h-4 mr-2 text-security-primary" />}
+                              <div>
+                                <span className="text-sm">{account.username}</span>
+                                <p className="text-xs text-muted-foreground">{account.platform}</p>
+                              </div>
+                            </div>
+                            <Button 
+                              variant="ghost" 
+                              size="sm" 
+                              className="h-7 w-7 p-0"
+                              onClick={() => {
+                                const newAccounts = [...protectedSocialAccounts];
+                                newAccounts.splice(index, 1);
+                                setProtectedSocialAccounts(newAccounts);
+                              }}
+                            >
+                              <X className="w-4 h-4" />
+                            </Button>
+                          </div>
+                        ))
+                      )}
+                    </div>
+                  </div>
                 </div>
               </SecurityCard>
             </motion.div>
@@ -923,125 +972,158 @@ const SecurityVerification = () => {
                 </div>
               </SecurityCard>
             </motion.div>
-          </TabsContent>
-        </Tabs>
+          </TabsContent>        </Tabs>
       </div>
-      
+
       {/* Add Email Dialog */}
       <Dialog open={showAddEmailDialog} onOpenChange={setShowAddEmailDialog}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>Add Email for Protection</DialogTitle>
+            <DialogTitle>Add Email Address for Protection</DialogTitle>
             <DialogDescription>
-              Enter an email address to protect from phishing and attacks
+              Enter an email address you want to monitor for phishing attempts
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-2">
             <div className="space-y-2">
-              <label htmlFor="email" className="text-sm font-medium">
-                Email Address
-              </label>
               <Input
-                id="email"
-                placeholder="example@domain.com"
+                placeholder="Enter email address"
                 value={newEmail}
                 onChange={(e) => setNewEmail(e.target.value)}
               />
+              <p className="text-xs text-muted-foreground">
+                We'll scan this email address for phishing attempts and notify you of any threats
+              </p>
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setShowAddEmailDialog(false)}>
-              Cancel
-            </Button>
-            <Button onClick={handleAddEmail}>
+            <Button variant="outline" onClick={() => setShowAddEmailDialog(false)}>Cancel</Button>
+            <Button onClick={handleAddEmail} className="bg-security-primary hover:bg-security-primary/90">
+              <UserPlus className="mr-2 h-4 w-4" />
               Add Email
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
-      
+
       {/* Add Phone Dialog */}
       <Dialog open={showAddPhoneDialog} onOpenChange={setShowAddPhoneDialog}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle>Add Phone Number for Protection</DialogTitle>
             <DialogDescription>
-              Enter a phone number to protect from fraud and spam
+              Enter a phone number you want to monitor for fraud attempts
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-2">
             <div className="space-y-2">
-              <label htmlFor="phone" className="text-sm font-medium">
-                Phone Number
-              </label>
               <Input
-                id="phone"
-                placeholder="+1 (555) 123-4567"
+                placeholder="Enter phone number"
                 value={newPhone}
                 onChange={(e) => setNewPhone(e.target.value)}
               />
+              <p className="text-xs text-muted-foreground">
+                We'll monitor this phone number for SIM swapping, spoofing, and other fraud attempts
+              </p>
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setShowAddPhoneDialog(false)}>
-              Cancel
-            </Button>
-            <Button onClick={handleAddPhone}>
+            <Button variant="outline" onClick={() => setShowAddPhoneDialog(false)}>Cancel</Button>
+            <Button onClick={handleAddPhone} className="bg-security-primary hover:bg-security-primary/90">
+              <UserPlus className="mr-2 h-4 w-4" />
               Add Phone Number
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
-      
-      {/* Add Social Media Dialog */}
+
+      {/* Add Social Media Account Dialog */}
       <Dialog open={showAddSocialDialog} onOpenChange={setShowAddSocialDialog}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle>Add Social Media Account</DialogTitle>
             <DialogDescription>
-              Select a platform and enter your username to protect your social media accounts
+              Select a platform and enter your username to monitor for impersonation
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-2">
             <div className="space-y-2">
-              <label htmlFor="platform" className="text-sm font-medium">
-                Platform
-              </label>
-              <select
-                id="platform"
-                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                value={newSocialPlatform}
-                onChange={(e) => setNewSocialPlatform(e.target.value)}
-              >
-                {socialMediaPlatforms.map(platform => (
-                  <option key={platform} value={platform}>{platform}</option>
-                ))}
-              </select>
+              <Select value={newSocialPlatform} onValueChange={setNewSocialPlatform}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select platform" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Twitter">Twitter</SelectItem>
+                  <SelectItem value="Facebook">Facebook</SelectItem>
+                  <SelectItem value="Instagram">Instagram</SelectItem>
+                  <SelectItem value="LinkedIn">LinkedIn</SelectItem>
+                  <SelectItem value="TikTok">TikTok</SelectItem>
+                  <SelectItem value="Other">Other Platform</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
             <div className="space-y-2">
-              <label htmlFor="username" className="text-sm font-medium">
-                Username
-              </label>
               <Input
-                id="username"
-                placeholder="yourusername"
+                placeholder="Enter username (e.g. @username)"
                 value={newSocialUsername}
                 onChange={(e) => setNewSocialUsername(e.target.value)}
               />
+              <p className="text-xs text-muted-foreground">
+                We'll monitor for impersonation attempts and fraudulent profiles using your identity
+              </p>
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setShowAddSocialDialog(false)}>
-              Cancel
-            </Button>
-            <Button onClick={handleAddSocialAccount}>
+            <Button variant="outline" onClick={() => setShowAddSocialDialog(false)}>Cancel</Button>
+            <Button onClick={handleAddSocialAccount} className="bg-security-primary hover:bg-security-primary/90">
+              <UserPlus className="mr-2 h-4 w-4" />
               Add Account
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Admin User Selection Dialog */}
+      {isAdmin && (
+        <Dialog open={showUserSelector} onOpenChange={setShowUserSelector}>
+          <DialogContent className="sm:max-w-md">
+            <DialogHeader>
+              <DialogTitle>Select User to Manage</DialogTitle>
+              <DialogDescription>
+                Choose a user to view and modify their security verification settings
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4 py-2 max-h-[50vh] overflow-auto">
+              {nonAdminUsers.map(user => (
+                <div 
+                  key={user.id} 
+                  className={`p-3 flex items-center justify-between rounded-md cursor-pointer hover:bg-muted/50 transition-colors ${selectedUserId === user.id ? 'bg-security-primary/10 border border-security-primary/30' : 'border'}`}
+                  onClick={() => {
+                    handleUserChange(user.id);
+                    setShowUserSelector(false);
+                  }}
+                >
+                  <div className="flex items-center">
+                    <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center mr-3">
+                      <User className="w-5 h-5 text-security-primary" />
+                    </div>
+                    <div>
+                      <p className="font-medium">{user.name}</p>
+                      <p className="text-sm text-muted-foreground">{user.email}</p>
+                    </div>
+                  </div>
+                  <ArrowRight className={`w-5 h-5 ${selectedUserId === user.id ? 'text-security-primary' : 'text-muted-foreground'}`} />
+                </div>
+              ))}
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setShowUserSelector(false)}>Cancel</Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      )}
     </MainLayout>
   );
 };
 
-export default SecurityVerification; 
+export default SecurityVerification;
