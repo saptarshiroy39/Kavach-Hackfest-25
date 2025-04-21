@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import MainLayout from '@/components/layout/MainLayout';
 import SecurityCard from '@/components/security/SecurityCard';
@@ -43,6 +42,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { motion } from 'framer-motion';
+import { Label } from '@/components/ui/label';
 
 const usersList = [
   {
@@ -247,7 +247,7 @@ const AdminUsers = () => {
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
                 <Input
                   placeholder="Search users..."
-                  className="pl-9"
+                  className="pl-9 border-2 focus:border-security-primary focus:ring-security-primary/20 shadow-sm"
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                 />
@@ -255,10 +255,10 @@ const AdminUsers = () => {
               <div className="flex gap-2">
                 <div className="w-40">
                   <Select value={statusFilter} onValueChange={setStatusFilter}>
-                    <SelectTrigger>
+                    <SelectTrigger className="border-2 shadow-sm hover:bg-muted/30 transition-colors">
                       <SelectValue placeholder="Status" />
                     </SelectTrigger>
-                    <SelectContent>
+                    <SelectContent className="bg-background/95 backdrop-blur-sm border-2 shadow-md z-50">
                       <SelectItem value="all">All Statuses</SelectItem>
                       <SelectItem value="active">Active</SelectItem>
                       <SelectItem value="suspended">Suspended</SelectItem>
@@ -268,10 +268,10 @@ const AdminUsers = () => {
                 </div>
                 <div className="w-40">
                   <Select value={roleFilter} onValueChange={setRoleFilter}>
-                    <SelectTrigger>
+                    <SelectTrigger className="border-2 shadow-sm hover:bg-muted/30 transition-colors">
                       <SelectValue placeholder="Role" />
                     </SelectTrigger>
-                    <SelectContent>
+                    <SelectContent className="bg-background/95 backdrop-blur-sm border-2 shadow-md z-50">
                       <SelectItem value="all">All Roles</SelectItem>
                       <SelectItem value="admin">Admin</SelectItem>
                       <SelectItem value="moderator">Moderator</SelectItem>
@@ -279,7 +279,7 @@ const AdminUsers = () => {
                     </SelectContent>
                   </Select>
                 </div>
-                <Button variant="outline" size="icon">
+                <Button variant="outline" size="icon" className="border-2 shadow-sm hover:bg-muted/30 transition-colors">
                   <Filter className="h-4 w-4" />
                 </Button>
               </div>
@@ -417,6 +417,78 @@ const AdminUsers = () => {
           </div>
         </SecurityCard>
       </motion.div>
+
+      {/* Add User Dialog */}
+      <Dialog open={showAddUserDialog} onOpenChange={setShowAddUserDialog}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Add New User</DialogTitle>
+            <DialogDescription>
+              Create a new user account with specific permissions.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <div className="space-y-2">
+              <Label htmlFor="name">Full Name</Label>
+              <Input 
+                id="name" 
+                name="name"
+                placeholder="Enter full name" 
+                value={newUser.name}
+                onChange={handleInputChange}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="email">Email Address</Label>
+              <Input 
+                id="email" 
+                name="email"
+                type="email"
+                placeholder="user@example.com" 
+                value={newUser.email}
+                onChange={handleInputChange}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="role">Role</Label>
+              <Select value={newUser.role} onValueChange={handleRoleChange}>
+                <SelectTrigger id="role" className="border-2 shadow-sm hover:bg-muted/30 transition-colors">
+                  <SelectValue placeholder="Select role" />
+                </SelectTrigger>
+                <SelectContent className="bg-background/95 backdrop-blur-sm border-2 shadow-md z-50">
+                  <SelectItem value="User">User</SelectItem>
+                  <SelectItem value="Moderator">Moderator</SelectItem>
+                  <SelectItem value="Admin">Admin</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="password">Temporary Password</Label>
+              <Input 
+                id="password" 
+                name="password"
+                type="password"
+                placeholder="Create a temporary password" 
+                value={newUser.password}
+                onChange={handleInputChange}
+              />
+              <p className="text-xs text-muted-foreground">
+                User will be prompted to change this password on first login.
+              </p>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowAddUserDialog(false)}>Cancel</Button>
+            <Button 
+              onClick={handleAddUser} 
+              className="bg-security-primary hover:bg-security-primary/90"
+            >
+              <UserPlus className="mr-2 h-4 w-4" />
+              Add User
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </MainLayout>
   );
 };
