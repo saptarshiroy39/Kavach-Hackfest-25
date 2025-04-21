@@ -1,73 +1,56 @@
-# Welcome to your Lovable project
+# 🛡️ Kavach – Hackfest '25
 
-## Project info
+Welcome to **Kavach**, our innovative solution developed for Hackfest '25! 🚀
 
-**URL**: https://lovable.dev/projects/4af38d22-8482-43b7-92a4-fc0ce593272f
+## 📌 Project Overview
 
-## How can I edit this code?
+**Kavach** is a cutting-edge platform designed to [insert a brief description of the project's purpose and functionality]. Our goal is to [insert the main objective or problem the project addresses].
 
-There are several ways of editing your application.
+## 🧠 Features
 
-**Use Lovable**
+- 🔐 **Secure Authentication**: Ensuring user data is protected with robust security measures.
+- 📊 **Real-Time Analytics**: Providing live insights and data visualization.
+- 💬 **Interactive Chatbot**: Assisting users with instant responses and support.
+- 🌐 **Responsive Design**: Seamless experience across all devices.
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/4af38d22-8482-43b7-92a4-fc0ce593272f) and start prompting.
+## 🛠️ Tech Stack
 
-Changes made via Lovable will be committed automatically to this repo.
+- **Frontend**: React.js, Tailwind CSS
+- **Backend**: Node.js, Express.js
+- **Database**: MongoDB
+- **Authentication**: JWT, OAuth 2.0
+- **Deployment**: Vercel
 
-**Use your preferred IDE**
+## 🚀 Getting Started
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+To run this project locally:
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+1. Clone the repository:
+   ```bash
+   git clone https://github.com/saptarshiroy39/Kavach-Hackfest-25.git
+   ```
+2. Navigate to the project directory:
+   ```bash
+   cd Kavach-Hackfest-25
+   ```
+3. Install dependencies:
+   ```bash
+   npm install
+   ```
+4. Start the development server:
+   ```bash
+   npm run dev
+   ```
 
-Follow these steps:
+## 👥 Team Members
 
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
+- **Saptarshi Roy** – Full Stack Developer
+- [Add other team members with their roles]
 
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
+## 📄 License
 
-# Step 3: Install the necessary dependencies.
-npm i
+This project is licensed under the [MIT License](LICENSE).
 
-# Step 4: Start the development server with auto-reloading and an instant preview.
-npm run dev
-```
+---
 
-**Edit a file directly in GitHub**
-
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
-
-**Use GitHub Codespaces**
-
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
-
-## What technologies are used for this project?
-
-This project is built with:
-
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
-
-## How can I deploy this project?
-
-Simply open [Lovable](https://lovable.dev/projects/4af38d22-8482-43b7-92a4-fc0ce593272f) and click on Share -> Publish.
-
-## Can I connect a custom domain to my Lovable project?
-
-Yes, you can!
-
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
-
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/tips-tricks/custom-domain#step-by-step-guide)
+🌀 Made with ❤️ by Team **Code Crafters**
