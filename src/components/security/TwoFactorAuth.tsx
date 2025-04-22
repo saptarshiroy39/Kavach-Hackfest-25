@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -15,10 +15,11 @@ interface TwoFactorAuthProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   userId: string;
+  initialTab?: 'authenticator' | 'sms' | 'email';
 }
 
-const TwoFactorAuth: React.FC<TwoFactorAuthProps> = ({ open, onOpenChange, userId }) => {
-  const [activeTab, setActiveTab] = useState<string>('authenticator');
+const TwoFactorAuth: React.FC<TwoFactorAuthProps> = ({ open, onOpenChange, userId, initialTab = 'authenticator' }) => {
+  const [activeTab, setActiveTab] = useState<string>(initialTab);
   const [step, setStep] = useState<'setup' | 'verify' | 'complete'>('setup');
   const [verificationCode, setVerificationCode] = useState('');
   const [phoneNumber, setPhoneNumber] = useState('');
@@ -26,6 +27,17 @@ const TwoFactorAuth: React.FC<TwoFactorAuthProps> = ({ open, onOpenChange, userI
   const [qrCode, setQrCode] = useState('');
   const [secretKey, setSecretKey] = useState('');
   const { toast } = useToast();
+
+  // Reset states when component opens or initialTab changes
+  useEffect(() => {
+    if (open) {
+      setActiveTab(initialTab);
+      setStep('setup');
+      setVerificationCode('');
+      setQrCode('');
+      setSecretKey('');
+    }
+  }, [open, initialTab]);
 
   // Simulating API calls for 2FA setup
   const setupAuthenticator = async () => {
