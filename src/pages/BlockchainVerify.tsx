@@ -1,263 +1,128 @@
-
-import React, { useState } from 'react';
+import React from 'react';
 import MainLayout from '@/components/layout/MainLayout';
-import SecurityCard from '@/components/security/SecurityCard';
 import { 
   Shield, 
-  Link, 
-  CheckCircle2, 
-  Wallet, 
-  Lock,
-  Settings
+  LockKeyhole, 
+  BarChart, 
+  History,
+  FileText
 } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { mockApi } from '@/lib/mockDb';
-import { useToast } from '@/hooks/use-toast';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import BlockchainVerifyComponent from '@/components/security/BlockchainVerify';
+import { getCurrentUser } from '@/lib/mockDb';
 
-const BlockchainVerify = () => {
-  const [walletAddress, setWalletAddress] = useState('');
-  const [isConnecting, setIsConnecting] = useState(false);
-  const [isConnected, setIsConnected] = useState(false);
-  const { toast } = useToast();
-
-  const handleVerify = async () => {
-    if (!walletAddress || !walletAddress.startsWith('0x')) {
-      toast({
-        title: "Invalid wallet address",
-        description: "Please enter a valid Ethereum wallet address starting with 0x",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    setIsConnecting(true);
-    try {
-      const result = await mockApi.verifyBlockchain(walletAddress);
-      if (result.success) {
-        setIsConnected(true);
-        toast({
-          title: "Wallet connected successfully",
-          description: "Your blockchain wallet is now linked to your account",
-        });
-      } else {
-        toast({
-          title: "Connection failed",
-          description: result.error || "Failed to connect your wallet. Please try again.",
-          variant: "destructive",
-        });
-      }
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: "An unexpected error occurred. Please try again later.",
-        variant: "destructive",
-      });
-    } finally {
-      setIsConnecting(false);
-    }
-  };
-
+const BlockchainVerifyPage = () => {
+  const user = getCurrentUser();
+  
   return (
     <MainLayout>
       <div className="space-y-6">
-        <div>
-          <h1 className="text-3xl font-bold">Blockchain Verification</h1>
-          <p className="text-muted-foreground mt-1">
-            Connect your wallet for enhanced security and verification
-          </p>
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-6">
+          <div>
+            <h1 className="text-2xl font-bold">Blockchain Verification</h1>
+            <p className="text-muted-foreground mt-1">
+              Securely verify your identity and security events on the blockchain
+            </p>
+          </div>
         </div>
-
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <div className="lg:col-span-2">
-            <SecurityCard
-              className="mb-6"
-              title="Connect Blockchain Wallet"
-              icon={<Wallet className="w-5 h-5 text-security-primary" />}
-              status={isConnected ? 'secure' : undefined}
-            >
+        
+        <Tabs defaultValue="verify" className="space-y-6">
+          <TabsList className="grid grid-cols-3 max-w-md">
+            <TabsTrigger value="verify" className="flex items-center gap-2">
+              <Shield className="h-4 w-4" />
+              <span>Verify</span>
+            </TabsTrigger>
+            <TabsTrigger value="events" className="flex items-center gap-2">
+              <History className="h-4 w-4" />
+              <span>Events</span>
+            </TabsTrigger>
+            <TabsTrigger value="explorer" className="flex items-center gap-2">
+              <FileText className="h-4 w-4" />
+              <span>Explorer</span>
+            </TabsTrigger>
+          </TabsList>
+          
+          <TabsContent value="verify" className="space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <div className="md:col-span-2">
+                <BlockchainVerifyComponent userId={user.id} />
+              </div>
+              
               <div className="space-y-6">
-                {!isConnected ? (
-                  <>
-                    <div className="bg-muted p-4 rounded-lg">
-                      <p className="text-sm">
-                        Connect your blockchain wallet to enable additional security features:
-                      </p>
-                      <ul className="list-disc list-inside mt-2 space-y-1 text-sm">
+                <div className="border rounded-lg p-6 bg-card">
+                  <div className="flex items-center gap-3 mb-4">
+                    <div className="p-2 rounded-full bg-security-primary/10">
+                      <LockKeyhole className="h-5 w-5 text-security-primary" />
+                    </div>
+                    <h3 className="font-medium">About Blockchain Verification</h3>
+                  </div>
+                  
+                  <div className="space-y-3 text-sm">
+                    <p className="text-muted-foreground">
+                      Blockchain verification provides a secure and immutable way to verify your identity and security events.
+                    </p>
+                    
+                    <div className="py-2">
+                      <h4 className="font-medium mb-1">Benefits:</h4>
+                      <ul className="list-disc pl-4 text-muted-foreground space-y-1">
+                        <li>Tamper-proof security records</li>
                         <li>Decentralized identity verification</li>
-                        <li>Enhanced authentication security</li>
-                        <li>Transaction signing for critical security changes</li>
-                        <li>Non-custodial backup options</li>
+                        <li>Cryptographic proof of security events</li>
+                        <li>Enhanced protection against fraud</li>
                       </ul>
                     </div>
-
-                    <div className="space-y-3">
-                      <Label htmlFor="wallet-address">Wallet Address</Label>
-                      <Input
-                        id="wallet-address"
-                        placeholder="0x..."
-                        value={walletAddress}
-                        onChange={(e) => setWalletAddress(e.target.value)}
-                      />
-                      <p className="text-xs text-muted-foreground">
-                        Enter your Ethereum wallet address starting with 0x
-                      </p>
-                    </div>
-
-                    <div className="flex justify-between items-center pt-4">
-                      <Button variant="outline">
-                        Scan QR Code
-                      </Button>
-                      <Button 
-                        className="bg-security-primary hover:bg-security-primary/90"
-                        onClick={handleVerify}
-                        disabled={isConnecting}
-                      >
-                        {isConnecting ? (
-                          <>
-                            <div className="w-4 h-4 border-t-2 border-security-primary-foreground rounded-full animate-spin mr-2"></div>
-                            Connecting...
-                          </>
-                        ) : (
-                          <>
-                            <Link className="mr-2 h-4 w-4" />
-                            Connect Wallet
-                          </>
-                        )}
-                      </Button>
-                    </div>
-                  </>
-                ) : (
-                  <div className="space-y-6">
-                    <div className="bg-security-secondary/10 p-4 rounded-lg flex items-center">
-                      <CheckCircle2 className="w-6 h-6 text-security-secondary mr-3" />
-                      <div>
-                        <h3 className="font-medium">Wallet Connected Successfully</h3>
-                        <p className="text-sm text-muted-foreground mt-1">
-                          Your blockchain wallet is now linked to your account for enhanced security.
-                        </p>
-                      </div>
-                    </div>
-
-                    <div className="space-y-3">
-                      <div className="flex justify-between">
-                        <span className="text-sm font-medium">Wallet Address</span>
-                        <span className="text-sm font-mono">{walletAddress.slice(0, 6)}...{walletAddress.slice(-4)}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-sm font-medium">Network</span>
-                        <span className="text-sm">Ethereum</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-sm font-medium">Connection Status</span>
-                        <span className="text-sm text-security-secondary">Active</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-sm font-medium">Last Verified</span>
-                        <span className="text-sm">Just now</span>
-                      </div>
-                    </div>
-
-                    <div className="pt-4 flex justify-end space-x-3">
-                      <Button variant="outline" size="sm">
-                        <Settings className="mr-2 h-4 w-4" />
-                        Manage
-                      </Button>
-                      <Button variant="outline" size="sm" className="text-security-danger">
-                        Disconnect
-                      </Button>
-                    </div>
                   </div>
-                )}
-              </div>
-            </SecurityCard>
-          </div>
-
-          <div className="space-y-6">
-            <SecurityCard
-              title="Why Use Blockchain Verification?"
-              icon={<Shield className="w-5 h-5 text-security-primary" />}
-            >
-              <div className="space-y-4">
-                <div className="flex items-start">
-                  <div className="w-10 h-10 rounded-full bg-security-primary/10 flex items-center justify-center mr-3">
-                    <Lock className="w-5 h-5 text-security-primary" />
+                </div>
+                
+                <div className="border rounded-lg p-6 bg-card">
+                  <div className="flex items-center gap-3 mb-4">
+                    <div className="p-2 rounded-full bg-security-primary/10">
+                      <BarChart className="h-5 w-5 text-security-primary" />
+                    </div>
+                    <h3 className="font-medium">Trust Score</h3>
                   </div>
-                  <div>
-                    <h3 className="font-medium">Enhanced Security</h3>
-                    <p className="text-sm text-muted-foreground mt-1">
-                      Blockchain provides cryptographic security that's virtually impossible to breach.
+                  
+                  <div className="space-y-3 text-sm">
+                    <p className="text-muted-foreground">
+                      Your blockchain trust score is calculated based on your verification status and security events.
                     </p>
+                    
+                    <div className="py-2">
+                      <h4 className="font-medium mb-1">Factors:</h4>
+                      <ul className="list-disc pl-4 text-muted-foreground space-y-1">
+                        <li>Identity verification</li>
+                        <li>Account age</li>
+                        <li>Security incident history</li>
+                        <li>Authentication methods</li>
+                      </ul>
+                    </div>
                   </div>
-                </div>
-
-                <div className="flex items-start">
-                  <div className="w-10 h-10 rounded-full bg-security-secondary/10 flex items-center justify-center mr-3">
-                    <Link className="w-5 h-5 text-security-secondary" />
-                  </div>
-                  <div>
-                    <h3 className="font-medium">Decentralized Identity</h3>
-                    <p className="text-sm text-muted-foreground mt-1">
-                      Your identity is verified without relying on central authorities.
-                    </p>
-                  </div>
-                </div>
-
-                <div className="flex items-start">
-                  <div className="w-10 h-10 rounded-full bg-security-warning/10 flex items-center justify-center mr-3">
-                    <Wallet className="w-5 h-5 text-security-warning" />
-                  </div>
-                  <div>
-                    <h3 className="font-medium">Self-Sovereign Control</h3>
-                    <p className="text-sm text-muted-foreground mt-1">
-                      You maintain full control over your identity and verification.
-                    </p>
-                  </div>
-                </div>
-
-                <a href="#" className="block text-security-primary text-sm mt-4 hover:underline">
-                  Learn more about blockchain security →
-                </a>
-              </div>
-            </SecurityCard>
-
-            <SecurityCard
-              title="Compatible Wallets"
-              icon={<Wallet className="w-5 h-5 text-security-primary" />}
-            >
-              <div className="space-y-4">
-                <div className="p-3 border border-muted rounded-lg flex items-center">
-                  <div className="w-8 h-8 bg-blue-500 rounded-full mr-3 flex items-center justify-center text-white font-bold">
-                    M
-                  </div>
-                  <span className="font-medium">MetaMask</span>
-                </div>
-                <div className="p-3 border border-muted rounded-lg flex items-center">
-                  <div className="w-8 h-8 bg-gray-700 rounded-full mr-3 flex items-center justify-center text-white font-bold">
-                    L
-                  </div>
-                  <span className="font-medium">Ledger</span>
-                </div>
-                <div className="p-3 border border-muted rounded-lg flex items-center">
-                  <div className="w-8 h-8 bg-purple-600 rounded-full mr-3 flex items-center justify-center text-white font-bold">
-                    T
-                  </div>
-                  <span className="font-medium">Trezor</span>
-                </div>
-                <div className="p-3 border border-muted rounded-lg flex items-center">
-                  <div className="w-8 h-8 bg-blue-700 rounded-full mr-3 flex items-center justify-center text-white font-bold">
-                    C
-                  </div>
-                  <span className="font-medium">Coinbase Wallet</span>
                 </div>
               </div>
-            </SecurityCard>
-          </div>
-        </div>
+            </div>
+          </TabsContent>
+          
+          <TabsContent value="events" className="space-y-4">
+            <div className="border rounded-lg p-6">
+              <h3 className="font-medium mb-4">Security Events on Blockchain</h3>
+              <p className="text-muted-foreground">
+                No security events have been recorded on the blockchain yet. Verify your identity first.
+              </p>
+            </div>
+          </TabsContent>
+          
+          <TabsContent value="explorer" className="space-y-4">
+            <div className="border rounded-lg p-6">
+              <h3 className="font-medium mb-4">Blockchain Explorer</h3>
+              <p className="text-muted-foreground">
+                Connect your wallet to view your blockchain transactions.
+              </p>
+            </div>
+          </TabsContent>
+        </Tabs>
       </div>
     </MainLayout>
   );
 };
 
-export default BlockchainVerify;
+export default BlockchainVerifyPage;
