@@ -43,7 +43,7 @@ import {
 } from "@/components/ui/dialog";
 import { motion } from 'framer-motion';
 
-const usersList = [
+const initialUsersList = [
   {
     id: 1,
     name: 'John Doe',
@@ -127,6 +127,7 @@ const usersList = [
 ];
 
 const AdminUsers = () => {
+  const [usersList, setUsersList] = useState(initialUsersList);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [roleFilter, setRoleFilter] = useState('all');
@@ -150,8 +151,22 @@ const AdminUsers = () => {
       return;
     }
 
+    // Create new user object with an ID and default values
+    const newUserEntry = {
+      id: usersList.length > 0 ? Math.max(...usersList.map(u => u.id)) + 1 : 1,
+      name: newUser.name,
+      email: newUser.email,
+      role: newUser.role,
+      status: 'Active',
+      lastLogin: 'Just now',
+      securityScore: 50,
+      hasTwoFactor: false,
+    };
+
+    // Add user to the list
+    setUsersList([...usersList, newUserEntry]);
+
     // In a real app, this would send the data to the server
-    // For the demo, we'll just show success and close the dialog
     toast({
       title: "User added",
       description: `Successfully added ${newUser.name} as a ${newUser.role.toLowerCase()}.`,
