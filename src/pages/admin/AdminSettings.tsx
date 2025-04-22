@@ -22,6 +22,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { useToast } from '@/hooks/use-toast';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { motion } from 'framer-motion';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 const AdminSettings = () => {
   const { toast } = useToast();
@@ -135,13 +136,18 @@ const AdminSettings = () => {
                         <span className="font-medium">Default Language</span>
                       </div>
                       <div className="md:col-span-2">
-                        <select className="w-full rounded-md border border-input bg-background px-3 py-2">
-                          <option>English (US)</option>
-                          <option>Spanish</option>
-                          <option>French</option>
-                          <option>German</option>
-                          <option>Japanese</option>
-                        </select>
+                        <Select defaultValue="en-US">
+                          <SelectTrigger className="w-full glass-effect dark:bg-sidebar-accent/30">
+                            <SelectValue placeholder="Select language" />
+                          </SelectTrigger>
+                          <SelectContent className="glass-effect dark:bg-sidebar-accent/80 border-white/10 z-50">
+                            <SelectItem value="en-US">English (US)</SelectItem>
+                            <SelectItem value="es">Spanish</SelectItem>
+                            <SelectItem value="fr">French</SelectItem>
+                            <SelectItem value="de">German</SelectItem>
+                            <SelectItem value="ja">Japanese</SelectItem>
+                          </SelectContent>
+                        </Select>
                       </div>
                     </div>
                     
@@ -151,15 +157,20 @@ const AdminSettings = () => {
                         <span className="font-medium">Time Zone</span>
                       </div>
                       <div className="md:col-span-2">
-                        <select className="w-full rounded-md border border-input bg-background px-3 py-2">
-                          <option>UTC (Coordinated Universal Time)</option>
-                          <option>America/New_York (Eastern Time)</option>
-                          <option>America/Chicago (Central Time)</option>
-                          <option>America/Denver (Mountain Time)</option>
-                          <option>America/Los_Angeles (Pacific Time)</option>
-                          <option>Europe/London (Greenwich Mean Time)</option>
-                          <option>Asia/Tokyo (Japan Standard Time)</option>
-                        </select>
+                        <Select defaultValue="UTC">
+                          <SelectTrigger className="w-full glass-effect dark:bg-sidebar-accent/30">
+                            <SelectValue placeholder="Select timezone" />
+                          </SelectTrigger>
+                          <SelectContent className="glass-effect dark:bg-sidebar-accent/80 border-white/10 z-50">
+                            <SelectItem value="UTC">UTC (Coordinated Universal Time)</SelectItem>
+                            <SelectItem value="America/New_York">America/New_York (Eastern Time)</SelectItem>
+                            <SelectItem value="America/Chicago">America/Chicago (Central Time)</SelectItem>
+                            <SelectItem value="America/Denver">America/Denver (Mountain Time)</SelectItem>
+                            <SelectItem value="America/Los_Angeles">America/Los_Angeles (Pacific Time)</SelectItem>
+                            <SelectItem value="Europe/London">Europe/London (Greenwich Mean Time)</SelectItem>
+                            <SelectItem value="Asia/Tokyo">Asia/Tokyo (Japan Standard Time)</SelectItem>
+                          </SelectContent>
+                        </Select>
                       </div>
                     </div>
                     
@@ -168,11 +179,16 @@ const AdminSettings = () => {
                         <span className="font-medium">Date Format</span>
                       </div>
                       <div className="md:col-span-2">
-                        <select className="w-full rounded-md border border-input bg-background px-3 py-2">
-                          <option>MM/DD/YYYY</option>
-                          <option>DD/MM/YYYY</option>
-                          <option>YYYY-MM-DD</option>
-                        </select>
+                        <Select defaultValue="MM/DD/YYYY">
+                          <SelectTrigger className="w-full glass-effect dark:bg-sidebar-accent/30">
+                            <SelectValue placeholder="Select date format" />
+                          </SelectTrigger>
+                          <SelectContent className="glass-effect dark:bg-sidebar-accent/80 border-white/10 z-50">
+                            <SelectItem value="MM/DD/YYYY">MM/DD/YYYY</SelectItem>
+                            <SelectItem value="DD/MM/YYYY">DD/MM/YYYY</SelectItem>
+                            <SelectItem value="YYYY-MM-DD">YYYY-MM-DD</SelectItem>
+                          </SelectContent>
+                        </Select>
                       </div>
                     </div>
                   </div>
@@ -202,13 +218,18 @@ const AdminSettings = () => {
                         <p className="text-xs text-muted-foreground mt-1">Automatically log users out after inactivity</p>
                       </div>
                       <div className="md:col-span-2">
-                        <select className="w-full rounded-md border border-input bg-background px-3 py-2">
-                          <option>15 minutes</option>
-                          <option>30 minutes</option>
-                          <option>1 hour</option>
-                          <option>4 hours</option>
-                          <option>Never (not recommended)</option>
-                        </select>
+                        <Select defaultValue="15">
+                          <SelectTrigger className="w-full glass-effect dark:bg-sidebar-accent/30">
+                            <SelectValue placeholder="Select timeout" />
+                          </SelectTrigger>
+                          <SelectContent className="glass-effect dark:bg-sidebar-accent/80 border-white/10 z-50">
+                            <SelectItem value="15">15 minutes</SelectItem>
+                            <SelectItem value="30">30 minutes</SelectItem>
+                            <SelectItem value="60">1 hour</SelectItem>
+                            <SelectItem value="240">4 hours</SelectItem>
+                            <SelectItem value="0">Never (not recommended)</SelectItem>
+                          </SelectContent>
+                        </Select>
                       </div>
                     </div>
                     
@@ -228,11 +249,16 @@ const AdminSettings = () => {
                         <p className="text-xs text-muted-foreground mt-1">Enforce strong password requirements</p>
                       </div>
                       <div className="md:col-span-2">
-                        <select className="w-full rounded-md border border-input bg-background px-3 py-2">
-                          <option>High (12+ chars, special chars, numbers, mixed case)</option>
-                          <option>Medium (8+ chars, numbers, mixed case)</option>
-                          <option>Low (6+ chars)</option>
-                        </select>
+                        <Select defaultValue="high">
+                          <SelectTrigger className="w-full glass-effect dark:bg-sidebar-accent/30">
+                            <SelectValue placeholder="Select complexity" />
+                          </SelectTrigger>
+                          <SelectContent className="glass-effect dark:bg-sidebar-accent/80 border-white/10 z-50">
+                            <SelectItem value="high">High (12+ chars, special chars, numbers, mixed case)</SelectItem>
+                            <SelectItem value="medium">Medium (8+ chars, numbers, mixed case)</SelectItem>
+                            <SelectItem value="low">Low (6+ chars)</SelectItem>
+                          </SelectContent>
+                        </Select>
                       </div>
                     </div>
                   </div>
@@ -248,12 +274,17 @@ const AdminSettings = () => {
                         <span className="font-medium">Default Network</span>
                       </div>
                       <div className="md:col-span-2">
-                        <select className="w-full rounded-md border border-input bg-background px-3 py-2">
-                          <option>Ethereum Mainnet</option>
-                          <option>Ethereum Testnet (Goerli)</option>
-                          <option>Polygon</option>
-                          <option>Binance Smart Chain</option>
-                        </select>
+                        <Select defaultValue="ethereum">
+                          <SelectTrigger className="w-full glass-effect dark:bg-sidebar-accent/30">
+                            <SelectValue placeholder="Select network" />
+                          </SelectTrigger>
+                          <SelectContent className="glass-effect dark:bg-sidebar-accent/80 border-white/10 z-50">
+                            <SelectItem value="ethereum">Ethereum Mainnet</SelectItem>
+                            <SelectItem value="goerli">Ethereum Testnet (Goerli)</SelectItem>
+                            <SelectItem value="polygon">Polygon</SelectItem>
+                            <SelectItem value="bsc">Binance Smart Chain</SelectItem>
+                          </SelectContent>
+                        </Select>
                       </div>
                     </div>
                     
@@ -367,12 +398,17 @@ const AdminSettings = () => {
                         <span className="font-medium">Database Backup</span>
                       </div>
                       <div className="md:col-span-2">
-                        <select className="w-full rounded-md border border-input bg-background px-3 py-2">
-                          <option>Daily (at midnight)</option>
-                          <option>Weekly (Sunday at midnight)</option>
-                          <option>Monthly (First day at midnight)</option>
-                          <option>Never (not recommended)</option>
-                        </select>
+                        <Select defaultValue="daily">
+                          <SelectTrigger className="w-full glass-effect dark:bg-sidebar-accent/30">
+                            <SelectValue placeholder="Select frequency" />
+                          </SelectTrigger>
+                          <SelectContent className="glass-effect dark:bg-sidebar-accent/80 border-white/10 z-50">
+                            <SelectItem value="daily">Daily (at midnight)</SelectItem>
+                            <SelectItem value="weekly">Weekly (Sunday at midnight)</SelectItem>
+                            <SelectItem value="monthly">Monthly (First day at midnight)</SelectItem>
+                            <SelectItem value="never">Never (not recommended)</SelectItem>
+                          </SelectContent>
+                        </Select>
                       </div>
                     </div>
                   </div>
@@ -438,11 +474,16 @@ const AdminSettings = () => {
                         <p className="text-xs text-muted-foreground mt-1">Minimum severity level for alerts</p>
                       </div>
                       <div className="md:col-span-2">
-                        <select className="w-full rounded-md border border-input bg-background px-3 py-2">
-                          <option>Low (all threats)</option>
-                          <option>Medium (exclude low severity)</option>
-                          <option>High (critical issues only)</option>
-                        </select>
+                        <Select defaultValue="low">
+                          <SelectTrigger className="w-full glass-effect dark:bg-sidebar-accent/30">
+                            <SelectValue placeholder="Select threshold" />
+                          </SelectTrigger>
+                          <SelectContent className="glass-effect dark:bg-sidebar-accent/80 border-white/10 z-50">
+                            <SelectItem value="low">Low (all threats)</SelectItem>
+                            <SelectItem value="medium">Medium (exclude low severity)</SelectItem>
+                            <SelectItem value="high">High (critical issues only)</SelectItem>
+                          </SelectContent>
+                        </Select>
                       </div>
                     </div>
                     

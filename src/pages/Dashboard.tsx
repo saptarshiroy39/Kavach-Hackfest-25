@@ -1,9 +1,12 @@
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import MainLayout from '@/components/layout/MainLayout';
 import SecurityCard from '@/components/security/SecurityCard';
 import SecurityBadge from '@/components/security/SecurityBadge';
-import { mockApi, SecurityStatus, User, SecurityEvent } from '@/lib/mockDb';
+import PasswordHealthAnalysis from '@/components/security/PasswordHealthAnalysis';
+import DarkWebMonitoring from '@/components/security/DarkWebMonitoring';
+import PrivacyReport from '@/components/security/PrivacyReport';
+import EncryptedMessaging from '@/components/messaging/EncryptedMessaging';
 import { 
   Shield, 
   Key, 
@@ -15,45 +18,80 @@ import {
   Lock,
   User as UserIcon,
   Scan,
-  Loader2
+  Loader2,
+  Eye,
+  MessageSquare,
+  Clock
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { useToast } from '@/hooks/use-toast';
-import { motion, useAnimation, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { useLanguage } from '@/hooks/use-language';
+import { mockApi } from '@/lib/mockDb';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog';
+
+// Simple fallback components to avoid crashes
+const ErrorBoundary = ({ children, fallback }) => {
+  const [hasError, setHasError] = useState(false);
+  
+  useEffect(() => {
+    const handleError = (error) => {
+      console.error("Component error caught:", error);
+      setHasError(true);
+    };
+
+    window.addEventListener('error', handleError);
+    return () => window.removeEventListener('error', handleError);
+  }, []);
+
+  return hasError ? fallback : children;
+};
+
+// Simple Tabs Implementation
+const SimpleTabs = ({ tabs, activeTab, setActiveTab }) => {
+  return (
+    <div className="border-b mb-6">
+      <div className="flex overflow-x-auto space-x-2">
+        {tabs.map((tab) => (
+          <button 
+            key={tab.value}
+            className={`px-6 py-3 font-medium text-sm whitespace-nowrap rounded-t-lg transition-colors ${
+              activeTab === tab.value 
+                ? 'border-b-2 border-security-primary text-security-primary bg-muted/50' 
+                : 'text-muted-foreground hover:bg-muted/30'
+            }`}
+            onClick={() => setActiveTab(tab.value)}
+          >
+            {tab.label}
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+};
 
 const Dashboard = () => {
   const navigate = useNavigate();
-  const [user, setUser] = useState<User | null>(null);
-  const [securityStatus, setSecurityStatus] = useState<SecurityStatus | null>(null);
-  const [recentEvents, setRecentEvents] = useState<SecurityEvent[]>([]);
+  const [securityStatus, setSecurityStatus] = useState(null);
+  const [recentEvents, setRecentEvents] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [animateScore, setAnimateScore] = useState(0);
   const [animatePasswordHealth, setAnimatePasswordHealth] = useState(0);
+  const [activeTab, setActiveTab] = useState('overview');
   const [isScanningDialogOpen, setIsScanningDialogOpen] = useState(false);
   const [scanProgress, setScanProgress] = useState(0);
-  const [scanStatus, setScanStatus] = useState<'idle' | 'scanning' | 'complete'>('idle');
-  const [scanReport, setScanReport] = useState<{
-    issues: number;
-    recommendations: string[];
-    newScore: number;
-  } | null>(null);
-  const scoreAnimationControls = useAnimation();
-  const passwordHealthAnimationControls = useAnimation();
+  const [scanStage, setScanStage] = useState('initializing');
+  const [showTwoFactorAuthDialog, setShowTwoFactorAuthDialog] = useState(false);
   const { toast } = useToast();
   const { t } = useLanguage();
-  const scoreCircleRef = useRef<SVGCircleElement>(null);
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const userData = await mockApi.getCurrentUser();
         const statusData = await mockApi.getSecurityStatus();
         const eventsData = await mockApi.getSecurityEvents();
         
-        setUser(userData);
         setSecurityStatus(statusData);
         setRecentEvents(eventsData.slice(0, 3));
         setIsLoading(false);
@@ -70,68 +108,50 @@ const Dashboard = () => {
 
     fetchData();
   }, [toast]);
-
-  // Animate the security score and password health when data is loaded
   useEffect(() => {
     if (!securityStatus || isLoading) return;
 
-    // Animate score from 0 to actual value
-    const scoreAnimation = async () => {
-      await scoreAnimationControls.start({
-        strokeDasharray: [`0 283`, `${securityStatus.overallScore * 2.83} 283`],
-        transition: { duration: 1.5, ease: "easeOut" }
-      });
-    };
-
     // Animate the score number
-    const animateScoreNumber = () => {
-      const duration = 1500;
-      const frameDuration = 1000 / 60;
-      const totalFrames = Math.round(duration / frameDuration);
-      const finalValue = securityStatus.overallScore;
+    const duration = 1500;
+    const frameDuration = 1000 / 60;
+    const totalFrames = Math.round(duration / frameDuration);
+    // Make sure the score is between 0-100
+    const finalValue = Math.min(Math.max(securityStatus.overallScore || 0, 0), 100);
+    
+    let frame = 0;
+    const counter = setInterval(() => {
+      frame++;
+      const progress = frame / totalFrames;
+      const currentValue = Math.round(progress * finalValue);
       
-      let frame = 0;
-      const counter = setInterval(() => {
-        frame++;
-        const progress = frame / totalFrames;
-        const currentValue = Math.round(progress * finalValue);
-        
-        setAnimateScore(currentValue);
-        
-        if (frame === totalFrames) {
-          clearInterval(counter);
-        }
-      }, frameDuration);
-    };
-
-    // Animate password health from 0 to actual value
-    const passwordHealthAnimation = async () => {
-      const duration = 1500;
-      const frameDuration = 1000 / 60;
-      const totalFrames = Math.round(duration / frameDuration);
-      const finalValue = securityStatus.passwordHealth || 0;
+      setAnimateScore(currentValue);
       
-      let frame = 0;
-      const counter = setInterval(() => {
-        frame++;
-        const progress = frame / totalFrames;
-        const currentValue = Math.round(progress * finalValue);
-        
-        setAnimatePasswordHealth(currentValue);
-        
-        if (frame === totalFrames) {
-          clearInterval(counter);
-        }
-      }, frameDuration);
+      if (frame === totalFrames) {
+        clearInterval(counter);
+      }
+    }, frameDuration);    // Also animate password health score
+    let passwordFrame = 0;
+    const passwordValue = Math.min(Math.max(securityStatus.passwordHealth || 0, 0), 100);
+    const passwordCounter = setInterval(() => {
+      passwordFrame++;
+      const progress = passwordFrame / totalFrames;
+      const currentValue = Math.round(progress * passwordValue);
+      
+      setAnimatePasswordHealth(currentValue);
+      
+      if (passwordFrame === totalFrames) {
+        clearInterval(passwordCounter);
+      }
+    }, frameDuration);
+
+    return () => {
+      clearInterval(counter);
+      clearInterval(passwordCounter);
     };
+  }, [securityStatus, isLoading]);
 
-    // Start animations
-    scoreAnimation();
-    animateScoreNumber();
-    passwordHealthAnimation();
-  }, [securityStatus, isLoading, scoreAnimationControls]);
-
-  const formatDate = (dateString: string) => {
+  const formatDate = (dateString) => {
+    if (!dateString) return 'Unknown';
     const date = new Date(dateString);
     return date.toLocaleDateString('en-US', {
       day: 'numeric',
@@ -140,103 +160,72 @@ const Dashboard = () => {
     });
   };
 
-  const handleRunScan = () => {
-    setIsScanningDialogOpen(true);
-    setScanStatus('scanning');
-    setScanProgress(0);
-    
-    // Simulate a security scan with progress updates
-    const scanSteps = [
-      "Scanning passwords...",
-      "Checking for vulnerable accounts...",
-      "Analyzing authentication methods...",
-      "Looking for suspicious activities...",
-      "Validating security settings...",
-      "Scanning for malware...",
-      "Checking for data breaches...",
-      "Finalizing security report..."
-    ];
-    
-    let currentStep = 0;
-    const interval = setInterval(() => {
-      currentStep++;
-      setScanProgress(prev => {
-        const newProgress = Math.min(Math.round((currentStep / scanSteps.length) * 100), 100);
-        return newProgress;
-      });
-      
-      if (currentStep >= scanSteps.length) {
-        clearInterval(interval);
-        setTimeout(() => {
-          setScanStatus('complete');
-          
-          // Create a mock scan result report
-          const newScore = Math.min(securityStatus?.overallScore ? securityStatus.overallScore + 5 : 85, 100);
-          setScanReport({
-            issues: 3,
-            recommendations: [
-              "Enable two-factor authentication on all accounts",
-              "Update weak passwords for better security",
-              "Review and remove unused third-party app connections"
-            ],
-            newScore: newScore
-          });
-          
-          // Update security status with new date and score
-          if (securityStatus) {
-            setSecurityStatus({
-              ...securityStatus,
-              lastScanDate: new Date().toISOString(),
-              overallScore: newScore
-            });
-          }
-        }, 500);
-      }
-    }, 600);
+  // Convert snake_case to Title Case
+  const formatEventType = (eventType) => {
+    if (!eventType) return '';
+    return eventType
+      .split('_')
+      .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+      .join(' ');
   };
 
-  const handleScanComplete = () => {
-    setIsScanningDialogOpen(false);
-    setScanStatus('idle');
+  const handleRunScan = () => {
+    setIsScanningDialogOpen(true);
+    setScanProgress(0);
+    setScanStage('initializing');
     
-    // Show toast notification
-    toast({
-      title: "Security scan complete",
-      description: "Your security status has been updated.",
-    });
+    // Simulate scan progress
+    const totalDuration = 3000; // 3 seconds total
+    const progressInterval = 50; // Update every 50ms
+    const steps = totalDuration / progressInterval;
+    const increment = 100 / steps;
     
-    // Re-animate the security score
-    if (securityStatus && scanReport) {
-      scoreAnimationControls.start({
-        strokeDasharray: [`0 283`, `${scanReport.newScore * 2.83} 283`],
-        transition: { duration: 1.5, ease: "easeOut" }
-      });
+    let currentProgress = 0;
+    let intervalId = null;
+    
+    // Start progress animation
+    intervalId = setInterval(() => {
+      currentProgress += increment;
       
-      // Animate the score number
-      const duration = 1500;
-      const frameDuration = 1000 / 60;
-      const totalFrames = Math.round(duration / frameDuration);
-      const finalValue = scanReport.newScore;
+      // Update scan stage based on progress
+      if (currentProgress > 20 && currentProgress <= 40) {
+        setScanStage('scanning passwords');
+      } else if (currentProgress > 40 && currentProgress <= 60) {
+        setScanStage('checking vulnerabilities');
+      } else if (currentProgress > 60 && currentProgress <= 80) {
+        setScanStage('analyzing security status');
+      } else if (currentProgress > 80) {
+        setScanStage('finalizing');
+      }
       
-      let frame = 0;
-      const counter = setInterval(() => {
-        frame++;
-        const progress = frame / totalFrames;
-        const currentValue = Math.round(progress * finalValue);
-        
-        setAnimateScore(currentValue);
-        
-        if (frame === totalFrames) {
-          clearInterval(counter);
-        }
-      }, frameDuration);
-    }
+      if (currentProgress >= 100) {
+        clearInterval(intervalId);
+        currentProgress = 100;
+        setTimeout(() => {
+          setIsScanningDialogOpen(false);
+          toast({
+            title: "Scan Complete",
+            description: "Your security status has been updated.",
+          });
+        }, 500);
+      }
+      
+      setScanProgress(Math.min(Math.round(currentProgress), 100));
+    }, progressInterval);
   };
+
+  const tabs = [
+    { value: 'overview', label: 'Overview' },
+    { value: 'password-health', label: 'Password Health' },
+    { value: 'dark-web', label: 'Dark Web' },
+    { value: 'privacy', label: 'Privacy Report' },
+    { value: 'messaging', label: 'Encrypted Messaging' }
+  ];
 
   if (isLoading) {
     return (
       <MainLayout>
-        <div className="flex flex-col items-center justify-center h-full">
+        <div className="flex flex-col items-center justify-center h-[60vh]">
           <div className="w-16 h-16 border-t-4 border-security-primary rounded-full animate-spin"></div>
           <p className="mt-4 text-muted-foreground">Loading your security dashboard...</p>
         </div>
@@ -252,101 +241,29 @@ const Dashboard = () => {
           <div>
             <h1 className="text-3xl font-bold">{t('welcomeBack')}, User</h1>
             <p className="text-muted-foreground mt-1">
-              {t('securityDashboard')} - {t('lastUpdated')} {formatDate(securityStatus?.lastScanDate || '')}
+              Security Dashboard - Last updated: {formatDate(securityStatus?.lastScanDate)}
             </p>
           </div>
-          <div className="flex mt-4 md:mt-0">
+          <div className="flex gap-2 mt-4 md:mt-0">
+            <Button 
+              variant="outline"
+              onClick={() => setShowTwoFactorAuthDialog(true)}
+            >
+              Enable 2FA
+            </Button>
             <Button 
               className="bg-security-primary hover:bg-security-primary/90"
               onClick={handleRunScan}
             >
-              {t('runSecurityScan')}
+              Run Security Scan
             </Button>
           </div>
         </div>
 
-        {/* Security scan dialog */}
-        <Dialog open={isScanningDialogOpen} onOpenChange={setIsScanningDialogOpen}>
-          <DialogContent className="sm:max-w-md">
-            <DialogHeader>
-              <DialogTitle>
-                {scanStatus === 'scanning' ? 'Running Security Scan...' : 'Security Scan Complete'}
-              </DialogTitle>
-              <DialogDescription>
-                {scanStatus === 'scanning' 
-                  ? 'Please wait while we analyze your security status and check for vulnerabilities.' 
-                  : 'Your security scan has finished. Review the results below.'}
-              </DialogDescription>
-            </DialogHeader>
-            
-            <div className="py-4">
-              {scanStatus === 'scanning' ? (
-                <div className="space-y-4">
-                  <div className="flex items-center justify-center mb-4">
-                    <div className="w-16 h-16 relative">
-                      <Scan className="w-8 h-8 text-security-primary absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2" />
-                      <div className="w-16 h-16 border-4 border-security-primary/30 border-t-security-primary rounded-full animate-spin absolute inset-0"></div>
-                    </div>
-                  </div>
-                  <Progress value={scanProgress} className="h-2" />
-                  <p className="text-center text-sm text-muted-foreground">{scanProgress}% complete</p>
-                </div>
-              ) : (
-                <div className="space-y-4">
-                  <div className="flex items-center justify-center mb-4">
-                    <div className="w-16 h-16 rounded-full bg-security-primary/10 flex items-center justify-center">
-                      <CheckCircle2 className="w-10 h-10 text-security-primary" />
-                    </div>
-                  </div>
-                  
-                  <div className="rounded-lg border p-4 space-y-3">
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm font-medium">Security Score</span>
-                      <span className={`font-bold ${scanReport?.newScore && scanReport.newScore >= 80 ? 'text-security-primary' : 'text-security-warning'}`}>
-                        {scanReport?.newScore}%
-                      </span>
-                    </div>
-                    
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm font-medium">Issues Found</span>
-                      <span className="font-bold text-security-danger">{scanReport?.issues}</span>
-                    </div>
-                    
-                    <div className="space-y-2">
-                      <h4 className="text-sm font-medium">Recommendations:</h4>
-                      <ul className="text-sm space-y-1">
-                        {scanReport?.recommendations.map((rec, i) => (
-                          <li key={i} className="flex items-start">
-                            <span className="mr-2">•</span>
-                            <span>{rec}</span>
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                  </div>
-                </div>
-              )}
-            </div>
-            
-            <DialogFooter>
-              {scanStatus === 'scanning' ? (
-                <Button variant="outline" disabled>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Scanning...
-                </Button>
-              ) : (
-                <Button onClick={handleScanComplete}>
-                  Close and Apply Updates
-                </Button>
-              )}
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
-
         {/* Security score */}
         <SecurityCard
           className="mb-6"
-          title={t('securityScore')}
+          title="Security Score"
           icon={<Shield className="w-5 h-5 text-security-primary" />}
           status={
             securityStatus?.overallScore && securityStatus.overallScore >= 80
@@ -360,7 +277,7 @@ const Dashboard = () => {
             <div className="relative w-36 h-36 mx-auto md:mx-0">
               <div className="absolute inset-0 flex items-center justify-center flex-col">
                 <span className="text-4xl font-bold">{animateScore}%</span>
-                <span className="text-sm text-muted-foreground">{t('protected')}</span>
+                <span className="text-sm text-muted-foreground">Protected</span>
               </div>
               <svg className="w-full h-full transform -rotate-90" viewBox="0 0 100 100">
                 <circle
@@ -372,7 +289,6 @@ const Dashboard = () => {
                   strokeWidth="8"
                 />
                 <motion.circle
-                  ref={scoreCircleRef}
                   cx="50"
                   cy="50"
                   r="45"
@@ -383,10 +299,11 @@ const Dashboard = () => {
                     ? '#ff9f0a' 
                     : '#ff453a'}
                   strokeWidth="8"
-                  strokeDasharray={`0 283`}
+                  strokeDasharray={`${securityStatus?.overallScore ? securityStatus.overallScore * 2.83 : 0} 283`}
                   strokeLinecap="round"
-                  animate={scoreAnimationControls}
                   initial={{ strokeDasharray: "0 283" }}
+                  animate={{ strokeDasharray: `${securityStatus?.overallScore ? securityStatus.overallScore * 2.83 : 0} 283` }}
+                  transition={{ duration: 1.5, ease: "easeOut" }}
                 />
               </svg>
             </div>
@@ -394,17 +311,17 @@ const Dashboard = () => {
             <div className="flex-1 space-y-4 mt-4 md:mt-0">
               <div>
                 <div className="flex justify-between mb-1">
-                  <span className="text-sm font-medium">{t('passwordHealth')}</span>
+                  <span className="text-sm font-medium">Password Health</span>
                   <span className="text-sm font-medium">{animatePasswordHealth}%</span>
                 </div>
-                <motion.div className="h-2 bg-muted rounded-full overflow-hidden">
+                <div className="h-2 bg-muted rounded-full overflow-hidden">
                   <motion.div 
                     className="h-full bg-security-primary rounded-full"
                     initial={{ width: "0%" }}
                     animate={{ width: `${animatePasswordHealth}%` }}
                     transition={{ duration: 1.5, ease: "easeOut" }}
                   />
-                </motion.div>
+                </div>
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="flex items-center">
@@ -413,7 +330,7 @@ const Dashboard = () => {
                   </div>
                   <div>
                     <p className="text-sm font-medium">{securityStatus?.vulnerableAccounts || 0}</p>
-                    <p className="text-xs text-muted-foreground">{t('vulnerableAccounts')}</p>
+                    <p className="text-xs text-muted-foreground">Vulnerable Accounts</p>
                   </div>
                 </div>
                 <div className="flex items-center">
@@ -422,7 +339,7 @@ const Dashboard = () => {
                   </div>
                   <div>
                     <p className="text-sm font-medium">{securityStatus?.reusedPasswords || 0}</p>
-                    <p className="text-xs text-muted-foreground">{t('reusedPasswords')}</p>
+                    <p className="text-xs text-muted-foreground">Reused Passwords</p>
                   </div>
                 </div>
               </div>
@@ -430,159 +347,324 @@ const Dashboard = () => {
           </div>
         </SecurityCard>
 
-        {/* Security overview cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          <SecurityCard
-            title={t('authentication')}
-            icon={<Lock className="w-5 h-5 text-security-primary" />}
-            status={user?.hasTwoFactor ? 'secure' : 'warning'}
-          >
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <span className="text-sm">{t('twoFactor')}</span>
-                <SecurityBadge 
-                  status={user?.hasTwoFactor ? 'secure' : 'danger'} 
-                  text={user?.hasTwoFactor ? t('enabled') : t('disabled')}
-                />
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-sm">{t('biometric')}</span>
-                <SecurityBadge 
-                  status={user?.hasBiometrics ? 'secure' : 'warning'} 
-                  text={user?.hasBiometrics ? t('enabled') : t('disabled')}
-                />
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-sm">{t('blockchainVerify')}</span>
-                <SecurityBadge 
-                  status={user?.hasBlockchainVerification ? 'secure' : 'warning'} 
-                  text={user?.hasBlockchainVerification ? t('enabled') : t('disabled')}
-                />
-              </div>
-              <Button 
-                className="w-full mt-2" 
-                variant="outline" 
-                size="sm"
-                onClick={() => navigate('/authentication')}
-              >
-                <span>{t('manage')}</span>
-                <ArrowRight className="ml-2 w-4 h-4" />
-              </Button>
-            </div>
-          </SecurityCard>
-
-          <SecurityCard
-            title={t('passwordVault')}
-            icon={<Key className="w-5 h-5 text-security-primary" />}
-            status={securityStatus?.passwordHealth && securityStatus.passwordHealth >= 80 ? 'secure' : 'warning'}
-          >
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <span className="text-sm">{t('totalPasswords')}</span>
-                <span className="font-medium">5</span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-sm">{t('weakPasswords')}</span>
-                <span className="text-security-danger font-medium">{securityStatus?.weakPasswords || 0}</span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-sm">{t('passwordUpdated')}</span>
-                <span className="text-xs text-muted-foreground">{formatDate(user?.passwordLastChanged || '')}</span>
-              </div>
-              <Button 
-                className="w-full mt-2" 
-                variant="outline" 
-                size="sm"
-                onClick={() => navigate('/password-vault')}
-              >
-                <span>{t('openVault')}</span>
-                <ArrowRight className="ml-2 w-4 h-4" />
-              </Button>
-            </div>
-          </SecurityCard>
-
-          <SecurityCard
-            title={t('accountSettings')}
-            icon={<UserIcon className="w-5 h-5 text-security-primary" />}
-            status="secure"
-          >
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <span className="text-sm">{t('accountType')}</span>
-                <span className="capitalize">{user?.subscriptionTier || 'Free'}</span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-sm">{t('email')}</span>
-                <span className="text-xs truncate max-w-[150px]">{user?.email}</span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-sm">{t('phone')}</span>
-                <span className="text-xs">{user?.phone || t('notAdded')}</span>
-              </div>
-              <Button 
-                className="w-full mt-2" 
-                variant="outline" 
-                size="sm" 
-                onClick={() => navigate('/settings')}
-              >
-                <span>{t('accountSettings')}</span>
-                <ArrowRight className="ml-2 w-4 h-4" />
-              </Button>
-            </div>
-          </SecurityCard>
+        {/* Tabs for Security Features */}
+        <div className="mb-4 border p-2 rounded-lg bg-background shadow-sm">
+          <SimpleTabs 
+            tabs={tabs}
+            activeTab={activeTab}
+            setActiveTab={setActiveTab}
+          />
         </div>
 
-        {/* Recent security events */}
-        <SecurityCard
-          title={t('recentSecurityEvents')}
-          icon={<Bell className="w-5 h-5 text-security-primary" />}
-          action={
-            <Button 
-              variant="outline" 
-              size="sm"
-              onClick={() => navigate('/notifications')}
-            >
-              <span>{t('viewAll')}</span>
-              <ExternalLink className="ml-2 w-4 h-4" />
-            </Button>
-          }
-        >
-          <div className="space-y-4">
-            {recentEvents.length > 0 ? (
-              recentEvents.map((event) => (
-                <div key={event.id} className="flex items-start space-x-4 p-3 rounded-lg hover:bg-muted/50 transition-colors">
-                  <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
-                    event.severity === 'high' 
-                      ? 'bg-security-danger/10 text-security-danger' 
-                      : event.severity === 'medium'
-                      ? 'bg-security-warning/10 text-security-warning'
-                      : 'bg-security-secondary/10 text-security-secondary'
-                  }`}>
-                    {event.severity === 'high' ? (
-                      <AlertCircle className="w-5 h-5" />
-                    ) : event.severity === 'medium' ? (
-                      <Bell className="w-5 h-5" />
-                    ) : (
-                      <CheckCircle2 className="w-5 h-5" />
-                    )}
-                  </div>
-                  <div className="flex-1">
-                    <div className="flex justify-between items-start mb-1">
-                      <h4 className="font-medium text-sm">{event.description}</h4>
-                      <span className="text-xs text-muted-foreground">{formatDate(event.timestamp)}</span>
+        {/* Tab Content */}
+        <div>
+          {activeTab === 'overview' && (
+            <div className="space-y-6">
+              {/* Security overview cards */}
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <SecurityCard
+                  title="Authentication"
+                  icon={<Lock className="w-5 h-5 text-security-primary" />}
+                  status="warning"
+                >
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm">Two-Factor Auth</span>
+                      <SecurityBadge 
+                        status="danger" 
+                        text="Disabled"
+                      />
                     </div>
-                    <p className="text-sm text-muted-foreground">{event.type} - {event.location}</p>
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm">Biometric</span>
+                      <SecurityBadge 
+                        status="warning" 
+                        text="Disabled"
+                      />
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm">Blockchain Verify</span>
+                      <SecurityBadge 
+                        status="warning" 
+                        text="Disabled"
+                      />
+                    </div>
+                    <Button 
+                      className="w-full mt-2" 
+                      variant="outline" 
+                      size="sm"
+                      onClick={() => navigate('/authentication')}
+                    >
+                      <span>Manage</span>
+                      <ArrowRight className="ml-2 w-4 h-4" />
+                    </Button>
                   </div>
-                </div>
-              ))
-            ) : (
-              <div className="text-center py-4">
-                <p className="text-muted-foreground">{t('noRecentEvents')}</p>
+                </SecurityCard>
+
+                <SecurityCard
+                  title="Password Vault"
+                  icon={<Key className="w-5 h-5 text-security-primary" />}
+                  status={securityStatus?.passwordHealth && securityStatus.passwordHealth >= 80 ? 'secure' : 'warning'}
+                >
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm">Total Passwords</span>
+                      <span className="font-medium">5</span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm">Weak Passwords</span>
+                      <span className="text-security-danger font-medium">{securityStatus?.weakPasswords || 0}</span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm">Last Updated</span>
+                      <span className="text-xs text-muted-foreground">2 days ago</span>
+                    </div>
+                    <Button 
+                      className="w-full mt-2" 
+                      variant="outline" 
+                      size="sm"
+                      onClick={() => navigate('/password-vault')}
+                    >
+                      <span>Open Vault</span>
+                      <ArrowRight className="ml-2 w-4 h-4" />
+                    </Button>
+                  </div>
+                </SecurityCard>
+
+                <SecurityCard
+                  title="Account Settings"
+                  icon={<UserIcon className="w-5 h-5 text-security-primary" />}
+                  status="secure"
+                >
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm">Email Verification</span>
+                      <SecurityBadge 
+                        status="secure" 
+                        text="Verified"
+                      />
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm">Recovery Email</span>
+                      <SecurityBadge 
+                        status="secure" 
+                        text="Set"
+                      />
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm">Account Activity</span>
+                      <span className="text-xs text-muted-foreground">Normal</span>
+                    </div>
+                    <Button 
+                      className="w-full mt-2" 
+                      variant="outline" 
+                      size="sm"
+                      onClick={() => navigate('/settings')}
+                    >
+                      <span>Manage Settings</span>
+                      <ArrowRight className="ml-2 w-4 h-4" />
+                    </Button>
+                  </div>
+                </SecurityCard>
               </div>
-            )}
-          </div>
-        </SecurityCard>
+
+              <SecurityCard 
+                title="Recent Events"
+                icon={<Bell className="w-5 h-5 text-security-primary" />}
+                status="secure"
+              >
+                <div className="space-y-4">
+                  {recentEvents.map((event, index) => (
+                    <div key={index} className="flex items-start">
+                      <div className={`w-8 h-8 rounded-full flex items-center justify-center mr-3 ${
+                        event.severity === 'medium' 
+                          ? 'bg-security-warning/10' 
+                          : event.severity === 'high' 
+                          ? 'bg-security-danger/10' 
+                          : 'bg-security-success/10'
+                      }`}>
+                        {event.severity === 'medium' ? (
+                          <AlertCircle className="w-4 h-4 text-security-warning" />
+                        ) : event.severity === 'high' ? (
+                          <AlertCircle className="w-4 h-4 text-security-danger" />
+                        ) : (
+                          <CheckCircle2 className="w-4 h-4 text-security-success" />
+                        )}
+                      </div>
+                      <div className="flex-1">
+                        <p className="text-sm font-medium">{formatEventType(event.type)}</p>
+                        <p className="text-xs text-muted-foreground">{event.description}</p>
+                        <div className="flex items-center mt-1">
+                          <span className="text-xs text-muted-foreground">{formatDate(event.timestamp)}</span>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                  <Button 
+                    className="w-full mt-2" 
+                    variant="outline" 
+                    size="sm"
+                    onClick={() => navigate('/notifications')}
+                  >
+                    <span>View All Events</span>
+                    <ArrowRight className="ml-2 w-4 h-4" />
+                  </Button>
+                </div>
+              </SecurityCard>
+            </div>
+          )}          {activeTab === 'password-health' && (
+            <PasswordHealthAnalysis />
+          )}
+
+          {activeTab === 'dark-web' && (
+            <DarkWebMonitoring />
+          )}
+
+          {activeTab === 'privacy' && (
+            <PrivacyReport />
+          )}
+
+          {activeTab === 'messaging' && (
+            <EncryptedMessaging />
+          )}
+        </div>
       </div>
+
+      {/* Security scan dialog */}
+      <Dialog open={isScanningDialogOpen} onOpenChange={setIsScanningDialogOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Running Security Scan...</DialogTitle>
+            <DialogDescription>
+              Please wait while we analyze your security status and check for vulnerabilities.
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="py-8">
+            <div className="flex flex-col items-center mb-6">
+              <div className="relative w-24 h-24 mb-4">
+                {/* Outer pulsing circle */}
+                <motion.div 
+                  className="absolute inset-0 rounded-full bg-security-primary/10"
+                  animate={{ 
+                    scale: [1, 1.2, 1],
+                    opacity: [0.7, 0.2, 0.7]
+                  }}
+                  transition={{ 
+                    duration: 2,
+                    repeat: Infinity,
+                    ease: "easeInOut"
+                  }}
+                />
+                
+                {/* Inner spinner */}
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <div className="w-16 h-16 border-4 border-security-primary/30 border-t-security-primary rounded-full animate-spin" />
+                </div>
+                
+                {/* Center icon */}
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <motion.div
+                    animate={{ 
+                      opacity: [0.5, 1, 0.5],
+                      scale: [0.9, 1, 0.9]
+                    }}
+                    transition={{ 
+                      duration: 1.5,
+                      repeat: Infinity,
+                      ease: "easeInOut"
+                    }}
+                  >
+                    <Shield className="w-6 h-6 text-security-primary" />
+                  </motion.div>
+                </div>
+              </div>
+              
+              {/* Scan status text */}
+              <motion.div
+                className="text-sm font-medium text-center mb-2"
+                animate={{ opacity: [0.7, 1, 0.7] }}
+                transition={{ 
+                  duration: 1.5,
+                  repeat: Infinity,
+                  ease: "easeInOut"
+                }}
+              >
+                {scanStage === 'initializing' && "Initializing scan..."}
+                {scanStage === 'scanning passwords' && "Scanning passwords..."}
+                {scanStage === 'checking vulnerabilities' && "Checking for vulnerabilities..."}
+                {scanStage === 'analyzing security status' && "Analyzing security status..."}
+                {scanStage === 'finalizing' && "Finalizing results..."}
+              </motion.div>
+            </div>
+            
+            {/* Progress bar with gradient */}
+            <div className="relative h-3 w-full bg-muted rounded-full overflow-hidden mb-2">
+              <motion.div 
+                className="h-full bg-gradient-to-r from-blue-500 via-security-primary to-green-500 rounded-full"
+                initial={{ width: "0%" }}
+                animate={{ width: `${scanProgress}%` }}
+                transition={{ ease: "easeInOut" }}
+              />
+            </div>
+            
+            <div className="flex justify-between items-center">
+              <motion.div 
+                className="text-xs text-muted-foreground"
+                animate={{ opacity: scanProgress < 10 ? 0 : 1 }}
+              >
+                <Clock className="inline w-3 h-3 mr-1" />
+                <span>Estimated time: {Math.max(3 - (scanProgress/33), 0).toFixed(0)} sec</span>
+              </motion.div>
+              <p className="text-right text-sm font-medium">
+                {scanProgress}% complete
+              </p>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Basic 2FA Dialog */}
+      <Dialog open={showTwoFactorAuthDialog} onOpenChange={setShowTwoFactorAuthDialog}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Enable Two-Factor Authentication</DialogTitle>
+            <DialogDescription>
+              Enhance your account security by enabling two-factor authentication.
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="py-4">
+            <div className="space-y-4">
+              <div className="flex items-center p-3 border rounded-md">
+                <div className="mr-3 bg-blue-100 p-2 rounded-full">
+                  <Shield className="h-5 w-5 text-blue-600" />
+                </div>
+                <div>
+                  <h4 className="font-medium">Authenticator App</h4>
+                  <p className="text-sm text-muted-foreground">Use Google Authenticator or similar apps</p>
+                </div>
+                <Button className="ml-auto" variant="outline">Set Up</Button>
+              </div>
+              
+              <div className="flex items-center p-3 border rounded-md">
+                <div className="mr-3 bg-green-100 p-2 rounded-full">
+                  <MessageSquare className="h-5 w-5 text-green-600" />
+                </div>
+                <div>
+                  <h4 className="font-medium">SMS Verification</h4>
+                  <p className="text-sm text-muted-foreground">Receive codes via text message</p>
+                </div>
+                <Button className="ml-auto" variant="outline">Set Up</Button>
+              </div>
+            </div>
+          </div>
+          
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowTwoFactorAuthDialog(false)}>Cancel</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </MainLayout>
   );
 };

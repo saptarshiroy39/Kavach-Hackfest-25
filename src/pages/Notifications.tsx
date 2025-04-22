@@ -14,9 +14,48 @@ import {
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 
+interface NotificationSetting {
+  id: string;
+  title: string;
+  description: string;
+  enabled: boolean;
+}
+
 const Notifications = () => {
   const [notifications, setNotifications] = useState<SecurityEvent[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [notificationSettings, setNotificationSettings] = useState<NotificationSetting[]>([
+    {
+      id: 'security-alerts',
+      title: 'Security Alerts',
+      description: 'Critical security notifications',
+      enabled: true
+    },
+    {
+      id: 'login-attempts',
+      title: 'Login Attempts',
+      description: 'Notify on successful and failed logins',
+      enabled: true
+    },
+    {
+      id: 'password-changes',
+      title: 'Password Changes',
+      description: 'Notify when passwords are updated',
+      enabled: true
+    },
+    {
+      id: 'device-sync',
+      title: 'Device Sync',
+      description: 'Notify when a new device is added',
+      enabled: true
+    },
+    {
+      id: 'marketing-updates',
+      title: 'Marketing Updates',
+      description: 'News and feature announcements',
+      enabled: false
+    }
+  ]);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -50,7 +89,6 @@ const Notifications = () => {
       description: "All notifications marked as read",
     });
   };
-
   const clearAllNotifications = () => {
     setNotifications([]);
     toast({
@@ -65,6 +103,26 @@ const Notifications = () => {
       title: "Notification removed",
       description: "The notification has been deleted",
     });
+  };
+  
+  const toggleNotificationSetting = (settingId: string) => {
+    setNotificationSettings(prev => 
+      prev.map(setting => 
+        setting.id === settingId 
+          ? { ...setting, enabled: !setting.enabled } 
+          : setting
+      )
+    );
+    
+    // Find the setting that was toggled
+    const setting = notificationSettings.find(s => s.id === settingId);
+    if (setting) {
+      const newStatus = !setting.enabled ? 'Enabled' : 'Disabled';
+      toast({
+        title: `${setting.title} ${newStatus}`,
+        description: `Notification setting has been ${newStatus.toLowerCase()}`,
+      });
+    }
   };
 
   if (isLoading) {
@@ -176,48 +234,35 @@ const Notifications = () => {
               </p>
             </div>
           )}
-        </SecurityCard>
-
-        <SecurityCard
+        </SecurityCard>        <SecurityCard
           title="Notification Settings"
           icon={<Settings className="w-5 h-5 text-security-primary" />}
         >
           <div className="space-y-4">
-            <div className="flex items-center justify-between p-3 border border-muted rounded-lg">
-              <div>
-                <p className="font-medium">Security Alerts</p>
-                <p className="text-sm text-muted-foreground">Critical security notifications</p>
+            {notificationSettings.map(setting => (
+              <div 
+                key={setting.id} 
+                className={`flex items-center justify-between p-3 border rounded-lg ${
+                  setting.enabled 
+                    ? 'border-muted'
+                    : 'border-muted bg-muted/20'
+                }`}
+              >
+                <div>
+                  <p className="font-medium">{setting.title}</p>
+                  <p className="text-sm text-muted-foreground">{setting.description}</p>
+                </div>                <Button 
+                  variant={setting.enabled ? "outline" : "outline"} 
+                  size="sm"
+                  onClick={() => toggleNotificationSetting(setting.id)}
+                  className={setting.enabled 
+                    ? "bg-green-500/10 text-green-500 border-green-500/50 hover:bg-green-500/20 hover:text-green-600" 
+                    : "bg-red-500/10 text-red-500 border-red-500/50 hover:bg-red-500/20 hover:text-red-600"}
+                >
+                  {setting.enabled ? "Enabled" : "Disabled"}
+                </Button>
               </div>
-              <Button variant="outline" size="sm">Enabled</Button>
-            </div>
-            <div className="flex items-center justify-between p-3 border border-muted rounded-lg">
-              <div>
-                <p className="font-medium">Login Attempts</p>
-                <p className="text-sm text-muted-foreground">Notify on successful and failed logins</p>
-              </div>
-              <Button variant="outline" size="sm">Enabled</Button>
-            </div>
-            <div className="flex items-center justify-between p-3 border border-muted rounded-lg">
-              <div>
-                <p className="font-medium">Password Changes</p>
-                <p className="text-sm text-muted-foreground">Notify when passwords are updated</p>
-              </div>
-              <Button variant="outline" size="sm">Enabled</Button>
-            </div>
-            <div className="flex items-center justify-between p-3 border border-muted rounded-lg">
-              <div>
-                <p className="font-medium">Device Sync</p>
-                <p className="text-sm text-muted-foreground">Notify when a new device is added</p>
-              </div>
-              <Button variant="outline" size="sm">Enabled</Button>
-            </div>
-            <div className="flex items-center justify-between p-3 border border-muted rounded-lg">
-              <div>
-                <p className="font-medium">Marketing Updates</p>
-                <p className="text-sm text-muted-foreground">News and feature announcements</p>
-              </div>
-              <Button variant="outline" size="sm">Disabled</Button>
-            </div>
+            ))}
           </div>
         </SecurityCard>
       </div>

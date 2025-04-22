@@ -15,7 +15,9 @@ import {
   Moon,
   LogOut,
   Shield,
-  Save
+  Save,
+  Plus,
+  Laptop
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
@@ -33,6 +35,11 @@ const Settings = () => {
   const { language, setLanguage, t } = useLanguage();
   const [isEditingProfile, setIsEditingProfile] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [connectedDevices, setConnectedDevices] = useState([
+    { id: 1, name: 'Windows PC', type: 'desktop', status: 'active', lastActive: 'current' },
+    { id: 2, name: 'iPhone 13', type: 'mobile', status: 'inactive', lastActive: '1 hour ago' },
+    { id: 3, name: 'MacBook Pro', type: 'laptop', status: 'inactive', lastActive: '3 days ago' }
+  ]);
 
   const handleSave = () => {
     toast({
@@ -87,6 +94,32 @@ const Settings = () => {
     toast({
       title: "Language changed",
       description: `Language has been changed to ${languageNames[value as Language]}`,
+    });
+  };
+
+  const handleRemoveDevice = (deviceId) => {
+    setConnectedDevices(prevDevices => prevDevices.filter(device => device.id !== deviceId));
+    toast({
+      title: "Device removed",
+      description: "The device has been removed from your account successfully",
+    });
+  };
+
+  const handleAddDevice = () => {
+    // In a real app, this would show a dialog to scan a QR code or enter a device code
+    // For demo purposes, we'll just add a new device
+    const newDevice = {
+      id: Date.now(),
+      name: 'New Device',
+      type: 'laptop',
+      status: 'inactive',
+      lastActive: 'just added'
+    };
+    setConnectedDevices(prev => [...prev, newDevice]);
+    toast({
+      title: "Device added",
+      description: "A new device has been added to your account",
+      variant: "default"
     });
   };
 
@@ -386,62 +419,55 @@ const Settings = () => {
                 icon={<Smartphone className="w-5 h-5 text-security-primary" />}
               >
                 <div className="space-y-4">
-                  <motion.div 
-                    className="p-3 border border-muted rounded-lg glass-effect dark:bg-sidebar-accent/10"
-                    whileHover={{ scale: 1.02 }}
-                    transition={{ type: "spring", stiffness: 400 }}
-                  >
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center">
-                        <Monitor className="w-5 h-5 text-security-primary mr-2" />
-                        <div>
-                          <p className="text-sm font-medium">Windows PC</p>
-                          <p className="text-xs text-muted-foreground">{t('currentDevice')}</p>
+                  {connectedDevices.map(device => (
+                    <motion.div 
+                      key={device.id}
+                      className="p-3 border border-muted rounded-lg glass-effect dark:bg-sidebar-accent/10"
+                      whileHover={{ scale: 1.02 }}
+                      transition={{ type: "spring", stiffness: 400 }}
+                    >
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center">
+                          {device.type === 'desktop' ? (
+                            <Monitor className="w-5 h-5 text-security-primary mr-2" />
+                          ) : device.type === 'laptop' ? (
+                            <Laptop className="w-5 h-5 text-security-primary mr-2" />
+                          ) : (
+                            <Smartphone className="w-5 h-5 text-security-primary mr-2" />
+                          )}
+                          <div>
+                            <p className="text-sm font-medium">{device.name}</p>
+                            <p className="text-xs text-muted-foreground">
+                              {device.lastActive === 'current' ? t('currentDevice') : `Last active: ${device.lastActive}`}
+                            </p>
+                          </div>
                         </div>
+                        {device.lastActive === 'current' ? (
+                          <Button variant="outline" size="sm" disabled className="glass-effect dark:bg-sidebar-accent/30">
+                            {t('active')}
+                          </Button>
+                        ) : (
+                          <Button 
+                            variant="outline" 
+                            size="sm" 
+                            className="glass-effect dark:bg-sidebar-accent/30"
+                            onClick={() => handleRemoveDevice(device.id)}
+                          >
+                            {t('remove')}
+                          </Button>
+                        )}
                       </div>
-                      <Button variant="outline" size="sm" disabled className="glass-effect dark:bg-sidebar-accent/30">
-                        {t('active')}
-                      </Button>
-                    </div>
-                  </motion.div>
-
-                  <motion.div 
-                    className="p-3 border border-muted rounded-lg glass-effect dark:bg-sidebar-accent/10"
-                    whileHover={{ scale: 1.02 }}
-                    transition={{ type: "spring", stiffness: 400 }}
+                    </motion.div>
+                  ))}
+                  
+                  <Button 
+                    variant="outline" 
+                    className="w-full mt-2 glass-effect dark:bg-sidebar-accent/30"
+                    onClick={handleAddDevice}
                   >
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center">
-                        <Smartphone className="w-5 h-5 text-security-primary mr-2" />
-                        <div>
-                          <p className="text-sm font-medium">iPhone 13</p>
-                          <p className="text-xs text-muted-foreground">Last active: 1 hour ago</p>
-                        </div>
-                      </div>
-                      <Button variant="outline" size="sm" className="glass-effect dark:bg-sidebar-accent/30">
-                        Remove
-                      </Button>
-                    </div>
-                  </motion.div>
-
-                  <motion.div 
-                    className="p-3 border border-muted rounded-lg glass-effect dark:bg-sidebar-accent/10"
-                    whileHover={{ scale: 1.02 }}
-                    transition={{ type: "spring", stiffness: 400 }}
-                  >
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center">
-                        <Monitor className="w-5 h-5 text-security-primary mr-2" />
-                        <div>
-                          <p className="text-sm font-medium">MacBook Pro</p>
-                          <p className="text-xs text-muted-foreground">Last active: 3 days ago</p>
-                        </div>
-                      </div>
-                      <Button variant="outline" size="sm" className="glass-effect dark:bg-sidebar-accent/30">
-                        Remove
-                      </Button>
-                    </div>
-                  </motion.div>
+                    <Plus className="h-4 w-4 mr-2" />
+                    Add New Device
+                  </Button>
                 </div>
               </SecurityCard>
             </motion.div>
