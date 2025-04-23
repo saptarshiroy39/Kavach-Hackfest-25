@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
@@ -8,6 +7,7 @@ import { Eye, EyeOff, Lock } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { mockApi } from '@/lib/mockDb';
 import { motion } from 'framer-motion';
+import { useLanguage } from '@/hooks/use-language';
 
 interface ChangePasswordDialogProps {
   open: boolean;
@@ -22,6 +22,7 @@ const ChangePasswordDialog: React.FC<ChangePasswordDialogProps> = ({ open, onOpe
   const [loading, setLoading] = useState(false);
   
   const { toast } = useToast();
+  const { t } = useLanguage();
   
   const toggleShowPassword = () => {
     setShowPassword(!showPassword);
@@ -30,8 +31,8 @@ const ChangePasswordDialog: React.FC<ChangePasswordDialogProps> = ({ open, onOpe
   const handleChangePassword = async () => {
     if (!currentPassword) {
       toast({
-        title: "Current password required",
-        description: "Please enter your current password.",
+        title: t("Current password required"),
+        description: t("Please enter your current password."),
         variant: "destructive",
       });
       return;
@@ -39,8 +40,8 @@ const ChangePasswordDialog: React.FC<ChangePasswordDialogProps> = ({ open, onOpe
     
     if (!newPassword) {
       toast({
-        title: "New password required",
-        description: "Please enter a new password.",
+        title: t("New password required"),
+        description: t("Please enter a new password."),
         variant: "destructive",
       });
       return;
@@ -48,8 +49,8 @@ const ChangePasswordDialog: React.FC<ChangePasswordDialogProps> = ({ open, onOpe
     
     if (newPassword !== confirmPassword) {
       toast({
-        title: "Passwords don't match",
-        description: "New password and confirmation must match.",
+        title: t("Passwords don't match"),
+        description: t("New password and confirmation must match."),
         variant: "destructive",
       });
       return;
@@ -62,8 +63,8 @@ const ChangePasswordDialog: React.FC<ChangePasswordDialogProps> = ({ open, onOpe
       
       if (result.success) {
         toast({
-          title: "Password changed",
-          description: "Your password has been successfully updated.",
+          title: t("Password changed"),
+          description: t("Your password has been successfully updated."),
         });
         onOpenChange(false);
         
@@ -73,15 +74,15 @@ const ChangePasswordDialog: React.FC<ChangePasswordDialogProps> = ({ open, onOpe
         setConfirmPassword('');
       } else {
         toast({
-          title: "Failed to change password",
-          description: result.error || "An error occurred when changing your password.",
+          title: t("Failed to change password"),
+          description: t(result.error || "An error occurred when changing your password."),
           variant: "destructive",
         });
       }
     } catch (error) {
       toast({
-        title: "Error",
-        description: "An unexpected error occurred. Please try again later.",
+        title: t("Error"),
+        description: t("An unexpected error occurred. Please try again later."),
         variant: "destructive",
       });
     } finally {
@@ -98,11 +99,11 @@ const ChangePasswordDialog: React.FC<ChangePasswordDialogProps> = ({ open, onOpe
   };
   
   const getStrengthLabel = (strength: number) => {
-    if (strength === 0) return 'Enter a password';
-    if (strength <= 25) return 'Weak';
-    if (strength <= 50) return 'Fair';
-    if (strength <= 75) return 'Good';
-    return 'Strong';
+    if (strength === 0) return t('Enter a password');
+    if (strength <= 25) return t('Weak');
+    if (strength <= 50) return t('Fair');
+    if (strength <= 75) return t('Good');
+    return t('Strong');
   };
   
   const getStrengthColor = (strength: number) => {
@@ -117,15 +118,15 @@ const ChangePasswordDialog: React.FC<ChangePasswordDialogProps> = ({ open, onOpe
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md glass-card dark:bg-background/80">
         <DialogHeader>
-          <DialogTitle>Change Password</DialogTitle>
+          <DialogTitle>{t("Change Password")}</DialogTitle>
           <DialogDescription>
-            Update your password to keep your account secure.
+            {t("Update your password to keep your account secure.")}
           </DialogDescription>
         </DialogHeader>
         
         <div className="space-y-4 py-4">
           <div className="space-y-2">
-            <Label htmlFor="current-password">Current Password</Label>
+            <Label htmlFor="current-password">{t("Current Password")}</Label>
             <div className="relative">
               <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-5 h-5" />
               <Input
@@ -146,7 +147,7 @@ const ChangePasswordDialog: React.FC<ChangePasswordDialogProps> = ({ open, onOpe
           </div>
           
           <div className="space-y-2">
-            <Label htmlFor="new-password">New Password</Label>
+            <Label htmlFor="new-password">{t("New Password")}</Label>
             <div className="relative">
               <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-5 h-5" />
               <Input
@@ -174,7 +175,7 @@ const ChangePasswordDialog: React.FC<ChangePasswordDialogProps> = ({ open, onOpe
           </div>
           
           <div className="space-y-2">
-            <Label htmlFor="confirm-password">Confirm New Password</Label>
+            <Label htmlFor="confirm-password">{t("Confirm New Password")}</Label>
             <div className="relative">
               <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-5 h-5" />
               <Input
@@ -186,7 +187,7 @@ const ChangePasswordDialog: React.FC<ChangePasswordDialogProps> = ({ open, onOpe
               />
             </div>
             {confirmPassword && newPassword !== confirmPassword && (
-              <p className="text-xs text-security-danger">Passwords don't match</p>
+              <p className="text-xs text-security-danger">{t("Passwords don't match")}</p>
             )}
           </div>
         </div>
@@ -198,14 +199,14 @@ const ChangePasswordDialog: React.FC<ChangePasswordDialogProps> = ({ open, onOpe
             disabled={loading}
             className="hover-scale"
           >
-            Cancel
+            {t("Cancel")}
           </Button>
           <Button 
             onClick={handleChangePassword} 
             disabled={loading}
             className="bg-security-primary hover:bg-security-primary/90 hover-scale"
           >
-            {loading ? 'Updating...' : 'Update Password'}
+            {loading ? t('Updating...') : t('Update Password')}
           </Button>
         </DialogFooter>
       </DialogContent>

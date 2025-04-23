@@ -280,7 +280,7 @@ const Dashboard = () => {
           {/* Welcome section */}
           <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-8">
             <div>
-              <h1 className="text-3xl font-bold">{t('welcomeBack')}, User</h1>
+              <h1 className="text-3xl font-bold">{t('Welcome Back')}, User</h1>
               <p className="text-muted-foreground mt-1">
                 Security Dashboard - Last updated: {formatDate(securityStatus?.lastScanDate)}
               </p>
@@ -553,7 +553,9 @@ const Dashboard = () => {
                   </div>
                 </SecurityCard>
               </div>
-            )}          {activeTab === 'password-health' && (
+            )}
+            
+            {activeTab === 'password-health' && (
               <PasswordHealthAnalysis />
             )}
 
@@ -699,7 +701,7 @@ const Dashboard = () => {
                     variant="outline"
                     onClick={() => handleTwoFactorSetup('authenticator')}
                   >
-                    Set Up
+                    Set up
                   </Button>
                 </div>
                 
@@ -716,7 +718,7 @@ const Dashboard = () => {
                     variant="outline"
                     onClick={() => handleTwoFactorSetup('sms')}
                   >
-                    Set Up
+                    Set up
                   </Button>
                 </div>
               </div>
@@ -733,7 +735,7 @@ const Dashboard = () => {
           open={showTwoFactorSetupDialog} 
           onOpenChange={setShowTwoFactorSetupDialog}
           userId={user?.id || 'default-user-id'}
-          initialTab={twoFactorMethod}
+          initialTab={twoFactorMethod as 'authenticator' | 'sms' | 'email'}
         />
       </MainLayout>
     </ErrorBoundary>

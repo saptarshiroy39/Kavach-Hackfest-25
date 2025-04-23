@@ -5,6 +5,7 @@ import { Copy, Key, Download } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { mockApi } from '@/lib/mockDb';
 import { motion } from 'framer-motion';
+import { useLanguage } from '@/hooks/use-language';
 
 interface RecoveryCodesDialogProps {
   open: boolean;
@@ -15,6 +16,7 @@ const RecoveryCodesDialog: React.FC<RecoveryCodesDialogProps> = ({ open, onOpenC
   const [codes, setCodes] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
+  const { t } = useLanguage();
   
   useEffect(() => {
     if (open) {
@@ -30,15 +32,15 @@ const RecoveryCodesDialog: React.FC<RecoveryCodesDialogProps> = ({ open, onOpenC
         setCodes(result.codes);
       } else {
         toast({
-          title: "Failed to load recovery codes",
-          description: "Could not retrieve your recovery codes.",
+          title: t("Failed to load recovery codes"),
+          description: t("Could not retrieve your recovery codes."),
           variant: "destructive",
         });
       }
     } catch (error) {
       toast({
-        title: "Error",
-        description: "An unexpected error occurred. Please try again later.",
+        title: t("Error"),
+        description: t("An unexpected error occurred. Please try again later."),
         variant: "destructive",
       });
     } finally {
@@ -50,14 +52,14 @@ const RecoveryCodesDialog: React.FC<RecoveryCodesDialogProps> = ({ open, onOpenC
     navigator.clipboard.writeText(codes.join('\n'))
       .then(() => {
         toast({
-          title: "Copied to clipboard",
-          description: "All recovery codes have been copied to your clipboard.",
+          title: t("Copied to clipboard"),
+          description: t("All recovery codes have been copied to your clipboard."),
         });
       })
       .catch(() => {
         toast({
-          title: "Copy failed",
-          description: "Could not copy to clipboard. Please try again.",
+          title: t("Copy failed"),
+          description: t("Could not copy to clipboard. Please try again."),
           variant: "destructive",
         });
       });
@@ -73,8 +75,8 @@ const RecoveryCodesDialog: React.FC<RecoveryCodesDialogProps> = ({ open, onOpenC
     document.body.removeChild(element);
     
     toast({
-      title: "Download started",
-      description: "Your recovery codes are being downloaded.",
+      title: t("Download started"),
+      description: t("Your recovery codes are being downloaded."),
     });
   };
   
@@ -97,9 +99,9 @@ const RecoveryCodesDialog: React.FC<RecoveryCodesDialogProps> = ({ open, onOpenC
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md glass-card dark:bg-background/80">
         <DialogHeader>
-          <DialogTitle>Recovery Codes</DialogTitle>
+          <DialogTitle>{t("Recovery Codes")}</DialogTitle>
           <DialogDescription>
-            Keep these codes in a safe place. Each code can only be used once.
+            {t("Keep these codes in a safe place. Each code can only be used once.")}
           </DialogDescription>
         </DialogHeader>
         
@@ -111,7 +113,7 @@ const RecoveryCodesDialog: React.FC<RecoveryCodesDialogProps> = ({ open, onOpenC
           ) : (
             <>
               <div className="flex justify-between mb-4">
-                <p className="text-sm text-muted-foreground">Save these recovery codes:</p>
+                <p className="text-sm text-muted-foreground">{t("Save these recovery codes:")}</p>
                 <div className="space-x-2">
                   <Button 
                     size="sm" 
@@ -119,7 +121,7 @@ const RecoveryCodesDialog: React.FC<RecoveryCodesDialogProps> = ({ open, onOpenC
                     onClick={copyAllCodes}
                     className="hover-scale"
                   >
-                    <Copy className="h-4 w-4 mr-1" /> Copy
+                    <Copy className="h-4 w-4 mr-1" /> {t("Copy")}
                   </Button>
                   <Button 
                     size="sm" 
@@ -127,7 +129,7 @@ const RecoveryCodesDialog: React.FC<RecoveryCodesDialogProps> = ({ open, onOpenC
                     onClick={downloadCodes}
                     className="hover-scale"
                   >
-                    <Download className="h-4 w-4 mr-1" /> Download
+                    <Download className="h-4 w-4 mr-1" /> {t("Download")}
                   </Button>
                 </div>
               </div>
@@ -152,7 +154,7 @@ const RecoveryCodesDialog: React.FC<RecoveryCodesDialogProps> = ({ open, onOpenC
               
               <div className="mt-4 p-3 bg-muted/30 rounded-md">
                 <p className="text-sm text-muted-foreground">
-                  <strong>Important:</strong> If you lose access to your authentication app and your recovery codes, you'll be locked out of your account.
+                  <strong>{t("Important:")}</strong> {t("If you lose access to your authentication app and your recovery codes, you'll be locked out of your account.")}
                 </p>
               </div>
             </>
@@ -161,7 +163,7 @@ const RecoveryCodesDialog: React.FC<RecoveryCodesDialogProps> = ({ open, onOpenC
         
         <DialogFooter>
           <Button onClick={() => onOpenChange(false)} className="hover-scale">
-            Close
+            {t("Close")}
           </Button>
         </DialogFooter>
       </DialogContent>

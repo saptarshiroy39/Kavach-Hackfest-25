@@ -25,6 +25,7 @@ import { securityStatus } from '@/lib/mockDb';
 import { useToast } from '@/hooks/use-toast';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { motion } from 'framer-motion';
+import { useLanguage } from '@/hooks/use-language';
 
 // Define threat types
 interface Threat {
@@ -37,6 +38,7 @@ interface Threat {
 
 const SecurityStatus = () => {
   const navigate = useNavigate();
+  const { t } = useLanguage();
   const [isScanning, setIsScanning] = useState(false);
   const [scanProgress, setScanProgress] = useState(0);
   const [scanStage, setScanStage] = useState('initializing');
@@ -204,8 +206,8 @@ const SecurityStatus = () => {
           setIsScanning(false);
           setIsScanDialogOpen(false);
           toast({
-            title: "Scan Complete",
-            description: `Scan completed with ${detectedThreats.length} potential threats detected.`,
+            title: t("Scan Complete"),
+            description: t(`Scan completed with ${detectedThreats.length} potential threats detected.`),
           });
         }, 500);
       }
@@ -223,15 +225,15 @@ const SecurityStatus = () => {
     <MainLayout>
       <div className="space-y-6">
         <div>
-          <h1 className="text-3xl font-bold">Security Status</h1>
+          <h1 className="text-3xl font-bold">{t("Security Status")}</h1>
           <p className="text-muted-foreground mt-1">
-            Comprehensive overview of your security posture
+            {t("Comprehensive overview of your security posture")}
           </p>
         </div>
 
         <SecurityCard
           className="mb-6"
-          title="Security Overview"
+          title={t("Security Overview")}
           icon={<Shield className="w-5 h-5 text-security-primary" />}
           status={
             securityStatus.overallScore >= 80
@@ -246,7 +248,7 @@ const SecurityStatus = () => {
               <div className="relative w-40 h-40">
                 <div className="absolute inset-0 flex items-center justify-center flex-col">
                   <span className="text-4xl font-bold">{securityStatus.overallScore}%</span>
-                  <span className="text-sm text-muted-foreground">Overall Score</span>
+                  <span className="text-sm text-muted-foreground">{t("Overall Score")}</span>
                 </div>
                 <svg className="w-full h-full transform -rotate-90" viewBox="0 0 100 100">
                   <circle
@@ -275,12 +277,11 @@ const SecurityStatus = () => {
               </div>
               <div className="flex-1 space-y-4">
                 <p className="text-sm text-muted-foreground">
-                  Your security score is calculated based on password strength, authentication methods, 
-                  and overall account protection. Improve your score by addressing the issues below.
+                  {t("Your security score is calculated based on password strength, authentication methods, and overall account protection. Improve your score by addressing the issues below.")}
                 </p>
                 <div>
                   <div className="flex justify-between mb-1">
-                    <span className="text-sm font-medium">Password Health</span>
+                    <span className="text-sm font-medium">{t("Password Health")}</span>
                     <span className="text-sm font-medium">{securityStatus.passwordHealth}%</span>
                   </div>
                   <Progress 
@@ -299,7 +300,7 @@ const SecurityStatus = () => {
                     size="sm"
                     onClick={handleViewDetailedReport}
                   >
-                    View Detailed Report
+                    {t("View Detailed Report")}
                   </Button>
                 </div>
               </div>
@@ -312,9 +313,9 @@ const SecurityStatus = () => {
                     <AlertCircle className="w-5 h-5 text-security-danger" />
                   </div>
                   <div>
-                    <h3 className="font-medium">Security Vulnerabilities</h3>
+                    <h3 className="font-medium">{t("Security Vulnerabilities")}</h3>
                     <p className="text-2xl font-bold mt-2 mb-1">{securityStatus.vulnerableAccounts}</p>
-                    <p className="text-sm text-muted-foreground">Vulnerable accounts</p>
+                    <p className="text-sm text-muted-foreground">{t("Vulnerable accounts")}</p>
                   </div>
                 </div>
               </div>
@@ -325,9 +326,9 @@ const SecurityStatus = () => {
                     <Info className="w-5 h-5 text-security-warning" />
                   </div>
                   <div>
-                    <h3 className="font-medium">Dark Web Exposures</h3>
+                    <h3 className="font-medium">{t("Dark Web Exposures")}</h3>
                     <p className="text-2xl font-bold mt-2 mb-1">{securityStatus.darkWebExposures}</p>
-                    <p className="text-sm text-muted-foreground">Found in data breaches</p>
+                    <p className="text-sm text-muted-foreground">{t("Found in data breaches")}</p>
                   </div>
                 </div>
               </div>
@@ -338,9 +339,9 @@ const SecurityStatus = () => {
                     <Lock className="w-5 h-5 text-security-secondary" />
                   </div>
                   <div>
-                    <h3 className="font-medium">Password Strength</h3>
+                    <h3 className="font-medium">{t("Password Strength")}</h3>
                     <p className="text-2xl font-bold mt-2 mb-1">{securityStatus.weakPasswords}</p>
-                    <p className="text-sm text-muted-foreground">Weak passwords</p>
+                    <p className="text-sm text-muted-foreground">{t("Weak passwords")}</p>
                   </div>
                 </div>
               </div>
@@ -349,23 +350,23 @@ const SecurityStatus = () => {
         </SecurityCard>
 
         <SecurityCard 
-          title="Security Recommendations" 
+          title={t("Security Recommendations")} 
           icon={<CheckCircle2 className="w-5 h-5 text-security-primary" />}
         >
           <div className="space-y-4">
             <div className="p-4 border border-security-danger/30 bg-security-danger/5 rounded-lg">
               <div className="flex items-start">
                 <AlertCircle className="w-5 h-5 text-security-danger mr-3 mt-0.5" />
-                <div>                  <h3 className="font-medium">Enable Two-Factor Authentication</h3>
+                <div>                  <h3 className="font-medium">{t("Enable Two-Factor Authentication")}</h3>
                   <p className="text-sm text-muted-foreground mt-1">
-                    Your account will be more secure with an additional verification step.
+                    {t("Your account will be more secure with an additional verification step.")}
                   </p>                  <Button 
                     variant="outline" 
                     size="sm" 
                     className="mt-3"
                     onClick={() => navigate('/authentication')}
                   >
-                    Enable 2FA Now
+                    {t("Enable 2FA Now")}
                   </Button>
                 </div>
               </div>
@@ -374,16 +375,16 @@ const SecurityStatus = () => {
             <div className="p-4 border border-security-warning/30 bg-security-warning/5 rounded-lg">
               <div className="flex items-start">
                 <Info className="w-5 h-5 text-security-warning mr-3 mt-0.5" />
-                <div>                  <h3 className="font-medium">Update Weak Passwords</h3>
+                <div>                  <h3 className="font-medium">{t("Update Weak Passwords")}</h3>
                   <p className="text-sm text-muted-foreground mt-1">
-                    2 of your passwords are weak and should be updated for better security.
+                    {t("2 of your passwords are weak and should be updated for better security.")}
                   </p>                  <Button 
                     variant="outline" 
                     size="sm" 
                     className="mt-3"
                     onClick={() => navigate('/password-vault')}
                   >
-                    Fix Now
+                    {t("Fix Now")}
                   </Button>
                 </div>
               </div>
@@ -392,16 +393,16 @@ const SecurityStatus = () => {
             <div className="p-4 border border-security-warning/30 bg-security-warning/5 rounded-lg">
               <div className="flex items-start">
                 <FileText className="w-5 h-5 text-security-warning mr-3 mt-0.5" />
-                <div>                  <h3 className="font-medium">Complete Security Checklist</h3>
+                <div>                  <h3 className="font-medium">{t("Complete Security Checklist")}</h3>
                   <p className="text-sm text-muted-foreground mt-1">
-                    You've completed 7 out of 10 security steps for full protection.
+                    {t("You've completed 7 out of 10 security steps for full protection.")}
                   </p>                  <Button 
                     variant="outline" 
                     size="sm" 
                     className="mt-3"
                     onClick={() => navigate('/security-verification')}
                   >
-                    Continue Checklist
+                    {t("Continue Checklist")}
                   </Button>
                 </div>
               </div>
@@ -414,12 +415,12 @@ const SecurityStatus = () => {
                 {isScanning ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    <span>Scanning...</span>
+                    <span>{t("Scanning...")}</span>
                   </>
                 ) : (
                   <>
                     <Shield className="mr-2 h-4 w-4" />
-                    <span>Run Full Security Scan</span>
+                    <span>{t("Run Full Security Scan")}</span>
                   </>
                 )}
               </Button>
@@ -431,9 +432,9 @@ const SecurityStatus = () => {
       <Dialog open={isScanDialogOpen} onOpenChange={setIsScanDialogOpen}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>Running Security Scan...</DialogTitle>
+            <DialogTitle>{t("Running Security Scan...")}</DialogTitle>
             <DialogDescription>
-              Please wait while we analyze your security status and check for vulnerabilities.
+              {t("Please wait while we analyze your security status and check for vulnerabilities.")}
             </DialogDescription>
           </DialogHeader>
           
@@ -487,11 +488,11 @@ const SecurityStatus = () => {
                   ease: "easeInOut"
                 }}
               >
-                {scanStage === 'initializing' && "Initializing scan..."}
-                {scanStage === 'scanning passwords' && "Scanning passwords..."}
-                {scanStage === 'checking vulnerabilities' && "Checking for vulnerabilities..."}
-                {scanStage === 'analyzing security status' && "Analyzing security status..."}
-                {scanStage === 'finalizing' && "Finalizing results..."}
+                {scanStage === 'initializing' && t("Initializing scan...")}
+                {scanStage === 'scanning passwords' && t("Scanning passwords...")}
+                {scanStage === 'checking vulnerabilities' && t("Checking for vulnerabilities...")}
+                {scanStage === 'analyzing security status' && t("Analyzing security status...")}
+                {scanStage === 'finalizing' && t("Finalizing results...")}
               </motion.div>
             </div>
             
@@ -500,11 +501,11 @@ const SecurityStatus = () => {
               <div className="flex justify-between items-center mb-3">
                 <h3 className="font-medium flex items-center">
                   <AlertTriangle className="h-4 w-4 mr-2 text-security-warning" />
-                  Threat Detection
+                  {t("Threat Detection")}
                 </h3>
                 <div className="flex items-center bg-background px-2 py-1 rounded text-sm">
                   <span className="font-bold">{detectedThreats.length}</span>
-                  <span className="ml-1 text-muted-foreground">threats detected</span>
+                  <span className="ml-1 text-muted-foreground">{t("threats detected")}</span>
                 </div>
               </div>
               
@@ -534,7 +535,7 @@ const SecurityStatus = () => {
                           {latestThreat.severity}
                         </span>
                         <span className="text-xs text-muted-foreground">
-                          Just detected
+                          {t("Just detected")}
                         </span>
                       </div>
                       <p className="font-medium mt-1">{latestThreat.description}</p>
@@ -546,19 +547,19 @@ const SecurityStatus = () => {
               {/* Threat summary by severity */}
               <div className="grid grid-cols-3 gap-2 mb-2">
                 <div className="bg-security-danger/5 rounded p-2 text-center">
-                  <p className="text-xs text-muted-foreground">High</p>
+                  <p className="text-xs text-muted-foreground">{t("High")}</p>
                   <p className="font-bold text-security-danger">
                     {detectedThreats.filter(t => t.severity === 'high').length}
                   </p>
                 </div>
                 <div className="bg-security-warning/5 rounded p-2 text-center">
-                  <p className="text-xs text-muted-foreground">Medium</p>
+                  <p className="text-xs text-muted-foreground">{t("Medium")}</p>
                   <p className="font-bold text-security-warning">
                     {detectedThreats.filter(t => t.severity === 'medium').length}
                   </p>
                 </div>
                 <div className="bg-yellow-500/5 rounded p-2 text-center">
-                  <p className="text-xs text-muted-foreground">Low</p>
+                  <p className="text-xs text-muted-foreground">{t("Low")}</p>
                   <p className="font-bold text-yellow-500">
                     {detectedThreats.filter(t => t.severity === 'low').length}
                   </p>
@@ -568,7 +569,7 @@ const SecurityStatus = () => {
               {/* Small threat list */}
               <div className="text-xs text-muted-foreground">
                 {detectedThreats.length === 0 ? (
-                  <p className="text-center py-2">No threats detected yet...</p>
+                  <p className="text-center py-2">{t("No threats detected yet...")}</p>
                 ) : (
                   <div className="max-h-20 overflow-y-auto">
                     {detectedThreats.map((threat, index) => (
@@ -600,10 +601,10 @@ const SecurityStatus = () => {
                 animate={{ opacity: scanProgress < 10 ? 0 : 1 }}
               >
                 <Clock className="inline w-3 h-3 mr-1" />
-                <span>Estimated time: {Math.max(3 - (scanProgress/33), 0).toFixed(0)} sec</span>
+                <span>{t("Estimated time:")} {Math.max(3 - (scanProgress/33), 0).toFixed(0)} {t("sec")}</span>
               </motion.div>
               <p className="text-right text-sm font-medium">
-                {scanProgress}% complete
+                {scanProgress}% {t("complete")}
               </p>
             </div>
           </div>
@@ -616,17 +617,17 @@ const SecurityStatus = () => {
           <DialogHeader className="px-6 pt-6">
             <DialogTitle className="flex items-center">
               <FileBarChart className="h-5 w-5 mr-2 text-security-primary" />
-              Detailed Security Report
+              {t("Detailed Security Report")}
             </DialogTitle>
             <DialogDescription>
-              Comprehensive analysis of your security status across multiple categories
+              {t("Comprehensive analysis of your security status across multiple categories")}
             </DialogDescription>
           </DialogHeader>
           
           <div className="overflow-y-auto px-6 py-4 space-y-6 flex-grow">
             {/* Overall Security Score */}
             <div className="border-b pb-4">
-              <h3 className="text-lg font-semibold mb-2">Overall Security Score</h3>
+              <h3 className="text-lg font-semibold mb-2">{t("Overall Security Score")}</h3>
               <div className="flex items-center space-x-4">
                 <div className="w-20 h-20 relative">
                   <div className="absolute inset-0 flex items-center justify-center">
@@ -659,21 +660,21 @@ const SecurityStatus = () => {
                 </div>
                 <div>
                   <p className="text-muted-foreground mb-2">
-                    Your security score is {securityStatus.overallScore}%, which is considered
+                    {t("Your security score is")} {securityStatus.overallScore}%, {t("which is considered")}
                     {securityStatus.overallScore >= 80 
-                      ? ' excellent. Keep up the good security practices.' 
+                      ? t("excellent. Keep up the good security practices.") 
                       : securityStatus.overallScore >= 60 
-                      ? ' good, but there\'s room for improvement.' 
-                      : ' concerning. Please address the critical issues immediately.'}
+                      ? t("good, but there's room for improvement.") 
+                      : t("concerning. Please address the critical issues immediately.")}
                   </p>
-                  <p className="text-sm text-muted-foreground">Last updated: {new Date().toLocaleDateString()}</p>
+                  <p className="text-sm text-muted-foreground">{t("Last updated:")} {new Date().toLocaleDateString()}</p>
                 </div>
               </div>
             </div>
             
             {/* Security Categories Breakdown */}
             <div className="space-y-4">
-              <h3 className="text-lg font-semibold">Security Categories</h3>
+              <h3 className="text-lg font-semibold">{t("Security Categories")}</h3>
               
               {/* Password Health */}
               <div className="border rounded-lg p-4">
@@ -682,7 +683,7 @@ const SecurityStatus = () => {
                     <div className="w-8 h-8 rounded-full bg-security-primary/10 flex items-center justify-center mr-3">
                       <Key className="w-4 h-4 text-security-primary" />
                     </div>
-                    <h4 className="font-medium">Password Health</h4>
+                    <h4 className="font-medium">{t("Password Health")}</h4>
                   </div>
                   <span className={`text-sm font-medium ${
                     securityStatus.passwordHealth >= 80 
@@ -700,11 +701,11 @@ const SecurityStatus = () => {
                 />
                 <div className="text-sm space-y-2">
                   <p className="text-muted-foreground">
-                    You have {securityStatus.weakPasswords} weak passwords and {securityStatus.reusedPasswords} reused passwords.
+                    {t("You have")} {securityStatus.weakPasswords} {t("weak passwords and")} {securityStatus.reusedPasswords} {t("reused passwords.")}
                   </p>
                   <p className="flex items-center text-security-warning">
                     <AlertTriangle className="h-4 w-4 mr-1" />
-                    <span>Update weak passwords to improve your security score.</span>
+                    <span>{t("Update weak passwords to improve your security score.")}</span>
                   </p>
                 </div>
               </div>
@@ -716,7 +717,7 @@ const SecurityStatus = () => {
                     <div className="w-8 h-8 rounded-full bg-security-primary/10 flex items-center justify-center mr-3">
                       <Lock className="w-4 h-4 text-security-primary" />
                     </div>
-                    <h4 className="font-medium">Account Security</h4>
+                    <h4 className="font-medium">{t("Account Security")}</h4>
                   </div>
                   <span className="text-sm font-medium text-red-500">
                     65%
@@ -728,11 +729,11 @@ const SecurityStatus = () => {
                 />
                 <div className="text-sm space-y-2">
                   <p className="text-muted-foreground">
-                    2FA is not enabled on your primary account, which presents a significant security risk.
+                    {t("2FA is not enabled on your primary account, which presents a significant security risk.")}
                   </p>
                   <p className="flex items-center text-security-danger">
                     <AlertCircle className="h-4 w-4 mr-1" />
-                    <span>Enable two-factor authentication immediately.</span>
+                    <span>{t("Enable two-factor authentication immediately.")}</span>
                   </p>
                 </div>
               </div>
@@ -744,7 +745,7 @@ const SecurityStatus = () => {
                     <div className="w-8 h-8 rounded-full bg-security-primary/10 flex items-center justify-center mr-3">
                       <Globe className="w-4 h-4 text-security-primary" />
                     </div>
-                    <h4 className="font-medium">Data Protection</h4>
+                    <h4 className="font-medium">{t("Data Protection")}</h4>
                   </div>
                   <span className="text-sm font-medium text-green-500">
                     85%
@@ -756,11 +757,11 @@ const SecurityStatus = () => {
                 />
                 <div className="text-sm space-y-2">
                   <p className="text-muted-foreground">
-                    Your data protection practices are strong, with {securityStatus.darkWebExposures} data breach exposures found.
+                    {t("Your data protection practices are strong, with")} {securityStatus.darkWebExposures} {t("data breach exposures found.")}
                   </p>
                   <p className="flex items-center text-green-500">
                     <CheckCircle2 className="h-4 w-4 mr-1" />
-                    <span>Continue monitoring for data breaches regularly.</span>
+                    <span>{t("Continue monitoring for data breaches regularly.")}</span>
                   </p>
                 </div>
               </div>
@@ -772,7 +773,7 @@ const SecurityStatus = () => {
                     <div className="w-8 h-8 rounded-full bg-security-primary/10 flex items-center justify-center mr-3">
                       <Wifi className="w-4 h-4 text-security-primary" />
                     </div>
-                    <h4 className="font-medium">Connection Security</h4>
+                    <h4 className="font-medium">{t("Connection Security")}</h4>
                   </div>
                   <span className="text-sm font-medium text-yellow-500">
                     75%
@@ -784,11 +785,11 @@ const SecurityStatus = () => {
                 />
                 <div className="text-sm space-y-2">
                   <p className="text-muted-foreground">
-                    Your network security is generally good, but some connections may be vulnerable.
+                    {t("Your network security is generally good, but some connections may be vulnerable.")}
                   </p>
                   <p className="flex items-center text-security-warning">
                     <Info className="h-4 w-4 mr-1" />
-                    <span>Avoid using public WiFi networks for sensitive transactions.</span>
+                    <span>{t("Avoid using public WiFi networks for sensitive transactions.")}</span>
                   </p>
                 </div>
               </div>
@@ -796,31 +797,31 @@ const SecurityStatus = () => {
             
             {/* Recommendations */}
             <div className="space-y-3">
-              <h3 className="text-lg font-semibold">Recommended Actions</h3>
+              <h3 className="text-lg font-semibold">{t("Recommended Actions")}</h3>
               <ul className="space-y-2">
                 <li className="flex items-start">
                   <div className="min-w-4 mt-0.5 mr-2 text-security-danger">
                     <AlertCircle className="h-4 w-4" />
                   </div>
-                  <span>Enable two-factor authentication on all accounts</span>
+                  <span>{t("Enable two-factor authentication on all accounts")}</span>
                 </li>
                 <li className="flex items-start">
                   <div className="min-w-4 mt-0.5 mr-2 text-security-warning">
                     <AlertTriangle className="h-4 w-4" />
                   </div>
-                  <span>Update the {securityStatus.weakPasswords} weak passwords identified in your password vault</span>
+                  <span>{t("Update the")} {securityStatus.weakPasswords} {t("weak passwords identified in your password vault")}</span>
                 </li>
                 <li className="flex items-start">
                   <div className="min-w-4 mt-0.5 mr-2 text-security-warning">
                     <AlertTriangle className="h-4 w-4" />
                   </div>
-                  <span>Complete your security checklist (7/10 complete)</span>
+                  <span>{t("Complete your security checklist (7/10 complete)")}</span>
                 </li>
                 <li className="flex items-start">
                   <div className="min-w-4 mt-0.5 mr-2 text-security-primary">
                     <Info className="h-4 w-4" />
                   </div>
-                  <span>Review app permissions on your connected accounts</span>
+                  <span>{t("Review app permissions on your connected accounts")}</span>
                 </li>
               </ul>
             </div>
@@ -831,7 +832,7 @@ const SecurityStatus = () => {
               variant="outline"
               onClick={() => setIsDetailedReportOpen(false)}
             >
-              Close
+              {t("Close")}
             </Button>
             <Button 
               className="bg-security-primary hover:bg-security-primary/90"
@@ -840,7 +841,7 @@ const SecurityStatus = () => {
                 navigate('/security-verification');
               }}
             >
-              Fix Security Issues
+              {t("Fix Security Issues")}
             </Button>
           </DialogFooter>
         </DialogContent>

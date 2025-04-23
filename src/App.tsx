@@ -4,10 +4,13 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { useState, useEffect, Suspense, lazy } from "react";
-import { ThemeProvider } from '@/hooks/use-theme';
+import { ThemeProvider } from '@/context/ThemeProvider';
 import { SearchProvider } from '@/context/SearchContext';
 import { LanguageProvider } from '@/hooks/use-language';
 import { AnimatePresence } from 'framer-motion';
+
+// Layouts
+import AdminLayout from './components/layout/admin/AdminLayout';
 
 // Pages
 import Dashboard from "./pages/Dashboard";
@@ -22,11 +25,16 @@ import NotFound from "./pages/NotFound";
 import SecurityScanner from "./pages/SecurityScanner";
 import SecurityVerification from "./pages/SecurityVerification";
 
+// Admin Pages
+import AdminDashboard from './pages/admin/AdminDashboard';
+import AdminUsers from './pages/admin/AdminUsers';
+import AdminSettings from './pages/admin/AdminSettings';
+
 // Lazy-loaded pages
 const SignUp = lazy(() => import('./pages/SignUp'));
 const PhishingDetection = lazy(() => import('./pages/PhishingDetection'));
 const PaymentScanner = lazy(() => import('./pages/PaymentScanner'));
-const AdminDashboard = lazy(() => import('./pages/admin/AdminDashboard'));
+const EncryptedMessaging = lazy(() => import('./pages/EncryptedMessaging'));
 
 const queryClient = new QueryClient();
 
@@ -106,14 +114,22 @@ const App = () => {
                           <Route path="/security-status" element={<SecurityStatus />} />
                           <Route path="/blockchain-verify" element={<BlockchainVerify />} />
                           <Route path="/security-verification" element={<SecurityVerification />} />
+                          <Route path="/encrypted-messaging" element={<EncryptedMessaging />} />
                           <Route path="/notifications" element={<Notifications />} />
                           <Route path="/settings" element={<Settings />} />
                           <Route path="/phishing-detection" element={<PhishingDetection />} />
                           <Route path="/payment-scanner" element={<PaymentScanner />} />
                           <Route path="/security-scanner" element={<SecurityScanner />} />
+                          
+                          {/* Admin routes with nested structure and top navigation */}
                           {isAdmin && (
-                            <Route path="/admin/*" element={<AdminDashboard />} />
+                            <Route path="/admin" element={<AdminLayout />}>
+                              <Route index element={<AdminDashboard />} />
+                              <Route path="users" element={<AdminUsers />} />
+                              <Route path="settings" element={<AdminSettings />} />
+                            </Route>
                           )}
+                          
                           <Route path="/login" element={<Navigate to="/" replace />} />
                           <Route path="/signup" element={<SignUp />} />
                           <Route path="*" element={<NotFound />} />

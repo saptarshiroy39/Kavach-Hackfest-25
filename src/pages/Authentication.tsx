@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import MainLayout from '@/components/layout/MainLayout';
 import SecurityCard from '@/components/security/SecurityCard';
@@ -11,7 +10,7 @@ import {
   QrCode, 
   Scan, 
   Wallet,
-  ChevronRight, 
+  ChevronRight,
   Lock
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -25,6 +24,7 @@ import { motion } from 'framer-motion';
 import ChangePasswordDialog from '@/components/security/ChangePasswordDialog';
 import RecoveryCodesDialog from '@/components/security/RecoveryCodesDialog';
 import UpdateRecoveryDialog from '@/components/security/UpdateRecoveryDialog';
+import { useLanguage } from '@/hooks/use-language';
 
 const Authentication = () => {
   const [twoFactorEnabled, setTwoFactorEnabled] = useState(currentUser.hasTwoFactor);
@@ -44,6 +44,7 @@ const Authentication = () => {
   const [loading, setLoading] = useState(false);
   
   const { toast } = useToast();
+  const { t } = useLanguage();
 
   const handleTwoFactorToggle = () => {
     if (!twoFactorEnabled) {
@@ -51,8 +52,8 @@ const Authentication = () => {
     } else {
       setTwoFactorEnabled(false);
       toast({
-        title: "Two-factor authentication disabled",
-        description: "Your account is now less secure. We recommend enabling 2FA for better protection.",
+        title: t("Two-factor authentication disabled"),
+        description: t("Your account is now less secure. We recommend enabling 2FA for better protection."),
         variant: "destructive",
       });
     }
@@ -64,8 +65,8 @@ const Authentication = () => {
     } else {
       setBiometricsEnabled(false);
       toast({
-        title: "Biometric authentication disabled",
-        description: "Biometric verification has been removed from your account.",
+        title: t("Biometric authentication disabled"),
+        description: t("Biometric verification has been removed from your account."),
       });
     }
   };
@@ -76,8 +77,8 @@ const Authentication = () => {
     } else {
       setBlockchainEnabled(false);
       toast({
-        title: "Blockchain verification disabled",
-        description: "Blockchain verification has been removed from your account.",
+        title: t("Blockchain verification disabled"),
+        description: t("Blockchain verification has been removed from your account."),
       });
     }
   };
@@ -85,8 +86,8 @@ const Authentication = () => {
   const verifyTwoFactor = async () => {
     if (!verificationCode) {
       toast({
-        title: "Verification failed",
-        description: "Please enter a verification code.",
+        title: t("Verification failed"),
+        description: t("Please enter a verification code."),
         variant: "destructive",
       });
       return;
@@ -99,20 +100,20 @@ const Authentication = () => {
         setTwoFactorEnabled(true);
         setShowTwoFactorDialog(false);
         toast({
-          title: "Two-factor authentication enabled",
-          description: "Your account is now more secure with 2FA protection.",
+          title: t("Two-factor authentication enabled"),
+          description: t("Your account is now more secure with 2FA protection."),
         });
       } else {
         toast({
-          title: "Verification failed",
-          description: result.error || "Invalid verification code. Please try again.",
+          title: t("Verification failed"),
+          description: t(result.error || "Invalid verification code. Please try again."),
           variant: "destructive",
         });
       }
     } catch (error) {
       toast({
-        title: "Error",
-        description: "An unexpected error occurred. Please try again later.",
+        title: t("Error"),
+        description: t("An unexpected error occurred. Please try again later."),
         variant: "destructive",
       });
     } finally {
@@ -129,20 +130,20 @@ const Authentication = () => {
         setBiometricsEnabled(true);
         setShowBiometricDialog(false);
         toast({
-          title: "Biometric authentication enabled",
-          description: "Your account now supports biometric verification.",
+          title: t("Biometric authentication enabled"),
+          description: t("Your account now supports biometric verification."),
         });
       } else {
         toast({
-          title: "Verification failed",
-          description: result.error || "Biometric verification failed. Please try again.",
+          title: t("Verification failed"),
+          description: t(result.error || "Biometric verification failed. Please try again."),
           variant: "destructive",
         });
       }
     } catch (error) {
       toast({
-        title: "Error",
-        description: "An unexpected error occurred. Please try again later.",
+        title: t("Error"),
+        description: t("An unexpected error occurred. Please try again later."),
         variant: "destructive",
       });
     } finally {
@@ -153,8 +154,8 @@ const Authentication = () => {
   const verifyBlockchain = async () => {
     if (!walletAddress) {
       toast({
-        title: "Verification failed",
-        description: "Please enter a wallet address.",
+        title: t("Verification failed"),
+        description: t("Please enter a wallet address."),
         variant: "destructive",
       });
       return;
@@ -167,20 +168,20 @@ const Authentication = () => {
         setBlockchainEnabled(true);
         setShowBlockchainDialog(false);
         toast({
-          title: "Blockchain verification enabled",
-          description: "Your account is now linked to your blockchain wallet.",
+          title: t("Blockchain verification enabled"),
+          description: t("Your account is now linked to your blockchain wallet."),
         });
       } else {
         toast({
-          title: "Verification failed",
-          description: result.error || "Invalid wallet address. Please try again.",
+          title: t("Verification failed"),
+          description: t(result.error || "Invalid wallet address. Please try again."),
           variant: "destructive",
         });
       }
     } catch (error) {
       toast({
-        title: "Error",
-        description: "An unexpected error occurred. Please try again later.",
+        title: t("Error"),
+        description: t("An unexpected error occurred. Please try again later."),
         variant: "destructive",
       });
     } finally {
@@ -215,18 +216,18 @@ const Authentication = () => {
         variants={containerVariants}
       >
         <motion.div variants={itemVariants}>
-          <h1 className="text-3xl font-bold">Authentication Methods</h1>
+          <h1 className="text-3xl font-bold">{t("Authentication Methods")}</h1>
           <p className="text-muted-foreground mt-1">
-            Manage how you sign in to your account
+            {t("Manage how you sign in to your account")}
           </p>
         </motion.div>
 
         <motion.div variants={itemVariants}>
           <SecurityCard
             className="mb-6 glass-card hover-scale-slight"
-            title="Authentication Security"
+            title={t("Authentication Security")}
             icon={<Shield className="w-5 h-5 text-security-primary" />}
-            subtitle="Enable multiple authentication methods for enhanced security"
+            subtitle={t("Enable multiple authentication methods for enhanced security")}
           >
             <div className="grid gap-6">
               <div className="grid md:grid-cols-2 gap-6">
@@ -234,12 +235,12 @@ const Authentication = () => {
                   <div className="p-4 border-b border-white/10 dark:border-white/5">
                     <div className="flex items-center">
                       <Key className="w-5 h-5 text-security-primary mr-2" />
-                      <h3 className="font-medium">Password</h3>
+                      <h3 className="font-medium">{t("Password")}</h3>
                     </div>
                   </div>
                   <div className="p-4">
                     <p className="text-sm text-muted-foreground mb-3">
-                      Your primary authentication method. Use a strong, unique password.
+                      {t("Your primary authentication method. Use a strong, unique password.")}
                     </p>
                     <Button 
                       className="w-full bounce-hover" 
@@ -247,7 +248,7 @@ const Authentication = () => {
                       size="sm"
                       onClick={() => setShowChangePasswordDialog(true)}
                     >
-                      <span>Change Password</span>
+                      <span>{t("Change Password")}</span>
                       <ChevronRight className="ml-2 w-4 h-4" />
                     </Button>
                   </div>
@@ -258,7 +259,7 @@ const Authentication = () => {
                     <div className="flex items-center justify-between">
                       <div className="flex items-center">
                         <Smartphone className="w-5 h-5 text-security-primary mr-2" />
-                        <h3 className="font-medium">Two-Factor Authentication</h3>
+                        <h3 className="font-medium">{t("Two-Factor Authentication")}</h3>
                       </div>
                       <Switch 
                         checked={twoFactorEnabled} 
@@ -268,7 +269,7 @@ const Authentication = () => {
                   </div>
                   <div className="p-4">
                     <p className="text-sm text-muted-foreground mb-3">
-                      Add an extra layer of security by requiring a verification code.
+                      {t("Add an extra layer of security by requiring a verification code.")}
                     </p>
                     <Button 
                       className="w-full bounce-hover" 
@@ -277,7 +278,7 @@ const Authentication = () => {
                       onClick={() => setShowTwoFactorDialog(true)}
                       disabled={!twoFactorEnabled}
                     >
-                      <span>Configure 2FA</span>
+                      <span>{t("Configure 2FA")}</span>
                       <ChevronRight className="ml-2 w-4 h-4" />
                     </Button>
                   </div>
@@ -290,7 +291,7 @@ const Authentication = () => {
                     <div className="flex items-center justify-between">
                       <div className="flex items-center">
                         <Fingerprint className="w-5 h-5 text-security-primary mr-2" />
-                        <h3 className="font-medium">Biometric Authentication</h3>
+                        <h3 className="font-medium">{t("Biometric Authentication")}</h3>
                       </div>
                       <Switch 
                         checked={biometricsEnabled} 
@@ -300,7 +301,7 @@ const Authentication = () => {
                   </div>
                   <div className="p-4">
                     <p className="text-sm text-muted-foreground mb-3">
-                      Use your fingerprint, face recognition, or other biometric data.
+                      {t("Use your fingerprint, face recognition, or other biometric data.")}
                     </p>
                     <Button 
                       className="w-full bounce-hover" 
@@ -309,7 +310,7 @@ const Authentication = () => {
                       onClick={() => setShowBiometricDialog(true)}
                       disabled={!biometricsEnabled}
                     >
-                      <span>Configure Biometrics</span>
+                      <span>{t("Configure Biometrics")}</span>
                       <ChevronRight className="ml-2 w-4 h-4" />
                     </Button>
                   </div>
@@ -320,7 +321,7 @@ const Authentication = () => {
                     <div className="flex items-center justify-between">
                       <div className="flex items-center">
                         <Wallet className="w-5 h-5 text-security-primary mr-2" />
-                        <h3 className="font-medium">Blockchain Verification</h3>
+                        <h3 className="font-medium">{t("Blockchain Verification")}</h3>
                       </div>
                       <Switch 
                         checked={blockchainEnabled} 
@@ -330,7 +331,7 @@ const Authentication = () => {
                   </div>
                   <div className="p-4">
                     <p className="text-sm text-muted-foreground mb-3">
-                      Connect your blockchain wallet for an additional verification method.
+                      {t("Connect your blockchain wallet for an additional verification method.")}
                     </p>
                     <Button 
                       className="w-full bounce-hover" 
@@ -339,7 +340,7 @@ const Authentication = () => {
                       onClick={() => setShowBlockchainDialog(true)}
                       disabled={!blockchainEnabled}
                     >
-                      <span>Configure Blockchain</span>
+                      <span>{t("Configure Blockchain")}</span>
                       <ChevronRight className="ml-2 w-4 h-4" />
                     </Button>
                   </div>
@@ -351,9 +352,9 @@ const Authentication = () => {
 
         <motion.div variants={itemVariants}>
           <SecurityCard
-            title="Recovery Options"
+            title={t("Recovery Options")}
             icon={<Lock className="w-5 h-5 text-security-primary" />}
-            subtitle="Set up methods to recover your account if you lose access"
+            subtitle={t("Set up methods to recover your account if you lose access")}
             className="glass-card hover-scale-slight"
           >
             <div className="space-y-4">
@@ -361,8 +362,8 @@ const Authentication = () => {
                 <div className="flex items-center">
                   <Mail className="w-5 h-5 text-security-primary mr-3" />
                   <div>
-                    <p className="font-medium">Recovery Email</p>
-                    <p className="text-sm text-muted-foreground">{currentUser.recoveryEmail || 'Not set'}</p>
+                    <p className="font-medium">{t("Recovery Email")}</p>
+                    <p className="text-sm text-muted-foreground">{currentUser.recoveryEmail || t('Not set')}</p>
                   </div>
                 </div>
                 <Button 
@@ -371,7 +372,7 @@ const Authentication = () => {
                   onClick={() => setShowUpdateEmailDialog(true)}
                   className="bounce-hover"
                 >
-                  Update
+                  {t("Update")}
                 </Button>
               </div>
               
@@ -379,8 +380,8 @@ const Authentication = () => {
                 <div className="flex items-center">
                   <Smartphone className="w-5 h-5 text-security-primary mr-3" />
                   <div>
-                    <p className="font-medium">Recovery Phone</p>
-                    <p className="text-sm text-muted-foreground">{currentUser.phone || 'Not set'}</p>
+                    <p className="font-medium">{t("Recovery Phone")}</p>
+                    <p className="text-sm text-muted-foreground">{currentUser.phone || t('Not set')}</p>
                   </div>
                 </div>
                 <Button 
@@ -389,7 +390,7 @@ const Authentication = () => {
                   onClick={() => setShowUpdatePhoneDialog(true)}
                   className="bounce-hover"
                 >
-                  Update
+                  {t("Update")}
                 </Button>
               </div>
               
@@ -397,9 +398,9 @@ const Authentication = () => {
                 <div className="flex items-center">
                   <QrCode className="w-5 h-5 text-security-primary mr-3" />
                   <div>
-                    <p className="font-medium">Recovery Codes</p>
+                    <p className="font-medium">{t("Recovery Codes")}</p>
                     <p className="text-sm text-muted-foreground">
-                      {currentUser.recoveryCodes ? `${currentUser.recoveryCodes.length} codes available` : 'No codes generated'}
+                      {currentUser.recoveryCodes ? t(`${currentUser.recoveryCodes.length} codes available`) : t('No codes generated')}
                     </p>
                   </div>
                 </div>
@@ -409,7 +410,7 @@ const Authentication = () => {
                   onClick={() => setShowRecoveryCodesDialog(true)}
                   className="bounce-hover"
                 >
-                  View Codes
+                  {t("View Codes")}
                 </Button>
               </div>
             </div>
@@ -421,9 +422,9 @@ const Authentication = () => {
       <Dialog open={showTwoFactorDialog} onOpenChange={setShowTwoFactorDialog}>
         <DialogContent className="sm:max-w-md glass-card dark:bg-background/80">
           <DialogHeader>
-            <DialogTitle>Set up Two-Factor Authentication</DialogTitle>
+            <DialogTitle>{t("Set up Two-Factor Authentication")}</DialogTitle>
             <DialogDescription>
-              Scan this QR code with your authenticator app or enter the code manually.
+              {t("Scan this QR code with your authenticator app or enter the code manually.")}
             </DialogDescription>
           </DialogHeader>
           <div className="flex flex-col items-center space-y-4">
@@ -431,11 +432,11 @@ const Authentication = () => {
               <QrCode className="w-48 h-48 text-security-primary" />
             </div>
             <div className="text-center">
-              <p className="text-sm font-medium">Or enter this code in your app:</p>
+              <p className="text-sm font-medium">{t("Or enter this code in your app:")}</p>
               <p className="font-mono text-lg mt-1">WXYZ-ABCD-1234-5678</p>
             </div>
             <div className="w-full space-y-2">
-              <Label htmlFor="verification-code">Enter the 6-digit code from your app</Label>
+              <Label htmlFor="verification-code">{t("Enter the 6-digit code from your app")}</Label>
               <Input 
                 id="verification-code" 
                 placeholder="000000" 
@@ -452,14 +453,14 @@ const Authentication = () => {
               disabled={loading}
               className="hover-scale"
             >
-              Cancel
+              {t("Cancel")}
             </Button>
             <Button 
               onClick={verifyTwoFactor} 
               disabled={loading}
               className="bg-security-primary hover:bg-security-primary/90 hover-scale"
             >
-              {loading ? 'Verifying...' : 'Verify'}
+              {loading ? t('Verifying...') : t('Verify')}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -469,9 +470,9 @@ const Authentication = () => {
       <Dialog open={showBiometricDialog} onOpenChange={setShowBiometricDialog}>
         <DialogContent className="sm:max-w-md glass-card dark:bg-background/80">
           <DialogHeader>
-            <DialogTitle>Set up Biometric Authentication</DialogTitle>
+            <DialogTitle>{t("Set up Biometric Authentication")}</DialogTitle>
             <DialogDescription>
-              Use your device's biometric features for faster and more secure sign-in.
+              {t("Use your device's biometric features for faster and more secure sign-in.")}
             </DialogDescription>
           </DialogHeader>
           <div className="flex flex-col items-center space-y-6 py-4">
@@ -483,8 +484,8 @@ const Authentication = () => {
             </motion.div>
             <p className="text-center">
               {loading 
-                ? "Processing your biometric data..." 
-                : "Place your finger on the sensor or use your device's biometric scanner"}
+                ? t("Processing your biometric data...") 
+                : t("Place your finger on the sensor or use your device's biometric scanner")}
             </p>
           </div>
           <DialogFooter>
@@ -494,14 +495,14 @@ const Authentication = () => {
               disabled={loading}
               className="hover-scale"
             >
-              Cancel
+              {t("Cancel")}
             </Button>
             <Button 
               onClick={verifyBiometric} 
               disabled={loading}
               className="bg-security-primary hover:bg-security-primary/90 hover-scale"
             >
-              {loading ? 'Scanning...' : 'Scan Fingerprint'}
+              {loading ? t('Scanning...') : t('Scan Fingerprint')}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -511,14 +512,14 @@ const Authentication = () => {
       <Dialog open={showBlockchainDialog} onOpenChange={setShowBlockchainDialog}>
         <DialogContent className="sm:max-w-md glass-card dark:bg-background/80">
           <DialogHeader>
-            <DialogTitle>Set up Blockchain Verification</DialogTitle>
+            <DialogTitle>{t("Set up Blockchain Verification")}</DialogTitle>
             <DialogDescription>
-              Link your blockchain wallet for enhanced security verification.
+              {t("Link your blockchain wallet for enhanced security verification.")}
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-2">
             <div className="space-y-2">
-              <Label htmlFor="wallet-address">Your Wallet Address</Label>
+              <Label htmlFor="wallet-address">{t("Your Wallet Address")}</Label>
               <Input 
                 id="wallet-address" 
                 placeholder="0x..." 
@@ -526,12 +527,12 @@ const Authentication = () => {
                 onChange={(e) => setWalletAddress(e.target.value)}
               />
               <p className="text-xs text-muted-foreground">
-                Enter your Ethereum wallet address starting with 0x
+                {t("Enter your Ethereum wallet address starting with 0x")}
               </p>
             </div>
             <div className="flex items-center p-3 bg-muted/50 rounded-lg">
               <Scan className="w-5 h-5 text-security-primary mr-3" />
-              <span className="text-sm">Alternatively, scan your wallet QR code</span>
+              <span className="text-sm">{t("Alternatively, scan your wallet QR code")}</span>
             </div>
           </div>
           <DialogFooter>
@@ -541,14 +542,14 @@ const Authentication = () => {
               disabled={loading}
               className="hover-scale"
             >
-              Cancel
+              {t("Cancel")}
             </Button>
             <Button 
               onClick={verifyBlockchain} 
               disabled={loading}
               className="bg-security-primary hover:bg-security-primary/90 hover-scale"
             >
-              {loading ? 'Verifying...' : 'Connect Wallet'}
+              {loading ? t('Verifying...') : t('Connect Wallet')}
             </Button>
           </DialogFooter>
         </DialogContent>

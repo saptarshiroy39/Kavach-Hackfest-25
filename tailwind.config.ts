@@ -162,6 +162,10 @@ export default {
         'spin-slow': 'spin-slow 8s linear infinite',
         'bob': 'bob 2s infinite ease-in-out'
 			},
+      transitionProperty: {
+        'width': 'width',
+        'spacing': 'margin, padding',
+      },
 			backgroundImage: {
 				'security-gradient': 'linear-gradient(to right, #0a84ff, #30d158)',
 				'dark-gradient': 'linear-gradient(to right, #1c1c1e, #2c2c2e)',

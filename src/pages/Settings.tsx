@@ -41,6 +41,52 @@ const Settings = () => {
     { id: 3, name: 'MacBook Pro', type: 'laptop', status: 'inactive', lastActive: '3 days ago' }
   ]);
 
+  const handleExportUserData = () => {
+    const userData = {
+      profile: {
+        name: currentUser.name,
+        email: currentUser.email,
+        phone: currentUser.phone,
+        createdAt: currentUser.createdAt,
+        lastLogin: currentUser.lastLogin,
+        role: currentUser.role,
+        subscriptionTier: currentUser.subscriptionTier,
+      },
+      security: {
+        hasTwoFactor: currentUser.hasTwoFactor,
+        hasBiometrics: currentUser.hasBiometrics,
+        passwordLastChanged: currentUser.passwordLastChanged,
+        securityScore: 87,
+        recentActivities: [
+          { type: "login", device: "Windows PC", ip: "192.168.1.1", timestamp: new Date().toISOString() },
+          { type: "password_change", device: "iPhone 13", ip: "192.168.1.2", timestamp: new Date(Date.now() - 86400000).toISOString() }
+        ]
+      },
+      devices: connectedDevices,
+      settings: {
+        language: language,
+        theme: document.documentElement.classList.contains('dark') ? 'dark' : 'light',
+        notifications: true,
+        autoLock: "5"
+      }
+    };
+
+    const dataStr = JSON.stringify(userData, null, 2);
+    const blob = new Blob([dataStr], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `kavach_user_data_${new Date().toISOString().slice(0, 10)}.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    toast({
+      title: t("Data Export Successful"),
+      description: t("Your data has been downloaded to your device."),
+    });
+  };
+
   const handleSave = () => {
     toast({
       title: "Settings saved",
@@ -50,42 +96,26 @@ const Settings = () => {
   };
 
   const handleSignOut = () => {
-    // Clear authentication data from localStorage
     localStorage.removeItem('auth-token');
     localStorage.removeItem('user-role');
-    
-    // Dispatch event to notify App component about auth state change
     window.dispatchEvent(new Event('auth-state-changed'));
-    
-    // Show toast notification
     toast({
       title: "Signed out",
       description: "You have been signed out successfully",
     });
-    
-    // Redirect to login page
     navigate('/login');
   };
 
   const handleDeleteAccount = () => {
-    // Close the dialog
     setShowDeleteDialog(false);
-    
-    // Clear authentication data from localStorage
     localStorage.removeItem('auth-token');
     localStorage.removeItem('user-role');
-    
-    // Dispatch event to notify App component about auth state change
     window.dispatchEvent(new Event('auth-state-changed'));
-    
-    // Show toast notification
     toast({
       title: "Account deleted",
       description: "Your account has been deleted successfully",
       variant: "destructive"
     });
-    
-    // Redirect to login page
     navigate('/login');
   };
 
@@ -106,8 +136,6 @@ const Settings = () => {
   };
 
   const handleAddDevice = () => {
-    // In a real app, this would show a dialog to scan a QR code or enter a device code
-    // For demo purposes, we'll just add a new device
     const newDevice = {
       id: Date.now(),
       name: 'New Device',
@@ -145,7 +173,7 @@ const Settings = () => {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.4 }}
         >
-          <h1 className="text-3xl font-bold">{t('settingsTitle')}</h1>
+          <h1 className="text-3xl font-bold">{t('Settings')}</h1>
           <p className="text-muted-foreground mt-1">
             {t('settingsSubtitle')}
           </p>
@@ -160,7 +188,7 @@ const Settings = () => {
               variants={cardVariants}
             >
               <SecurityCard
-                title={t('accountSettings')}
+                title={t('Account Settings')}
                 icon={<User className="w-5 h-5 text-security-primary" />}
               >
                 <div className="space-y-6">
@@ -182,7 +210,7 @@ const Settings = () => {
                           size="sm"
                           className="glass-effect dark:bg-sidebar-accent/30"
                         >
-                          {t('changePfp')}
+                          {t('Change Profile Picture')}
                         </Button>
                       </div>
                     </div>
@@ -227,7 +255,7 @@ const Settings = () => {
                   <div className="flex justify-end pt-4">
                     <Button onClick={handleSave} className="bg-security-primary hover:bg-security-primary/90">
                       <Save className="mr-2 h-4 w-4" />
-                      {t('saveChanges')}
+                      {t('Save Changes')}
                     </Button>
                   </div>
                 </div>
@@ -241,14 +269,14 @@ const Settings = () => {
               variants={cardVariants}
             >
               <SecurityCard
-                title={t('securitySettings')}
+                title={t('Security Settings')}
                 icon={<Lock className="w-5 h-5 text-security-primary" />}
               >
                 <div className="space-y-4">
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="font-medium">{t('changePassword')}</p>
-                      <p className="text-sm text-muted-foreground">{t('lastChanged')}: {new Date(currentUser.passwordLastChanged).toLocaleDateString()}</p>
+                      <p className="font-medium">{t('Change Password')}</p>
+                      <p className="text-sm text-muted-foreground">{t('Last Changed')}: {new Date(currentUser.passwordLastChanged).toLocaleDateString()}</p>
                     </div>
                     <Button variant="outline" className="glass-effect dark:bg-sidebar-accent/30">
                       {t('update')}
@@ -257,16 +285,16 @@ const Settings = () => {
 
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="font-medium">{t('twoFactor')}</p>
-                      <p className="text-sm text-muted-foreground">{t('twoFactorDesc')}</p>
+                      <p className="font-medium">{t('2FA')}</p>
+                      <p className="text-sm text-muted-foreground">{t('2-Factor Authentication')}</p>
                     </div>
                     <Switch checked={currentUser.hasTwoFactor} />
                   </div>
 
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="font-medium">{t('biometric')}</p>
-                      <p className="text-sm text-muted-foreground">{t('biometricDesc')}</p>
+                      <p className="font-medium">{t('Biometric')}</p>
+                      <p className="text-sm text-muted-foreground">{t('Fingerprint is Added')}</p>
                     </div>
                     <Switch checked={currentUser.hasBiometrics} />
                   </div>
@@ -317,7 +345,11 @@ const Settings = () => {
                       <p className="font-medium">{t('exportData')}</p>
                       <p className="text-sm text-muted-foreground">{t('exportDesc')}</p>
                     </div>
-                    <Button variant="outline" className="glass-effect dark:bg-sidebar-accent/30">
+                    <Button 
+                      variant="outline" 
+                      className="glass-effect dark:bg-sidebar-accent/30"
+                      onClick={handleExportUserData}
+                    >
                       <Download className="mr-2 h-4 w-4" /> {t('export')}
                     </Button>
                   </div>
@@ -370,7 +402,7 @@ const Settings = () => {
                   <div className="flex items-center justify-between">
                     <div className="flex items-center">
                       <Moon className="w-4 h-4 mr-2" />
-                      <span>{t('themeMode')}</span>
+                      <span>{t('Theme Mode')}</span>
                     </div>
                     <ThemeToggle />
                   </div>

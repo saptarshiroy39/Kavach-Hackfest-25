@@ -1,24 +1,18 @@
 import React, { useState } from 'react';
-import MainLayout from '@/components/layout/MainLayout';
-import SecurityCard from '@/components/security/SecurityCard';
+import { Search, MoreVertical, Trash, UserCheck, UserX, Lock, Filter, X } from 'lucide-react';
+import { useLanguage } from '@/hooks/use-language';
 import { 
-  Users, 
-  UserPlus, 
-  Search, 
-  Filter,
-  MoreHorizontal,
-  UserCog,
-  UserMinus,
-  ShieldAlert,
-  Mail,
-  ArrowLeft,
-  X
-} from 'lucide-react';
+  Dialog, 
+  DialogContent, 
+  DialogHeader, 
+  DialogTitle,
+  DialogDescription,
+  DialogFooter
+} from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { useToast } from '@/hooks/use-toast';
-import { Link } from 'react-router-dom';
-import {
+import { Label } from '@/components/ui/label';
+import { 
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
@@ -33,481 +27,447 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import { motion } from 'framer-motion';
+import { useToast } from '@/hooks/use-toast';
 
-const initialUsersList = [
-  {
-    id: 1,
-    name: 'John Doe',
-    email: 'john@example.com',
-    role: 'Admin',
-    status: 'Active',
-    lastLogin: 'Today, 9:43 AM',
-    securityScore: 92,
-    hasTwoFactor: true,
-  },
-  {
-    id: 2,
-    name: 'Alice Smith',
-    email: 'alice@example.com',
-    role: 'User',
-    status: 'Active',
-    lastLogin: 'Yesterday, 2:15 PM',
-    securityScore: 78,
-    hasTwoFactor: true,
-  },
-  {
-    id: 3,
-    name: 'Robert Johnson',
-    email: 'robert@example.com',
-    role: 'User',
-    status: 'Suspended',
-    lastLogin: 'Last week',
-    securityScore: 45,
-    hasTwoFactor: false,
-  },
-  {
-    id: 4,
-    name: 'Emily Davis',
-    email: 'emily@example.com',
-    role: 'User',
-    status: 'Active',
-    lastLogin: 'Today, 11:20 AM',
-    securityScore: 85,
-    hasTwoFactor: true,
-  },
-  {
-    id: 5,
-    name: 'Michael Brown',
-    email: 'michael@example.com',
-    role: 'User',
-    status: 'Active',
-    lastLogin: '2 days ago',
-    securityScore: 65,
-    hasTwoFactor: false,
-  },
-  {
-    id: 6,
-    name: 'Sarah Wilson',
-    email: 'sarah@example.com',
-    role: 'Moderator',
-    status: 'Active',
-    lastLogin: 'Today, 8:05 AM',
-    securityScore: 88,
-    hasTwoFactor: true,
-  },
-  {
-    id: 7,
-    name: 'David Miller',
-    email: 'david@example.com',
-    role: 'User',
-    status: 'Inactive',
-    lastLogin: '2 weeks ago',
-    securityScore: 32,
-    hasTwoFactor: false,
-  },
-  {
-    id: 8,
-    name: 'Jennifer Taylor',
-    email: 'jennifer@example.com',
-    role: 'User',
-    status: 'Active',
-    lastLogin: 'Yesterday, 4:30 PM',
-    securityScore: 74,
-    hasTwoFactor: true,
-  },
-];
-
-const AdminUsers = () => {
-  const [usersList, setUsersList] = useState(initialUsersList);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [statusFilter, setStatusFilter] = useState('all');
-  const [roleFilter, setRoleFilter] = useState('all');
-  const [showAddUserDialog, setShowAddUserDialog] = useState(false);
-  const [newUser, setNewUser] = useState({
-    name: '',
-    email: '',
-    role: 'User',
-    password: ''
-  });
+const AdminUsers: React.FC = () => {
+  const { t } = useLanguage();
   const { toast } = useToast();
+  const [searchTerm, setSearchTerm] = useState('');
+  const [showAddUserDialog, setShowAddUserDialog] = useState(false);
+  const [showResetPasswordDialog, setShowResetPasswordDialog] = useState(false);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [newUserName, setNewUserName] = useState('');
+  const [newUserEmail, setNewUserEmail] = useState('');
+  const [newUserRole, setNewUserRole] = useState('user');
+  const [newPassword, setNewPassword] = useState('');
+  const [currentUserId, setCurrentUserId] = useState<number | null>(null);
+  const [showFilterMenu, setShowFilterMenu] = useState(false);
+  const [statusFilter, setStatusFilter] = useState<string>('all');
+  const [roleFilter, setRoleFilter] = useState<string>('all');
+
+  // Mock user data - would come from an API in a real application
+  const [users, setUsers] = useState([
+    { id: 1, name: 'Alex Johnson', email: 'alex@example.com', role: 'user', status: 'Active', lastLogin: '2023-05-10' },
+    { id: 2, name: 'Maya Patel', email: 'maya@example.com', role: 'admin', status: 'Active', lastLogin: '2023-05-12' },
+    { id: 3, name: 'Sam Wilson', email: 'sam@example.com', role: 'user', status: 'Inactive', lastLogin: '2023-04-28' },
+    { id: 4, name: 'Taylor Smith', email: 'taylor@example.com', role: 'user', status: 'Active', lastLogin: '2023-05-11' },
+    { id: 5, name: 'Jordan Lee', email: 'jordan@example.com', role: 'user', status: 'Active', lastLogin: '2023-05-09' }
+  ]);
+
+  const filteredUsers = users
+    .filter(user => user.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
+                   user.email.toLowerCase().includes(searchTerm.toLowerCase()))
+    .filter(user => statusFilter === 'all' || user.status.toLowerCase() === statusFilter.toLowerCase())
+    .filter(user => roleFilter === 'all' || user.role.toLowerCase() === roleFilter.toLowerCase());
 
   const handleAddUser = () => {
-    // Validate form
-    if (!newUser.name || !newUser.email || !newUser.password) {
+    if (!newUserName || !newUserEmail || !newPassword) {
       toast({
-        title: "Missing information",
-        description: "Please fill in all required fields.",
-        variant: "destructive"
+        title: "Missing Information",
+        description: "Please fill in all required fields",
+        variant: "destructive",
       });
       return;
     }
 
-    // Create new user object with an ID and default values
-    const newUserEntry = {
-      id: usersList.length > 0 ? Math.max(...usersList.map(u => u.id)) + 1 : 1,
-      name: newUser.name,
-      email: newUser.email,
-      role: newUser.role,
+    const newUser = {
+      id: users.length + 1,
+      name: newUserName,
+      email: newUserEmail,
+      role: newUserRole,
       status: 'Active',
-      lastLogin: 'Just now',
-      securityScore: 50,
-      hasTwoFactor: false,
+      lastLogin: 'Never'
     };
 
-    // Add user to the list
-    setUsersList([...usersList, newUserEntry]);
-
-    // In a real app, this would send the data to the server
-    toast({
-      title: "User added",
-      description: `Successfully added ${newUser.name} as a ${newUser.role.toLowerCase()}.`,
-    });
-
-    // Reset form and close dialog
-    setNewUser({
-      name: '',
-      email: '',
-      role: 'User',
-      password: ''
-    });
+    setUsers([...users, newUser]);
     setShowAddUserDialog(false);
-  };
-  
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setNewUser(prev => ({ ...prev, [name]: value }));
-  };
-  
-  const handleRoleChange = (role: string) => {
-    setNewUser(prev => ({ ...prev, role }));
-  };
-
-  // Filter users based on search and filters
-  const filteredUsers = usersList.filter(user => {
-    const matchesSearch = 
-      user.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
-      user.email.toLowerCase().includes(searchTerm.toLowerCase());
-      
-    const matchesStatus = statusFilter === 'all' || user.status.toLowerCase() === statusFilter.toLowerCase();
-    const matchesRole = roleFilter === 'all' || user.role.toLowerCase() === roleFilter.toLowerCase();
+    setNewUserName('');
+    setNewUserEmail('');
+    setNewUserRole('user');
+    setNewPassword('');
     
-    return matchesSearch && matchesStatus && matchesRole;
-  });
-
-  const handleSendEmail = (user: typeof usersList[0]) => {
     toast({
-      title: "Email sent",
-      description: `Notification email sent to ${user.name}`,
+      title: "User Added",
+      description: `${newUserName} has been added successfully`,
     });
   };
 
-  const handleResetPassword = (user: typeof usersList[0]) => {
+  const handleResetPassword = () => {
+    setShowResetPasswordDialog(false);
+    
     toast({
-      title: "Password reset",
-      description: `Password reset link sent to ${user.email}`,
+      title: "Password Reset",
+      description: "Password reset email has been sent",
     });
   };
 
-  const handleToggleStatus = (user: typeof usersList[0]) => {
-    const newStatus = user.status === 'Active' ? 'Suspended' : 'Active';
+  const handleDeleteUser = () => {
+    if (currentUserId) {
+      setUsers(users.filter(user => user.id !== currentUserId));
+      
+      toast({
+        title: "User Deleted",
+        description: "The user has been deleted successfully",
+      });
+    }
+    setShowDeleteDialog(false);
+    setCurrentUserId(null);
+  };
+
+  const toggleUserStatus = (userId: number) => {
+    setUsers(users.map(user => {
+      if (user.id === userId) {
+        const newStatus = user.status === 'Active' ? 'Inactive' : 'Active';
+        
+        toast({
+          title: `User ${newStatus}`,
+          description: `${user.name} is now ${newStatus}`,
+        });
+        
+        return { ...user, status: newStatus };
+      }
+      return user;
+    }));
+  };
+
+  const clearFilters = () => {
+    setStatusFilter('all');
+    setRoleFilter('all');
+    setSearchTerm('');
+    
     toast({
-      title: `User ${newStatus.toLowerCase()}`,
-      description: `${user.name} has been ${newStatus.toLowerCase()}`,
-      variant: newStatus === 'Active' ? 'default' : 'destructive',
+      title: "Filters Cleared",
+      description: "All filters have been reset",
     });
   };
 
   return (
-    <MainLayout>
-      <motion.div 
-        className="space-y-6"
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.3 }}
-      >
-        <div className="flex items-center justify-between">
-          <div>
-            <Link to="/admin" className="text-security-primary hover:underline inline-flex items-center mb-2">
-              <ArrowLeft className="h-4 w-4 mr-1" />
-              Back to Admin Dashboard
-            </Link>
-            <h1 className="text-3xl font-bold">User Management</h1>
-            <p className="text-muted-foreground mt-1">
-              Manage user accounts and permissions
-            </p>
-          </div>
-          <Button className="bg-security-primary hover:bg-security-primary/90" onClick={() => setShowAddUserDialog(true)}>
-            <UserPlus className="h-4 w-4 mr-2" />
-            Add User
-          </Button>
-        </div>
-
-        <SecurityCard
-          className="mb-6 glass-card dark:bg-sidebar-accent/50"
-          title="Users"
-          icon={<Users className="w-5 h-5 text-security-primary" />}
+    <div className="space-y-6">
+      <div className="flex justify-between items-center">
+        <h1 className="text-2xl font-semibold text-foreground">{t('User Management')}</h1>
+        <Button 
+          className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white"
+          onClick={() => setShowAddUserDialog(true)}
         >
-          <div className="space-y-4">
-            <div className="flex flex-col md:flex-row justify-between gap-4">
-              <div className="relative flex-1">                <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4 pointer-events-none z-10" />
-                <Input
-                  placeholder="Search users..."
-                  className="pl-12"
-                  style={{ textIndent: "5px" }}
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                />
-              </div>
-              <div className="flex flex-wrap gap-2">
-                <Select value={statusFilter} onValueChange={setStatusFilter}>
-                  <SelectTrigger className="w-[140px]">
-                    <SelectValue placeholder="Status" />
+          {t('Add User')}
+        </Button>
+      </div>
+      
+      <div className="flex items-center gap-2">
+        <div className="relative flex-1">
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground" size={18} />
+          <input
+            type="text"
+            placeholder={t('search_users')}
+            className="w-full pl-10 pr-4 py-2 bg-muted dark:bg-slate-700 border border-input dark:border-slate-600 rounded-md text-foreground"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+          />
+          {searchTerm && (
+            <button 
+              className="absolute right-3 top-1/2 transform -translate-y-1/2 text-muted-foreground hover:text-foreground"
+              onClick={() => setSearchTerm('')}
+            >
+              <X size={16} />
+            </button>
+          )}
+        </div>
+        
+        <div className="relative">
+          <Button
+            variant="outline"
+            size="icon"
+            onClick={() => setShowFilterMenu(!showFilterMenu)}
+            className={`p-2 ${(statusFilter !== 'all' || roleFilter !== 'all') ? 'border-blue-500 text-blue-500' : ''}`}
+          >
+            <Filter size={18} />
+          </Button>
+          
+          {showFilterMenu && (
+            <div className="absolute right-0 mt-2 w-72 bg-card dark:bg-slate-800 border border-border dark:border-slate-700 rounded-md shadow-lg z-50 p-4 space-y-4">
+              <h3 className="font-medium text-foreground">Filter Users</h3>
+              
+              <div className="space-y-2">
+                <Label className="text-sm text-muted-foreground">Status</Label>
+                <Select 
+                  value={statusFilter} 
+                  onValueChange={setStatusFilter}
+                >
+                  <SelectTrigger className="bg-background dark:bg-slate-700 border-input dark:border-slate-600 text-foreground">
+                    <SelectValue placeholder="Select status" />
                   </SelectTrigger>
-                  <SelectContent className="z-50">
+                  <SelectContent className="bg-background dark:bg-slate-700 border-input dark:border-slate-600 text-foreground">
                     <SelectItem value="all">All Statuses</SelectItem>
                     <SelectItem value="active">Active</SelectItem>
-                    <SelectItem value="suspended">Suspended</SelectItem>
                     <SelectItem value="inactive">Inactive</SelectItem>
                   </SelectContent>
                 </Select>
-                
-                <Select value={roleFilter} onValueChange={setRoleFilter}>
-                  <SelectTrigger className="w-[140px]">
-                    <SelectValue placeholder="Role" />
+              </div>
+              
+              <div className="space-y-2">
+                <Label className="text-sm text-muted-foreground">Role</Label>
+                <Select 
+                  value={roleFilter} 
+                  onValueChange={setRoleFilter}
+                >
+                  <SelectTrigger className="bg-background dark:bg-slate-700 border-input dark:border-slate-600 text-foreground">
+                    <SelectValue placeholder="Select role" />
                   </SelectTrigger>
-                  <SelectContent className="z-50">
+                  <SelectContent className="bg-background dark:bg-slate-700 border-input dark:border-slate-600 text-foreground">
                     <SelectItem value="all">All Roles</SelectItem>
                     <SelectItem value="admin">Admin</SelectItem>
-                    <SelectItem value="moderator">Moderator</SelectItem>
                     <SelectItem value="user">User</SelectItem>
                   </SelectContent>
                 </Select>
-                
-                <Button variant="outline" size="icon">
-                  <Filter className="h-4 w-4" />
+              </div>
+              
+              <div className="pt-2 flex justify-between">
+                <Button 
+                  variant="outline"
+                  onClick={clearFilters}
+                  className="text-sm"
+                >
+                  Clear All
+                </Button>
+                <Button 
+                  onClick={() => setShowFilterMenu(false)}
+                  className="bg-blue-600 hover:bg-blue-700 text-sm"
+                >
+                  Apply Filters
                 </Button>
               </div>
             </div>
-            
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="border-b border-border">
-                    <th className="text-left py-3 px-4 font-medium">User</th>
-                    <th className="text-left py-3 px-4 font-medium">Role</th>
-                    <th className="text-left py-3 px-4 font-medium">Status</th>
-                    <th className="text-left py-3 px-4 font-medium">Security</th>
-                    <th className="text-left py-3 px-4 font-medium">Last Login</th>
-                    <th className="text-left py-3 px-4 font-medium">Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {filteredUsers.map((user) => (
-                    <tr key={user.id} className="border-b border-border hover:bg-muted/20">
-                      <td className="py-3 px-4">
-                        <div className="flex items-center">
-                          <div className={`w-10 h-10 rounded-full ${
-                            user.role === 'Admin' 
-                              ? 'bg-security-primary/20' 
-                              : user.role === 'Moderator'
-                              ? 'bg-security-secondary/20'
-                              : 'bg-muted'
-                          } flex items-center justify-center mr-3`}>
-                            {user.name.split(' ').map(name => name[0]).join('')}
-                          </div>
-                          <div>
-                            <div className="font-medium">{user.name}</div>
-                            <div className="text-xs text-muted-foreground">{user.email}</div>
-                          </div>
-                        </div>
-                      </td>
-                      <td className="py-3 px-4">
-                        <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
-                          user.role === 'Admin' 
-                            ? 'bg-security-primary/20 text-security-primary' 
-                            : user.role === 'Moderator'
-                            ? 'bg-security-secondary/20 text-security-secondary'
-                            : 'bg-muted text-muted-foreground'
-                        }`}>
-                          {user.role}
-                        </span>
-                      </td>
-                      <td className="py-3 px-4">
-                        <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
-                          user.status === 'Active' 
-                            ? 'bg-security-secondary/20 text-security-secondary' 
-                            : user.status === 'Suspended'
-                            ? 'bg-security-danger/20 text-security-danger'
-                            : 'bg-security-warning/20 text-security-warning'
-                        }`}>
-                          {user.status}
-                        </span>
-                      </td>
-                      <td className="py-3 px-4">
-                        <div className="flex items-center">
-                          <div className="w-16 mr-2">
-                            <div className="h-1.5 w-full bg-muted rounded-full overflow-hidden">
-                              <div 
-                                className={`h-full ${
-                                  user.securityScore >= 80 ? 'bg-security-secondary' : 
-                                  user.securityScore >= 60 ? 'bg-security-warning' : 
-                                  'bg-security-danger'
-                                }`}
-                                style={{ width: `${user.securityScore}%` }}
-                              ></div>
-                            </div>
-                          </div>
-                          <div className="text-xs font-medium">{user.securityScore}%</div>
-                          {user.hasTwoFactor && (
-                            <div className="ml-2 text-security-secondary" title="2FA Enabled">
-                              <ShieldAlert className="h-3.5 w-3.5" />
-                            </div>
-                          )}
-                        </div>
-                      </td>
-                      <td className="py-3 px-4 text-xs">
-                        {user.lastLogin}
-                      </td>
-                      <td className="py-3 px-4">
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
-                              <MoreHorizontal className="h-4 w-4" />
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end" className="glass-card">
-                            <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                            <DropdownMenuSeparator />
-                            <DropdownMenuItem onClick={() => handleSendEmail(user)}>
-                              <Mail className="mr-2 h-4 w-4" />
-                              <span>Contact User</span>
-                            </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => handleResetPassword(user)}>
-                              <UserCog className="mr-2 h-4 w-4" />
-                              <span>Reset Password</span>
-                            </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => handleToggleStatus(user)}>
-                              <UserMinus className="mr-2 h-4 w-4" />
-                              <span>{user.status === 'Active' ? 'Suspend User' : 'Activate User'}</span>
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-            
-            {filteredUsers.length === 0 && (
-              <div className="text-center py-8">
-                <Users className="mx-auto h-12 w-12 text-muted-foreground mb-3" />
-                <h3 className="font-medium">No users found</h3>
-                <p className="text-sm text-muted-foreground mt-1">
-                  Try adjusting your search or filters
-                </p>
-              </div>
-            )}
-            
-            <div className="flex justify-between items-center pt-4">
-              <div className="text-sm text-muted-foreground">
-                Showing {filteredUsers.length} of {usersList.length} users
-              </div>
-              <div className="flex gap-2">
-                <Button variant="outline" size="sm" disabled>Previous</Button>
-                <Button variant="outline" size="sm" disabled>Next</Button>
-              </div>
-            </div>
-          </div>
-        </SecurityCard>
-      </motion.div>
+          )}
+        </div>
+      </div>
       
+      <div className="overflow-x-auto">
+        <table className="w-full text-left">
+          <thead className="bg-muted dark:bg-slate-700 text-foreground">
+            <tr>
+              <th className="px-4 py-3">{t('Name')}</th>
+              <th className="px-4 py-3">{t('Email')}</th>
+              <th className="px-4 py-3">{t('Role')}</th>
+              <th className="px-4 py-3">{t('Status')}</th>
+              <th className="px-4 py-3">{t('Last Login')}</th>
+              <th className="px-4 py-3">{t('Actions')}</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-border dark:divide-slate-600">
+            {filteredUsers.map(user => (
+              <tr key={user.id} className="bg-card dark:bg-slate-800 text-foreground hover:bg-muted dark:hover:bg-slate-700">
+                <td className="px-4 py-3">{user.name}</td>
+                <td className="px-4 py-3">{user.email}</td>
+                <td className="px-4 py-3">{user.role === 'admin' ? 'Admin' : 'User'}</td>
+                <td className="px-4 py-3">
+                  <span className={`px-2 py-1 rounded-full text-xs ${user.status === 'Active' ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300' : 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300'}`}>
+                    {user.status}
+                  </span>
+                </td>
+                <td className="px-4 py-3">{user.lastLogin}</td>
+                <td className="px-4 py-3">
+                  <div className="flex space-x-2">
+                    <button 
+                      title={t('reset_password')} 
+                      className="p-1 text-blue-600 dark:text-blue-400 hover:text-blue-500 dark:hover:text-blue-300"
+                      onClick={() => {
+                        setCurrentUserId(user.id);
+                        setShowResetPasswordDialog(true);
+                      }}
+                    >
+                      <Lock size={16} />
+                    </button>
+                    {user.status === 'Active' ? (
+                      <button 
+                        title={t('deactivate_user')} 
+                        className="p-1 text-yellow-600 dark:text-yellow-400 hover:text-yellow-500 dark:hover:text-yellow-300"
+                        onClick={() => toggleUserStatus(user.id)}
+                      >
+                        <UserX size={16} />
+                      </button>
+                    ) : (
+                      <button 
+                        title={t('activate_user')} 
+                        className="p-1 text-green-600 dark:text-green-400 hover:text-green-500 dark:hover:text-green-300"
+                        onClick={() => toggleUserStatus(user.id)}
+                      >
+                        <UserCheck size={16} />
+                      </button>
+                    )}
+                    <button 
+                      title={t('delete_user')} 
+                      className="p-1 text-red-600 dark:text-red-400 hover:text-red-500 dark:hover:text-red-300"
+                      onClick={() => {
+                        setCurrentUserId(user.id);
+                        setShowDeleteDialog(true);
+                      }}
+                    >
+                      <Trash size={16} />
+                    </button>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <button title={t('more_options')} className="p-1 text-muted-foreground hover:text-foreground">
+                          <MoreVertical size={16} />
+                        </button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent className="bg-card dark:bg-slate-800 border-border dark:border-slate-700 text-foreground">
+                        <DropdownMenuLabel>User Options</DropdownMenuLabel>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem 
+                          className="cursor-pointer hover:bg-muted dark:hover:bg-slate-700"
+                          onClick={() => {
+                            toast({
+                              title: "User details",
+                              description: `Viewing details for ${user.name}`,
+                            });
+                          }}
+                        >
+                          View Details
+                        </DropdownMenuItem>
+                        <DropdownMenuItem 
+                          className="cursor-pointer hover:bg-muted dark:hover:bg-slate-700"
+                          onClick={() => {
+                            toast({
+                              title: "Edit User",
+                              description: `Editing ${user.name}`,
+                            });
+                          }}
+                        >
+                          Edit User
+                        </DropdownMenuItem>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem 
+                          className="cursor-pointer hover:bg-muted dark:hover:bg-slate-700 text-red-600 dark:text-red-400"
+                          onClick={() => {
+                            setCurrentUserId(user.id);
+                            setShowDeleteDialog(true);
+                          }}
+                        >
+                          Delete User
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </div>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+      
+      <div className="text-sm text-muted-foreground text-right">
+        {`${t('showing')} ${filteredUsers.length} ${t('of')} ${users.length} ${t('results')}`}
+      </div>
+
       {/* Add User Dialog */}
       <Dialog open={showAddUserDialog} onOpenChange={setShowAddUserDialog}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="bg-slate-800 text-white border-slate-700 sm:max-w-md">
           <DialogHeader>
             <DialogTitle>Add New User</DialogTitle>
-            <DialogDescription>
-              Create a new user account with the specified details.
+            <DialogDescription className="text-gray-400">
+              Enter the details for the new user. They will receive an email with login instructions.
             </DialogDescription>
           </DialogHeader>
-          
-          <div className="space-y-4 py-4">
+          <div className="space-y-4 py-2">
             <div className="space-y-2">
-              <label htmlFor="name" className="text-sm font-medium">Full Name</label>
+              <Label htmlFor="name">Name</Label>
               <Input
                 id="name"
-                name="name"
-                placeholder="John Doe"
-                value={newUser.name}
-                onChange={handleInputChange}
+                placeholder="Enter name"
+                value={newUserName}
+                onChange={(e) => setNewUserName(e.target.value)}
+                className="bg-slate-700 border-slate-600 text-white"
               />
             </div>
-            
             <div className="space-y-2">
-              <label htmlFor="email" className="text-sm font-medium">Email Address</label>
+              <Label htmlFor="email">Email</Label>
               <Input
                 id="email"
-                name="email"
                 type="email"
-                placeholder="user@example.com"
-                value={newUser.email}
-                onChange={handleInputChange}
+                placeholder="Enter email"
+                value={newUserEmail}
+                onChange={(e) => setNewUserEmail(e.target.value)}
+                className="bg-slate-700 border-slate-600 text-white"
               />
             </div>
-            
             <div className="space-y-2">
-              <label htmlFor="password" className="text-sm font-medium">Initial Password</label>
-              <Input
-                id="password"
-                name="password"
-                type="password"
-                placeholder="••••••••"
-                value={newUser.password}
-                onChange={handleInputChange}
-              />
-              <p className="text-xs text-muted-foreground">
-                User will be prompted to change this password on first login.
-              </p>
-            </div>
-            
-            <div className="space-y-2">
-              <label htmlFor="role" className="text-sm font-medium">User Role</label>
-              <Select value={newUser.role} onValueChange={handleRoleChange}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select role" />
+              <Label htmlFor="role">Role</Label>
+              <Select value={newUserRole} onValueChange={setNewUserRole}>
+                <SelectTrigger className="bg-slate-700 border-slate-600 text-white">
+                  <SelectValue placeholder="Select a role" />
                 </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="Admin">Administrator</SelectItem>
-                  <SelectItem value="Moderator">Moderator</SelectItem>
-                  <SelectItem value="User">Regular User</SelectItem>
+                <SelectContent className="bg-slate-700 border-slate-600 text-white">
+                  <SelectItem value="user">User</SelectItem>
+                  <SelectItem value="admin">Admin</SelectItem>
                 </SelectContent>
               </Select>
             </div>
+            <div className="space-y-2">
+              <Label htmlFor="password">Initial Password</Label>
+              <Input
+                id="password"
+                type="password"
+                placeholder="Set initial password"
+                value={newPassword}
+                onChange={(e) => setNewPassword(e.target.value)}
+                className="bg-slate-700 border-slate-600 text-white"
+              />
+            </div>
           </div>
-          
           <DialogFooter>
             <Button variant="outline" onClick={() => setShowAddUserDialog(false)}>
-              <X className="h-4 w-4 mr-2" />
               Cancel
             </Button>
-            <Button onClick={handleAddUser} className="bg-security-primary hover:bg-security-primary/90">
-              <UserPlus className="h-4 w-4 mr-2" />
+            <Button onClick={handleAddUser} className="bg-blue-600 hover:bg-blue-700">
               Add User
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </MainLayout>
+
+      {/* Reset Password Dialog */}
+      <Dialog open={showResetPasswordDialog} onOpenChange={setShowResetPasswordDialog}>
+        <DialogContent className="bg-slate-800 text-white border-slate-700 sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Reset Password</DialogTitle>
+            <DialogDescription className="text-gray-400">
+              This will send a password reset email to the user.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowResetPasswordDialog(false)}>
+              Cancel
+            </Button>
+            <Button onClick={handleResetPassword} className="bg-blue-600 hover:bg-blue-700">
+              Send Reset Link
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete User Dialog */}
+      <Dialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+        <DialogContent className="bg-slate-800 text-white border-slate-700 sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Delete User</DialogTitle>
+            <DialogDescription className="text-gray-400">
+              Are you sure you want to delete this user? This action cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowDeleteDialog(false)}>
+              Cancel
+            </Button>
+            <Button 
+              onClick={handleDeleteUser} 
+              variant="destructive"
+            >
+              Delete User
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </div>
   );
 };
 

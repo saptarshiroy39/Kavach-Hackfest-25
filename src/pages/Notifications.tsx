@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import MainLayout from '@/components/layout/MainLayout';
 import SecurityCard from '@/components/security/SecurityCard';
@@ -13,6 +12,7 @@ import {
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
+import { useLanguage } from '@/hooks/use-language';
 
 interface NotificationSetting {
   id: string;
@@ -57,6 +57,7 @@ const Notifications = () => {
     }
   ]);
   const { toast } = useToast();
+  const { t } = useLanguage();
 
   useEffect(() => {
     const fetchNotifications = async () => {
@@ -67,8 +68,8 @@ const Notifications = () => {
       } catch (error) {
         console.error('Failed to fetch notifications:', error);
         toast({
-          title: "Error",
-          description: "Failed to load notifications. Please try again.",
+          title: t("Error"),
+          description: t("Failed to load notifications. Please try again."),
           variant: "destructive",
         });
         setIsLoading(false);
@@ -76,7 +77,7 @@ const Notifications = () => {
     };
 
     fetchNotifications();
-  }, [toast]);
+  }, [toast, t]);
 
   const markAllAsRead = () => {
     const updatedNotifications = notifications.map(notif => ({
@@ -85,23 +86,23 @@ const Notifications = () => {
     }));
     setNotifications(updatedNotifications);
     toast({
-      title: "Notifications updated",
-      description: "All notifications marked as read",
+      title: t("Notifications updated"),
+      description: t("All notifications marked as read"),
     });
   };
   const clearAllNotifications = () => {
     setNotifications([]);
     toast({
-      title: "Notifications cleared",
-      description: "All notifications have been removed",
+      title: t("Notifications cleared"),
+      description: t("All notifications have been removed"),
     });
   };
 
   const deleteNotification = (id: string) => {
     setNotifications(prev => prev.filter(n => n.id !== id));
     toast({
-      title: "Notification removed",
-      description: "The notification has been deleted",
+      title: t("Notification removed"),
+      description: t("The notification has been deleted"),
     });
   };
   
@@ -117,10 +118,10 @@ const Notifications = () => {
     // Find the setting that was toggled
     const setting = notificationSettings.find(s => s.id === settingId);
     if (setting) {
-      const newStatus = !setting.enabled ? 'Enabled' : 'Disabled';
+      const newStatus = !setting.enabled ? t('Enabled') : t('Disabled');
       toast({
-        title: `${setting.title} ${newStatus}`,
-        description: `Notification setting has been ${newStatus.toLowerCase()}`,
+        title: `${t(setting.title)} ${newStatus}`,
+        description: t(`Notification setting has been ${newStatus.toLowerCase()}`),
       });
     }
   };
@@ -130,7 +131,7 @@ const Notifications = () => {
       <MainLayout>
         <div className="flex flex-col items-center justify-center h-full">
           <div className="w-16 h-16 border-t-4 border-security-primary rounded-full animate-spin"></div>
-          <p className="mt-4 text-muted-foreground">Loading your notifications...</p>
+          <p className="mt-4 text-muted-foreground">{t("Loading your notifications...")}</p>
         </div>
       </MainLayout>
     );
@@ -141,28 +142,28 @@ const Notifications = () => {
       <div className="space-y-6">
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
           <div>
-            <h1 className="text-3xl font-bold">Notifications</h1>
+            <h1 className="text-3xl font-bold">{t("Notifications")}</h1>
             <p className="text-muted-foreground mt-1">
-              Stay informed about security events and alerts
+              {t("Stay informed about security events and alerts")}
             </p>
           </div>
           <div className="flex space-x-3">
             <Button variant="outline" onClick={markAllAsRead}>
-              <CheckCircle2 className="mr-2 h-4 w-4" /> Mark all as read
+              <CheckCircle2 className="mr-2 h-4 w-4" /> {t("Mark all as read")}
             </Button>
             <Button variant="outline" onClick={clearAllNotifications}>
-              <Trash className="mr-2 h-4 w-4" /> Clear all
+              <Trash className="mr-2 h-4 w-4" /> {t("Clear all")}
             </Button>
             <Button variant="outline">
-              <Settings className="mr-2 h-4 w-4" /> Settings
+              <Settings className="mr-2 h-4 w-4" /> {t("Settings")}
             </Button>
           </div>
         </div>
 
         <SecurityCard
-          title="Recent Notifications"
+          title={t("Recent Notifications")}
           icon={<Bell className="w-5 h-5 text-security-primary" />}
-          subtitle={`${notifications.length} notifications`}
+          subtitle={t(`${notifications.length} notifications`)}
         >
           {notifications.length > 0 ? (
             <div className="divide-y divide-border">
@@ -186,7 +187,7 @@ const Notifications = () => {
                     </div>
                     <div className="ml-3 flex-1">
                       <div className="flex items-center justify-between">
-                        <p className="font-medium">{notification.description}</p>
+                        <p className="font-medium">{t(notification.description)}</p>
                         <SecurityBadge 
                           status={
                             notification.severity === 'high' 
@@ -195,29 +196,29 @@ const Notifications = () => {
                               ? 'warning' 
                               : 'secure'
                           }
-                          text={notification.severity}
+                          text={t(notification.severity)}
                           className="capitalize"
                         />
                       </div>
                       <div className="text-sm text-muted-foreground mt-1">
                         <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-3">
-                          <span>{notification.device}</span>
+                          <span>{t(notification.device)}</span>
                           <span className="hidden sm:inline">•</span>
-                          <span>{notification.location}</span>
+                          <span>{t(notification.location)}</span>
                           <span className="hidden sm:inline">•</span>
                           <span>{new Date(notification.timestamp).toLocaleString()}</span>
                         </div>
                       </div>
                       <div className="flex mt-3 space-x-2">
                         <Button variant="outline" size="sm">
-                          View Details
+                          {t("View Details")}
                         </Button>
                         <Button 
                           variant="outline" 
                           size="sm"
                           onClick={() => deleteNotification(notification.id)}
                         >
-                          Dismiss
+                          {t("Dismiss")}
                         </Button>
                       </div>
                     </div>
@@ -228,14 +229,14 @@ const Notifications = () => {
           ) : (
             <div className="py-8 text-center">
               <Bell className="mx-auto h-12 w-12 text-muted-foreground opacity-50" />
-              <h3 className="mt-4 text-lg font-medium">No notifications</h3>
+              <h3 className="mt-4 text-lg font-medium">{t("No notifications")}</h3>
               <p className="mt-1 text-sm text-muted-foreground">
-                You're all caught up! We'll notify you when there's a security event.
+                {t("You're all caught up! We'll notify you when there's a security event.")}
               </p>
             </div>
           )}
         </SecurityCard>        <SecurityCard
-          title="Notification Settings"
+          title={t("Notification Settings")}
           icon={<Settings className="w-5 h-5 text-security-primary" />}
         >
           <div className="space-y-4">
@@ -249,8 +250,8 @@ const Notifications = () => {
                 }`}
               >
                 <div>
-                  <p className="font-medium">{setting.title}</p>
-                  <p className="text-sm text-muted-foreground">{setting.description}</p>
+                  <p className="font-medium">{t(setting.title)}</p>
+                  <p className="text-sm text-muted-foreground">{t(setting.description)}</p>
                 </div>                <Button 
                   variant={setting.enabled ? "outline" : "outline"} 
                   size="sm"
@@ -259,7 +260,7 @@ const Notifications = () => {
                     ? "bg-green-500/10 text-green-500 border-green-500/50 hover:bg-green-500/20 hover:text-green-600" 
                     : "bg-red-500/10 text-red-500 border-red-500/50 hover:bg-red-500/20 hover:text-red-600"}
                 >
-                  {setting.enabled ? "Enabled" : "Disabled"}
+                  {setting.enabled ? t("Enabled") : t("Disabled")}
                 </Button>
               </div>
             ))}

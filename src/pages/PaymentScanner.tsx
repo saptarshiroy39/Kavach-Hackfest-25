@@ -1,4 +1,3 @@
-
 import React, { useState, useRef } from 'react';
 import MainLayout from '@/components/layout/MainLayout';
 import SecurityCard from '@/components/security/SecurityCard';
@@ -19,6 +18,7 @@ import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
 import { motion } from 'framer-motion';
+import { useLanguage } from '@/hooks/use-language';
 
 const PaymentScanner = () => {
   const [upiId, setUpiId] = useState('');
@@ -36,12 +36,13 @@ const PaymentScanner = () => {
   } | null>(null);
   
   const { toast } = useToast();
+  const { t } = useLanguage();
 
   const handleUPIAnalysis = async () => {
     if (!upiId.trim()) {
       toast({
-        title: "UPI ID required",
-        description: "Please enter a UPI ID to verify.",
+        title: t("upiIdRequired"),
+        description: t("pleaseEnterUpiId"),
         variant: "destructive",
       });
       return;
@@ -69,27 +70,27 @@ const PaymentScanner = () => {
         score: isSecure ? Math.floor(Math.random() * 20) + 80 : Math.floor(Math.random() * 30) + 20,
         providerInfo: isKnownProvider ? getProviderInfo(provider) : undefined,
         details: [
-          isValidFormat ? 'UPI ID format is valid' : 'UPI ID format is invalid',
-          isKnownProvider ? 'Recognized payment provider' : 'Unrecognized payment provider',
-          'Blockchain verification complete',
-          isSecure ? 'No reported frauds associated with this ID' : 'Potential security concerns detected'
+          isValidFormat ? t("upiIdFormatValid") : t("upiIdFormatInvalid"),
+          isKnownProvider ? t("recognizedPaymentProvider") : t("unrecognizedPaymentProvider"),
+          t("blockchainVerificationComplete"),
+          isSecure ? t("noReportedFrauds") : t("potentialSecurityConcerns")
         ],
         recommendation: isSecure 
-          ? 'This UPI ID appears to be legitimate. Always confirm the recipient before sending money.'
-          : 'This UPI ID shows suspicious characteristics. Avoid making payments to this ID.'
+          ? t("upiIdLegitimateRecommendation")
+          : t("upiIdSuspiciousRecommendation")
       });
       
       toast({
-        title: isSecure ? "Verification successful" : "Warning: Potential risk",
+        title: isSecure ? t("verificationSuccessful") : t("warningPotentialRisk"),
         description: isSecure 
-          ? "This UPI ID appears to be legitimate." 
-          : "This UPI ID may be associated with fraudulent activities.",
+          ? t("upiIdLegitimate") 
+          : t("upiIdFraudulent"),
         variant: isSecure ? "default" : "destructive",
       });
     } catch (error) {
       toast({
-        title: "Verification failed",
-        description: "Could not complete the UPI verification. Please try again.",
+        title: t("verificationFailed"),
+        description: t("couldNotCompleteUpiVerification"),
         variant: "destructive",
       });
     } finally {
@@ -99,20 +100,20 @@ const PaymentScanner = () => {
 
   const getProviderInfo = (provider: string) => {
     const providers: {[key: string]: string} = {
-      'okicici': 'ICICI Bank',
-      'okhdfcbank': 'HDFC Bank',
-      'oksbi': 'State Bank of India',
-      'okaxis': 'Axis Bank',
-      'ybl': 'PhonePe',
-      'paytm': 'Paytm',
-      'gpay': 'Google Pay'
+      'okicici': t("iciciBank"),
+      'okhdfcbank': t("hdfcBank"),
+      'oksbi': t("sbiBank"),
+      'okaxis': t("axisBank"),
+      'ybl': t("phonePe"),
+      'paytm': t("paytm"),
+      'gpay': t("googlePay")
     };
     
     for (const [key, value] of Object.entries(providers)) {
       if (provider.includes(key)) return value;
     }
     
-    return 'Unknown provider';
+    return t("unknownProvider");
   };
 
   const handleQRCodeUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -132,8 +133,8 @@ const PaymentScanner = () => {
   const handleQRCodeAnalysis = async () => {
     if (!qrCodeFile) {
       toast({
-        title: "QR Code required",
-        description: "Please upload a QR code image to analyze.",
+        title: t("qrCodeRequired"),
+        description: t("pleaseUploadQrCode"),
         variant: "destructive",
       });
       return;
@@ -150,36 +151,36 @@ const PaymentScanner = () => {
       setAnalysisResult({
         isSecure,
         score: isSecure ? Math.floor(Math.random() * 20) + 80 : Math.floor(Math.random() * 30) + 20,
-        providerInfo: isSecure ? 'GooglePay' : undefined,
+        providerInfo: isSecure ? t("googlePay") : undefined,
         details: isSecure 
           ? [
-              'QR code verified through blockchain',
-              'Payment provider is legitimate',
-              'No suspicious redirects detected',
-              'Merchant identity confirmed'
+              t("qrCodeVerifiedBlockchain"),
+              t("paymentProviderLegitimate"),
+              t("noSuspiciousRedirects"),
+              t("merchantIdentityConfirmed")
             ] 
           : [
-              'QR code integrity issues detected',
-              'Suspicious payment destination',
-              'Possible payment redirect',
-              'Merchant identity unverified'
+              t("qrCodeIntegrityIssues"),
+              t("suspiciousPaymentDestination"),
+              t("possiblePaymentRedirect"),
+              t("merchantIdentityUnverified")
             ],
         recommendation: isSecure 
-          ? 'This QR code appears to be legitimate. Always verify the payment amount before proceeding.'
-          : 'This QR code appears suspicious and may be fraudulent. Do not proceed with the payment.'
+          ? t("qrCodeLegitimateRecommendation")
+          : t("qrCodeSuspiciousRecommendation")
       });
       
       toast({
-        title: isSecure ? "QR Code verified" : "Suspicious QR Code",
+        title: isSecure ? t("qrCodeVerified") : t("suspiciousQrCode"),
         description: isSecure 
-          ? "This payment QR code appears to be legitimate." 
-          : "This QR code may be fraudulent. Payment not recommended.",
+          ? t("qrCodeLegitimate") 
+          : t("qrCodeFraudulent"),
         variant: isSecure ? "default" : "destructive",
       });
     } catch (error) {
       toast({
-        title: "Analysis failed",
-        description: "Could not complete the QR code analysis. Please try again.",
+        title: t("analysisFailed"),
+        description: t("couldNotCompleteQrCodeAnalysis"),
         variant: "destructive",
       });
     } finally {
@@ -203,8 +204,8 @@ const PaymentScanner = () => {
     } catch (err) {
       console.error('Error accessing camera:', err);
       toast({
-        title: "Camera access error",
-        description: "Could not access your camera. Please check permissions and try again.",
+        title: t("cameraAccessError"),
+        description: t("couldNotAccessCamera"),
         variant: "destructive",
       });
       setIsScanning(false);
@@ -229,28 +230,28 @@ const PaymentScanner = () => {
         transition={{ duration: 0.3 }}
       >
         <div>
-          <h1 className="text-3xl font-bold">Payment Security</h1>
+          <h1 className="text-3xl font-bold">{t("paymentSecurity")}</h1>
           <p className="text-muted-foreground mt-1">
-            Verify payment methods and scan QR codes for potential scams
+            {t("verifyPaymentMethodsDescription")}
           </p>
         </div>
 
         <div className="grid grid-cols-1 gap-6">
           <SecurityCard
             className="mb-6"
-            title="Payment Verification"
+            title={t("paymentVerification")}
             icon={<CreditCard className="w-5 h-5 text-security-primary" />}
-            subtitle="Verify UPI IDs and payment QR codes before completing transactions"
+            subtitle={t("verifyUpiAndQrDescription")}
           >
             <Tabs defaultValue="upi" className="w-full">
               <TabsList className="grid w-full md:w-auto grid-cols-2 mb-4">
                 <TabsTrigger value="upi" className="flex items-center">
                   <Wallet className="w-4 h-4 mr-2" />
-                  <span>UPI Verification</span>
+                  <span>{t("upiVerification")}</span>
                 </TabsTrigger>
                 <TabsTrigger value="qrcode" className="flex items-center">
                   <QrCode className="w-4 h-4 mr-2" />
-                  <span>QR Code Scanner</span>
+                  <span>{t("qrCodeScanner")}</span>
                 </TabsTrigger>
               </TabsList>
 
@@ -260,10 +261,10 @@ const PaymentScanner = () => {
                     <div className="glass-card p-4 rounded-lg">
                       <h3 className="font-medium mb-2 flex items-center">
                         <Wallet className="w-5 h-5 mr-2 text-security-primary" />
-                        UPI ID Verification
+                        {t("upiIdVerification")}
                       </h3>
                       <p className="text-sm text-muted-foreground mb-4">
-                        Enter a UPI ID to verify its authenticity before completing payment.
+                        {t("enterUpiIdToVerify")}
                       </p>
                       <div className="space-y-3">
                         <div className="flex items-center">
@@ -281,39 +282,39 @@ const PaymentScanner = () => {
                             {isAnalyzing ? (
                               <>
                                 <div className="w-4 h-4 border-t-2 border-white rounded-full animate-spin mr-2"></div>
-                                Verifying...
+                                {t("verifying")}
                               </>
                             ) : (
-                              <>Verify UPI</>
+                              <>{t("verifyUpi")}</>
                             )}
                           </Button>
                         </div>
                         <div className="p-3 bg-muted/50 rounded-lg">
-                          <h4 className="text-sm font-medium mb-2">Common UPI Providers:</h4>
+                          <h4 className="text-sm font-medium mb-2">{t("commonUpiProviders")}:</h4>
                           <div className="grid grid-cols-2 gap-2">
                             <div className="text-xs flex items-center">
                               <span className="w-2 h-2 bg-security-primary rounded-full mr-2"></span>
-                              @okicici - ICICI Bank
+                              @okicici - {t("iciciBank")}
                             </div>
                             <div className="text-xs flex items-center">
                               <span className="w-2 h-2 bg-security-primary rounded-full mr-2"></span>
-                              @oksbi - State Bank of India
+                              @oksbi - {t("sbiBank")}
                             </div>
                             <div className="text-xs flex items-center">
                               <span className="w-2 h-2 bg-security-primary rounded-full mr-2"></span>
-                              @okhdfcbank - HDFC Bank
+                              @okhdfcbank - {t("hdfcBank")}
                             </div>
                             <div className="text-xs flex items-center">
                               <span className="w-2 h-2 bg-security-primary rounded-full mr-2"></span>
-                              @okaxis - Axis Bank
+                              @okaxis - {t("axisBank")}
                             </div>
                             <div className="text-xs flex items-center">
                               <span className="w-2 h-2 bg-security-primary rounded-full mr-2"></span>
-                              @ybl - PhonePe
+                              @ybl - {t("phonePe")}
                             </div>
                             <div className="text-xs flex items-center">
                               <span className="w-2 h-2 bg-security-primary rounded-full mr-2"></span>
-                              @paytm - Paytm
+                              @paytm - {t("paytm")}
                             </div>
                           </div>
                         </div>
@@ -325,10 +326,10 @@ const PaymentScanner = () => {
                     <div className="glass-card p-4 rounded-lg">
                       <h3 className="font-medium mb-2 flex items-center">
                         <QrCode className="w-5 h-5 mr-2 text-security-primary" />
-                        Payment QR Code Scanner
+                        {t("paymentQrCodeScanner")}
                       </h3>
                       <p className="text-sm text-muted-foreground mb-4">
-                        Scan payment QR codes to verify their authenticity before making payments.
+                        {t("scanQrCodeToVerify")}
                       </p>
                       <div className="space-y-4">
                         {!isScanning ? (
@@ -340,16 +341,16 @@ const PaymentScanner = () => {
                               <div className="flex flex-col items-center">
                                 <img 
                                   src={qrCodePreview} 
-                                  alt="QR Code Preview" 
+                                  alt={t("qrCodePreviewAlt")} 
                                   className="max-h-40 object-contain mb-3"
                                 />
-                                <p className="text-sm text-muted-foreground">Click to change QR code</p>
+                                <p className="text-sm text-muted-foreground">{t("clickToChangeQrCode")}</p>
                               </div>
                             ) : (
                               <div className="flex flex-col items-center cursor-pointer">
                                 <Upload className="h-10 w-10 text-muted-foreground mb-2" />
-                                <p className="font-medium">Upload QR Code</p>
-                                <p className="text-sm text-muted-foreground mt-1">Click to browse or drag and drop</p>
+                                <p className="font-medium">{t("uploadQrCode")}</p>
+                                <p className="text-sm text-muted-foreground mt-1">{t("clickToBrowseOrDragDrop")}</p>
                               </div>
                             )}
                             <input 
@@ -382,7 +383,7 @@ const PaymentScanner = () => {
                               className="bounce-hover"
                             >
                               <Camera className="h-4 w-4 mr-2" />
-                              Scan with Camera
+                              {t("scanWithCamera")}
                             </Button>
                           ) : (
                             <Button 
@@ -390,7 +391,7 @@ const PaymentScanner = () => {
                               onClick={stopCamera}
                               className="bounce-hover"
                             >
-                              Stop Camera
+                              {t("stopCamera")}
                             </Button>
                           )}
                           
@@ -402,10 +403,10 @@ const PaymentScanner = () => {
                             {isAnalyzing ? (
                               <>
                                 <div className="w-4 h-4 border-t-2 border-white rounded-full animate-spin mr-2"></div>
-                                Analyzing...
+                                {t("analyzing")}
                               </>
                             ) : (
-                              <>Verify QR Code</>
+                              <>{t("verifyQrCode")}</>
                             )}
                           </Button>
                         </div>
@@ -422,11 +423,11 @@ const PaymentScanner = () => {
                       animate={{ opacity: 1, scale: 1 }}
                       transition={{ duration: 0.3 }}
                     >
-                      <h3 className="font-medium mb-4">Verification Results</h3>
+                      <h3 className="font-medium mb-4">{t("verificationResults")}</h3>
                       
                       <div className="mb-6">
                         <div className="flex items-center justify-between mb-2">
-                          <span className="text-sm font-medium">Security score</span>
+                          <span className="text-sm font-medium">{t("securityScore")}</span>
                           <span className={`text-sm font-medium ${
                             analysisResult.score >= 70 ? 'text-security-secondary' : 
                             analysisResult.score >= 40 ? 'text-security-warning' : 
@@ -451,12 +452,12 @@ const PaymentScanner = () => {
                         {analysisResult.isSecure ? (
                           <div className="flex items-center text-security-secondary">
                             <ShieldCheck className="h-5 w-5 mr-2" />
-                            <span className="font-medium">Verified & Secure</span>
+                            <span className="font-medium">{t("verifiedSecure")}</span>
                           </div>
                         ) : (
                           <div className="flex items-center text-security-danger">
                             <AlertTriangle className="h-5 w-5 mr-2" />
-                            <span className="font-medium">Potential Scam Detected</span>
+                            <span className="font-medium">{t("potentialScamDetected")}</span>
                           </div>
                         )}
                       </div>
@@ -464,19 +465,19 @@ const PaymentScanner = () => {
                       {analysisResult.providerInfo && (
                         <div className="bg-muted/50 rounded-lg p-3 mb-4">
                           <p className="text-sm">
-                            <span className="font-medium">Provider:</span> {analysisResult.providerInfo}
+                            <span className="font-medium">{t("provider")}:</span> {analysisResult.providerInfo}
                           </p>
                         </div>
                       )}
                       
                       <div className="space-y-4">
                         <div>
-                          <h4 className="text-sm font-medium mb-2">Verification Details:</h4>
+                          <h4 className="text-sm font-medium mb-2">{t("verificationDetails")}:</h4>
                           <ul className="space-y-2">
                             {analysisResult.details.map((detail, index) => (
                               <li key={index} className="text-sm flex items-start">
                                 <span className="flex-shrink-0 mt-0.5 mr-2">
-                                  {detail.includes('legitimate') || detail.includes('valid') || detail.includes('confirmed') || detail.includes('verified') ? (
+                                  {detail.includes(t("legitimate")) || detail.includes(t("valid")) || detail.includes(t("confirmed")) || detail.includes(t("verified")) ? (
                                     <CheckCircle2 className="h-4 w-4 text-security-secondary" />
                                   ) : (
                                     <AlertTriangle className="h-4 w-4 text-security-warning" />
@@ -489,7 +490,7 @@ const PaymentScanner = () => {
                         </div>
                         
                         <div>
-                          <h4 className="text-sm font-medium mb-2">Recommendation:</h4>
+                          <h4 className="text-sm font-medium mb-2">{t("recommendation")}:</h4>
                           <p className="text-sm bg-muted p-3 rounded-lg">
                             {analysisResult.recommendation}
                           </p>
@@ -503,7 +504,7 @@ const PaymentScanner = () => {
                               className="flex-1 text-security-danger border-security-danger/30"
                             >
                               <AlertTriangle className="h-4 w-4 mr-2" />
-                              Report Scam
+                              {t("reportScam")}
                             </Button>
                           )}
                           
@@ -513,7 +514,7 @@ const PaymentScanner = () => {
                             className={`flex-1 ${analysisResult.isSecure ? 'text-security-secondary border-security-secondary/30' : 'text-muted-foreground'}`}
                           >
                             <Copy className="h-4 w-4 mr-2" />
-                            Copy Results
+                            {t("copyResults")}
                           </Button>
                         </div>
                       </div>
@@ -523,12 +524,12 @@ const PaymentScanner = () => {
                   {!analysisResult && (
                     <div className="glass-card rounded-lg p-4 h-full flex flex-col items-center justify-center text-center">
                       <ShieldCheck className="h-12 w-12 text-security-primary mb-4 animate-bob" />
-                      <h3 className="font-medium mb-2">Payment Security</h3>
+                      <h3 className="font-medium mb-2">{t("paymentSecurity")}</h3>
                       <p className="text-sm text-muted-foreground mb-4">
-                        Verify payment methods before completing transactions to protect yourself from fraud.
+                        {t("verifyPaymentMethodsBeforeTransaction")}
                       </p>
                       <Button variant="outline" size="sm" className="mt-2">
-                        <span>Learn More</span>
+                        <span>{t("learnMore")}</span>
                         <ArrowRight className="ml-2 w-4 h-4" />
                       </Button>
                     </div>

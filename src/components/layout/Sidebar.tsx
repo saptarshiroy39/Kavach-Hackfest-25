@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import { 
@@ -20,16 +20,21 @@ import {
   Database,
   ServerCog,
   Sliders,
-  Shield
+  Shield,
+  MessageSquare
 } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useLanguage } from '@/hooks/use-language';
+import { useResizable } from '@/hooks/use-resizable';
+import ResizeHandle from '@/components/ResizeHandle';
 
 type SidebarItem = {
   titleKey: string;
   path: string;
   icon: React.ElementType;
   adminOnly?: boolean;
+  isNew?: boolean;
 };
 
 const Sidebar = () => {
@@ -38,8 +43,31 @@ const Sidebar = () => {
   const isMobile = useIsMobile();
   const [isOpen, setIsOpen] = useState(!isMobile);
   const navigate = useNavigate();
+  const sidebarRef = useRef<HTMLElement>(null);
   const [isAdmin, setIsAdmin] = useState(false);
   const [adminExpanded, setAdminExpanded] = useState(false);
+  
+  // Initialize resizable functionality
+  const { isResizing, startResizing } = useResizable({
+    sidebarRef,
+    minWidth: 200,
+    maxWidth: 400,
+    defaultWidth: 256,
+    storageKey: 'kavach-sidebar-width'
+  });
+  
+  // Add specific styles for resizing - debugging
+  useEffect(() => {
+    if (sidebarRef.current) {
+      if (isResizing) {
+        sidebarRef.current.style.transition = 'none';
+        document.body.classList.add('resize-active');
+      } else {
+        sidebarRef.current.style.transition = 'width 0.2s ease-out';
+        document.body.classList.remove('resize-active');
+      }
+    }
+  }, [isResizing]);
   
   useEffect(() => {
     // Check if the user is an admin
@@ -63,6 +91,7 @@ const Sidebar = () => {
     { titleKey: 'securityStatus', path: '/security-status', icon: CircleCheck },
     { titleKey: 'blockchainVerify', path: '/blockchain-verify', icon: Shield },
     { titleKey: 'securityVerification', path: '/security-verification', icon: Fingerprint },
+    { titleKey: 'encryptedMessaging', path: '/encrypted-messaging', icon: MessageSquare },
     { titleKey: 'notifications', path: '/notifications', icon: Bell },
     { titleKey: 'settings', path: '/settings', icon: Settings },
   ];
@@ -105,12 +134,60 @@ const Sidebar = () => {
       )}
       
       <aside
+        ref={sidebarRef}
         className={cn(
-          "flex flex-col h-screen bg-sidebar text-sidebar-foreground border-r border-sidebar-border transition-all duration-300",
-          isOpen ? "w-64" : isMobile ? "w-0" : "w-20",
-          isMobile && !isOpen && "hidden"
+          "flex flex-col h-screen bg-sidebar text-sidebar-foreground border-r border-sidebar-border",
+          !isOpen && (isMobile ? "w-0" : "w-20"),
+          isMobile && !isOpen && "hidden",
+          isResizing && "select-none",
+          !isResizing && "transition-[width] duration-200 ease-out",
+          isOpen && isMobile && "w-64" // Only apply fixed width on mobile when open
         )}
+        style={{ position: 'relative' }}
       >
+        {/* Resizer handle - DIRECT IMPLEMENTATION */}
+        {isOpen && !isMobile && (
+          <div 
+            className="absolute top-0 right-0 h-full w-4 z-50 cursor-col-resize"
+            onMouseDown={(e) => {
+              e.preventDefault();
+              
+              if (!sidebarRef.current) return;
+              const startWidth = sidebarRef.current.getBoundingClientRect().width;
+              const startX = e.clientX;
+              
+              const onMouseMove = (moveEvent: MouseEvent) => {
+                if (!sidebarRef.current) return;
+                
+                // Calculate new width
+                const newWidth = startWidth + (moveEvent.clientX - startX);
+                
+                // Apply constraints
+                const constrainedWidth = Math.max(200, Math.min(400, newWidth));
+                
+                // Apply width directly
+                sidebarRef.current.style.width = `${constrainedWidth}px`;
+                document.body.classList.add('resize-active');
+              };
+              
+              const onMouseUp = () => {
+                document.removeEventListener('mousemove', onMouseMove);
+                document.removeEventListener('mouseup', onMouseUp);
+                document.body.classList.remove('resize-active');
+                
+                // Save to localStorage
+                if (sidebarRef.current) {
+                  localStorage.setItem('kavach-sidebar-width', sidebarRef.current.getBoundingClientRect().width.toString());
+                }
+              };
+              
+              document.addEventListener('mousemove', onMouseMove);
+              document.addEventListener('mouseup', onMouseUp);
+            }}
+          >
+            <div className="absolute right-0 top-0 h-full w-1 bg-transparent hover:bg-security-primary/30" />
+          </div>
+        )}
         <div className="flex items-center justify-center p-6">
           <div className={cn(
             "flex items-center",
@@ -142,76 +219,47 @@ const Sidebar = () => {
                 location.pathname === item.path 
                   ? "bg-sidebar-accent text-sidebar-accent-foreground" 
                   : "hover:bg-sidebar-accent/50",
-                !isOpen && !isMobile && "justify-center px-0"
+                !isOpen && !isMobile && "justify-center px-0",
+                // Standard styling for all items
               )}
             >
-              <item.icon className={cn("w-5 h-5", location.pathname === item.path && "text-security-primary")} />
+              <item.icon className={cn(
+                "w-5 h-5", 
+                location.pathname === item.path && "text-security-primary"
+              )} />
               {(isOpen || isMobile) && (
-                <span className="ml-3 normal-case font-medium tracking-wide">{t(item.titleKey)}</span>
+                <div className="flex items-center">
+                  <span className="ml-3 normal-case tracking-wide">
+                    {t(item.titleKey)}
+                  </span>
+                </div>
               )}
             </Link>
           ))}
           
           {isAdmin && (
             <div className="mt-6">
-              <div 
+              <Link
+                to="/admin"
                 className={cn(
-                  "flex items-center px-4 py-2 mb-2",
-                  !isOpen && !isMobile && "justify-center"
+                  "flex items-center px-4 py-3 rounded-lg transition-colors",
+                  location.pathname.startsWith('/admin') 
+                    ? "bg-sidebar-accent text-sidebar-accent-foreground" 
+                    : "hover:bg-sidebar-accent/50",
+                  !isOpen && !isMobile && "justify-center px-0"
                 )}
               >
-                {(isOpen || isMobile) ? (
+                <ServerCog className={cn(
+                  "w-5 h-5", 
+                  location.pathname.startsWith('/admin') && "text-security-primary"
+                )} />
+                {(isOpen || isMobile) && (
                   <div className="flex items-center justify-between w-full">
-                    <div className="flex items-center">
-                      <ServerCog className="w-5 h-5 text-security-primary" />
-                      <span className="ml-3 text-sm font-semibold uppercase tracking-wider text-security-primary">
-                        Admin
-                      </span>
-                    </div>
-                    <button onClick={toggleAdminMenu} className="p-1 rounded hover:bg-sidebar-accent">
-                      <ChevronsUpDown className={cn(
-                        "h-4 w-4 text-muted-foreground transition-transform", 
-                        adminExpanded && "transform rotate-180"
-                      )} />
-                    </button>
+                    <span className="ml-3 normal-case font-semibold text-white uppercase tracking-wider">ADMIN</span>
+                    <Badge className="bg-red-500 text-xs text-white">Admin</Badge>
                   </div>
-                ) : (
-                  <span className="inline-flex items-center justify-center h-6 w-6 rounded-full bg-security-primary text-xs font-bold text-white">
-                    A
-                  </span>
                 )}
-              </div>
-              
-              <div className={cn(
-                "space-y-1",
-                !adminExpanded && !isOpen && "hidden",
-                !adminExpanded && isOpen && "hidden"
-              )}>
-                {adminItems.map((item) => (
-                  <Link
-                    key={item.path}
-                    to={item.path}
-                    className={cn(
-                      "flex items-center px-4 py-3 rounded-lg transition-colors",
-                      location.pathname === item.path 
-                        ? "bg-sidebar-accent text-sidebar-accent-foreground" 
-                        : "hover:bg-sidebar-accent/50",
-                      !isOpen && !isMobile && "justify-center px-0",
-                      "ml-2"
-                    )}
-                  >
-                    <item.icon className={cn("w-5 h-5", location.pathname === item.path && "text-security-primary")} />
-                    {(isOpen || isMobile) && (
-                      <div className="flex items-center justify-between w-full">
-                        <span className="ml-3 normal-case font-medium tracking-wide">{t(item.titleKey)}</span>
-                        <span className="ml-auto px-1.5 py-0.5 text-[10px] bg-security-primary text-white rounded font-medium">
-                          Admin
-                        </span>
-                      </div>
-                    )}
-                  </Link>
-                ))}
-              </div>
+              </Link>
             </div>
           )}
         </nav>

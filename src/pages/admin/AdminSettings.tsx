@@ -1,531 +1,608 @@
-import React from 'react';
-import MainLayout from '@/components/layout/MainLayout';
-import SecurityCard from '@/components/security/SecurityCard';
-import { 
-  Settings, 
-  ArrowLeft,
-  ShieldAlert,
-  Database,
-  Server,
-  Network,
-  Mail,
-  KeyRound,
-  Globe,
-  Clock,
-  Save
-} from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Link } from 'react-router-dom';
-import { Switch } from "@/components/ui/switch";
+import React, { useState } from 'react';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
+import { Button } from "@/components/ui/button";
+import { Switch } from "@/components/ui/switch";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Slider } from "@/components/ui/slider";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { 
+  AlertCircle, 
+  Save, 
+  Server, 
+  Shield, 
+  Database, 
+  LockKeyhole, 
+  Globe, 
+  Clock, 
+  Copy, 
+  RefreshCw,
+  Key,
+  CheckCircle
+} from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { motion } from 'framer-motion';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { useLanguage } from '@/hooks/use-language';
 
-const AdminSettings = () => {
+const AdminSettings: React.FC = () => {
   const { toast } = useToast();
+  const { t } = useLanguage();
+  const [apiKey, setApiKey] = useState<string>('kavach_live_api_xCpT8zvKL2RJwqY5');
+  const [webhookUrl, setWebhookUrl] = useState<string>('');
+  const [apiKeyCopied, setApiKeyCopied] = useState<boolean>(false);
+  const [saveLoading, setSaveLoading] = useState<boolean>(false);
 
-  const handleSave = () => {
+  // Function to generate random API key
+  const generateApiKey = () => {
+    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+    const prefix = 'kavach_live_api_';
+    let result = '';
+    for (let i = 0; i < 16; i++) {
+      result += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    setApiKey(prefix + result);
     toast({
-      title: "Settings saved",
-      description: "Your changes have been saved successfully.",
+      title: t("New API Key Generated"),
+      description: t("Remember to save changes to apply the new key."),
     });
   };
 
-  return (
-    <MainLayout>
-      <motion.div 
-        className="space-y-6"
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.3 }}
-      >
-        <div>
-          <Link to="/admin" className="text-security-primary hover:underline inline-flex items-center mb-2">
-            <ArrowLeft className="h-4 w-4 mr-1" />
-            Back to Admin Dashboard
-          </Link>
-          <h1 className="text-3xl font-bold">Admin Settings</h1>
-          <p className="text-muted-foreground mt-1">
-            Configure system settings and preferences
-          </p>
-        </div>
+  // Function to copy API key to clipboard
+  const copyApiKey = () => {
+    navigator.clipboard.writeText(apiKey);
+    setApiKeyCopied(true);
+    toast({
+      title: t("API Key Copied"),
+      description: t("The API key has been copied to clipboard."),
+    });
+    setTimeout(() => setApiKeyCopied(false), 3000);
+  };
 
-        <SecurityCard
-          className="mb-6 glass-card dark:bg-sidebar-accent/50"
-          title="System Configuration"
-          icon={<Settings className="w-5 h-5 text-security-primary" />}
+  // Function to save changes
+  const saveChanges = () => {
+    setSaveLoading(true);
+    setTimeout(() => {
+      setSaveLoading(false);
+      toast({
+        title: t("Settings Saved"),
+        description: t("Your changes have been saved successfully."),
+      });
+    }, 1000);
+  };
+
+  return (
+    <div className="space-y-6">
+      <div className="flex justify-between items-center">
+        <h1 className="text-2xl font-semibold">{t('Admin Settings')}</h1>
+        <Button 
+          className="flex items-center" 
+          onClick={saveChanges} 
+          disabled={saveLoading}
         >
-          <Tabs defaultValue="general" className="w-full">
-            <TabsList className="glass-effect mb-6">
-              <TabsTrigger value="general" className="data-[state=active]:bg-security-primary data-[state=active]:text-white">
-                General
-              </TabsTrigger>
-              <TabsTrigger value="security" className="data-[state=active]:bg-security-primary data-[state=active]:text-white">
-                Security
-              </TabsTrigger>
-              <TabsTrigger value="api" className="data-[state=active]:bg-security-primary data-[state=active]:text-white">
-                API & Integrations
-              </TabsTrigger>
-              <TabsTrigger value="notifications" className="data-[state=active]:bg-security-primary data-[state=active]:text-white">
-                Notifications
-              </TabsTrigger>
-            </TabsList>
-            
-            <TabsContent value="general" className="mt-0 space-y-6">
-              <div className="glass-card rounded-lg p-4 space-y-6">
-                <div>
-                  <h3 className="text-lg font-medium mb-4">General Settings</h3>
-                  
-                  <div className="space-y-4">
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-center">
-                      <label htmlFor="site-name" className="font-medium">Application Name</label>
-                      <div className="md:col-span-2">
-                        <Input id="site-name" defaultValue="Kavach" />
-                      </div>
+          {saveLoading ? (
+            <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
+          ) : (
+            <Save className="mr-2 h-4 w-4" />
+          )}
+          {t('saveChanges')}
+        </Button>
+      </div>
+      
+      <Alert>
+        <AlertCircle className="h-4 w-4" />
+        <AlertTitle>{t('Important')}</AlertTitle>
+        <AlertDescription>
+          {t('Changes to these settings will affect all users on the platform. Please proceed with caution.')}
+        </AlertDescription>
+      </Alert>
+      
+      <Tabs defaultValue="security" className="w-full">
+        <TabsList className="grid grid-cols-4 w-full">
+          <TabsTrigger value="security">{t("Security")}</TabsTrigger>
+          <TabsTrigger value="users">{t("User Policies")}</TabsTrigger>
+          <TabsTrigger value="system">{t("System")}</TabsTrigger>
+          <TabsTrigger value="api">{t("API & Integration")}</TabsTrigger>
+        </TabsList>
+        
+        <TabsContent value="security" className="mt-4 space-y-4">
+          <Card>
+            <CardHeader>
+              <div className="flex items-center">
+                <Shield className="mr-2 h-5 w-5 text-primary" />
+                <CardTitle>{t('securitySettings')}</CardTitle>
+              </div>
+              <CardDescription>{t('Configure security policies for the platform')}</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid gap-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <Label htmlFor="2fa" className="font-medium">{t('Enforce 2FA for all users')}</Label>
+                    <p className="text-sm text-muted-foreground">{t('All users will be required to set up two-factor authentication')}</p>
+                  </div>
+                  <Switch id="2fa" />
+                </div>
+                
+                <div className="flex items-center justify-between">
+                  <div>
+                    <Label htmlFor="pwdPolicy" className="font-medium">{t('Strong Password Policy')}</Label>
+                    <p className="text-sm text-muted-foreground">{t('Require complex passwords with numbers, symbols and uppercase letters')}</p>
+                  </div>
+                  <Switch id="pwdPolicy" defaultChecked />
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="loginAttempts" className="font-medium">{t('Maximum Login Attempts')}</Label>
+                  <p className="text-sm text-muted-foreground">{t('Number of failed attempts before account lockout')}</p>
+                  <Select defaultValue="5">
+                    <SelectTrigger id="loginAttempts" className="w-full">
+                      <SelectValue placeholder="Select" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="3">{t('3 attempts')}</SelectItem>
+                      <SelectItem value="5">{t('5 attempts')}</SelectItem>
+                      <SelectItem value="10">{t('10 attempts')}</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <Label className="font-medium">{t('Session Timeout (minutes)')}</Label>
+                    <span className="text-sm font-medium">30</span>
+                  </div>
+                  <Slider defaultValue={[30]} min={5} max={60} step={5} />
+                  <p className="text-sm text-muted-foreground">{t('Automatically log users out after period of inactivity')}</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+          
+          <Card>
+            <CardHeader>
+              <div className="flex items-center">
+                <LockKeyhole className="mr-2 h-5 w-5 text-primary" />
+                <CardTitle>{t('Encryption Settings')}</CardTitle>
+              </div>
+              <CardDescription>{t('Data encryption and protection configurations')}</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid gap-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <Label className="font-medium">{t('End-to-End Encryption')}</Label>
+                    <p className="text-sm text-muted-foreground">{t('Enable end-to-end encryption for all communications')}</p>
+                  </div>
+                  <Switch defaultChecked />
+                </div>
+                
+                <div className="space-y-2">
+                  <Label className="font-medium">{t('Encryption Algorithm')}</Label>
+                  <Select defaultValue="aes256">
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder={t('Select algorithm')} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="aes256">{t('AES-256')}</SelectItem>
+                      <SelectItem value="aes128">{t('AES-128')}</SelectItem>
+                      <SelectItem value="chacha20">{t('ChaCha20-Poly1305')}</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="users" className="mt-4 space-y-4">
+          <Card>
+            <CardHeader>
+              <div className="flex items-center">
+                <Database className="mr-2 h-5 w-5 text-primary" />
+                <CardTitle>{t('User Policies')}</CardTitle>
+              </div>
+              <CardDescription>{t('Configure default settings for users')}</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid gap-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <Label htmlFor="passwordReset" className="font-medium">{t('Periodic Password Reset')}</Label>
+                    <p className="text-sm text-muted-foreground">{t('Require users to reset passwords periodically')}</p>
+                  </div>
+                  <Switch id="passwordReset" defaultChecked />
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="passwordDays" className="font-medium">{t('Password Expiry (days)')}</Label>
+                  <p className="text-sm text-muted-foreground">{t('Days before password must be changed')}</p>
+                  <Select defaultValue="90">
+                    <SelectTrigger id="passwordDays" className="w-full">
+                      <SelectValue placeholder={t('Select')} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="30">{t('30 days')}</SelectItem>
+                      <SelectItem value="60">{t('60 days')}</SelectItem>
+                      <SelectItem value="90">{t('90 days')}</SelectItem>
+                      <SelectItem value="180">{t('180 days')}</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                
+                <div className="flex items-center justify-between">
+                  <div>
+                    <Label htmlFor="multiDevice" className="font-medium">{t('Allow Multiple Device Login')}</Label>
+                    <p className="text-sm text-muted-foreground">{t('Users can be logged in on multiple devices simultaneously')}</p>
+                  </div>
+                  <Switch id="multiDevice" defaultChecked />
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="maxDevices" className="font-medium">{t('Maximum Devices Per User')}</Label>
+                  <p className="text-sm text-muted-foreground">{t('Maximum number of active devices per user')}</p>
+                  <Select defaultValue="3">
+                    <SelectTrigger id="maxDevices" className="w-full">
+                      <SelectValue placeholder={t('Select')} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="1">{t('1 device')}</SelectItem>
+                      <SelectItem value="2">{t('2 devices')}</SelectItem>
+                      <SelectItem value="3">{t('3 devices')}</SelectItem>
+                      <SelectItem value="5">{t('5 devices')}</SelectItem>
+                      <SelectItem value="unlimited">{t('Unlimited')}</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                
+                <div className="flex items-center justify-between">
+                  <div>
+                    <Label htmlFor="activityLogging" className="font-medium">{t('User Activity Logging')}</Label>
+                    <p className="text-sm text-muted-foreground">{t('Track and log all user activities on the platform')}</p>
+                  </div>
+                  <Switch id="activityLogging" defaultChecked />
+                </div>
+                
+                <div className="flex items-center justify-between">
+                  <div>
+                    <Label htmlFor="geoRestrict" className="font-medium">{t('Geographic Restrictions')}</Label>
+                    <p className="text-sm text-muted-foreground">{t('Enable location-based access restrictions')}</p>
+                  </div>
+                  <Switch id="geoRestrict" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+          
+          <Card>
+            <CardHeader>
+              <div className="flex items-center">
+                <Clock className="mr-2 h-5 w-5 text-primary" />
+                <CardTitle>{t('accountSettings')}</CardTitle>
+              </div>
+              <CardDescription>{t('Account lifecycle and access controls')}</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="inactivityDays" className="font-medium">{t('Account Inactivity Period')}</Label>
+                  <p className="text-sm text-muted-foreground">{t('Days before an inactive account is suspended')}</p>
+                  <Select defaultValue="90">
+                    <SelectTrigger id="inactivityDays" className="w-full">
+                      <SelectValue placeholder={t('Select')} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="30">{t('30 days')}</SelectItem>
+                      <SelectItem value="60">{t('60 days')}</SelectItem>
+                      <SelectItem value="90">{t('90 days')}</SelectItem>
+                      <SelectItem value="180">{t('180 days')}</SelectItem>
+                      <SelectItem value="never">{t('Never suspend')}</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                
+                <div className="flex items-center justify-between">
+                  <div>
+                    <Label htmlFor="autoAccountRecovery" className="font-medium">{t('Automatic Account Recovery')}</Label>
+                    <p className="text-sm text-muted-foreground">{t('Allow users to recover accounts without admin approval')}</p>
+                  </div>
+                  <Switch id="autoAccountRecovery" defaultChecked />
+                </div>
+                
+                <div className="flex items-center justify-between">
+                  <div>
+                    <Label htmlFor="userSelfDelete" className="font-medium">{t('Allow Self Account Deletion')}</Label>
+                    <p className="text-sm text-muted-foreground">{t('Users can permanently delete their own accounts')}</p>
+                  </div>
+                  <Switch id="userSelfDelete" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+        
+        <TabsContent value="system" className="mt-4 space-y-4">
+          <Card>
+            <CardHeader>
+              <div className="flex items-center">
+                <Server className="mr-2 h-5 w-5 text-primary" />
+                <CardTitle>{t('System Configuration')}</CardTitle>
+              </div>
+              <CardDescription>{t('Server and infrastructure settings')}</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid gap-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <Label htmlFor="maintenanceMode" className="font-medium">{t('Maintenance Mode')}</Label>
+                    <p className="text-sm text-muted-foreground">{t('Temporarily restrict access for non-admin users')}</p>
+                  </div>
+                  <Switch id="maintenanceMode" />
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="systemBackup" className="font-medium">{t('Automated Backups')}</Label>
+                  <p className="text-sm text-muted-foreground">{t('Frequency of system-wide data backups')}</p>
+                  <Select defaultValue="daily">
+                    <SelectTrigger id="systemBackup" className="w-full">
+                      <SelectValue placeholder={t('Select')} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="hourly">{t('Every hour')}</SelectItem>
+                      <SelectItem value="daily">{t('Daily')}</SelectItem>
+                      <SelectItem value="weekly">{t('Weekly')}</SelectItem>
+                      <SelectItem value="monthly">{t('Monthly')}</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                
+                <div className="flex items-center justify-between">
+                  <div>
+                    <Label htmlFor="debugMode" className="font-medium">{t('Debug Mode')}</Label>
+                    <p className="text-sm text-muted-foreground">{t('Enable detailed logging for troubleshooting')}</p>
+                  </div>
+                  <Switch id="debugMode" />
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="dataRetention" className="font-medium">{t('Data Retention Period')}</Label>
+                  <p className="text-sm text-muted-foreground">{t('How long to retain system logs and usage data')}</p>
+                  <Select defaultValue="90">
+                    <SelectTrigger id="dataRetention" className="w-full">
+                      <SelectValue placeholder={t('Select')} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="30">{t('30 days')}</SelectItem>
+                      <SelectItem value="90">{t('90 days')}</SelectItem>
+                      <SelectItem value="180">{t('180 days')}</SelectItem>
+                      <SelectItem value="365">{t('1 year')}</SelectItem>
+                      <SelectItem value="forever">{t('Indefinitely')}</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+          
+          <Card>
+            <CardHeader>
+              <div className="flex items-center">
+                <Clock className="mr-2 h-5 w-5 text-primary" />
+                <CardTitle>{t('Performance Settings')}</CardTitle>
+              </div>
+              <CardDescription>{t('System performance and optimization')}</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid gap-4">
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <Label className="font-medium">{t('Resource Allocation')}</Label>
+                    <span className="text-sm font-medium">50%</span>
+                  </div>
+                  <Slider defaultValue={[50]} min={10} max={90} step={10} />
+                  <p className="text-sm text-muted-foreground">{t('Percentage of system resources allocated to core functions')}</p>
+                </div>
+                
+                <div className="flex items-center justify-between">
+                  <div>
+                    <Label htmlFor="cacheOptimization" className="font-medium">{t('Cache Optimization')}</Label>
+                    <p className="text-sm text-muted-foreground">{t('Optimize system cache for faster performance')}</p>
+                  </div>
+                  <Switch id="cacheOptimization" defaultChecked />
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="cleanupInterval" className="font-medium">{t('Automated Cleanup Interval')}</Label>
+                  <p className="text-sm text-muted-foreground">{t('Frequency of temporary file cleanup')}</p>
+                  <Select defaultValue="daily">
+                    <SelectTrigger id="cleanupInterval" className="w-full">
+                      <SelectValue placeholder={t('Select')} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="hourly">{t('Every hour')}</SelectItem>
+                      <SelectItem value="daily">{t('Daily')}</SelectItem>
+                      <SelectItem value="weekly">{t('Weekly')}</SelectItem>
+                      <SelectItem value="manual">{t('Manual only')}</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                
+                <div className="pt-2">
+                  <Button variant="outline" className="w-full">
+                    {t('Run System Diagnostics')}
+                  </Button>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+        
+        <TabsContent value="api" className="mt-4 space-y-4">
+          <Card>
+            <CardHeader>
+              <div className="flex items-center">
+                <Key className="mr-2 h-5 w-5 text-primary" />
+                <CardTitle>{t('API Settings')}</CardTitle>
+              </div>
+              <CardDescription>{t('API keys and integration configurations')}</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid gap-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <Label htmlFor="apiEnabled" className="font-medium">{t('Enable API Access')}</Label>
+                    <p className="text-sm text-muted-foreground">{t('Allow external applications to access the API')}</p>
+                  </div>
+                  <Switch id="apiEnabled" defaultChecked />
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="apiRateLimit" className="font-medium">{t('API Rate Limit')}</Label>
+                  <p className="text-sm text-muted-foreground">{t('Maximum number of requests per minute')}</p>
+                  <Select defaultValue="100">
+                    <SelectTrigger id="apiRateLimit" className="w-full">
+                      <SelectValue placeholder={t('Select')} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="60">{t('60 requests')}</SelectItem>
+                      <SelectItem value="100">{t('100 requests')}</SelectItem>
+                      <SelectItem value="500">{t('500 requests')}</SelectItem>
+                      <SelectItem value="1000">{t('1000 requests')}</SelectItem>
+                      <SelectItem value="unlimited">{t('Unlimited')}</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <Label htmlFor="apiKey" className="font-medium">{t('API Key')}</Label>
+                    <div className="flex gap-2">
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        onClick={generateApiKey}
+                      >
+                        <RefreshCw className="mr-1 h-3.5 w-3.5" />
+                        {t('Generate')}
+                      </Button>
                     </div>
-                    
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-center">
-                      <label htmlFor="site-url" className="font-medium">Application URL</label>
-                      <div className="md:col-span-2">
-                        <Input id="site-url" defaultValue="https://kavach.example.com" />
-                      </div>
+                  </div>
+                  <div className="flex">
+                    <Input
+                      id="apiKey"
+                      value={apiKey}
+                      readOnly
+                      className="flex-1 font-mono text-sm"
+                    />
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="ml-2"
+                      onClick={copyApiKey}
+                    >
+                      {apiKeyCopied ? (
+                        <CheckCircle className="h-4 w-4 text-green-500" />
+                      ) : (
+                        <Copy className="h-4 w-4" />
+                      )}
+                    </Button>
+                  </div>
+                  <p className="text-sm text-muted-foreground">{t('This key grants full access to the API. Keep it secure.')}</p>
+                </div>
+                
+                <div className="pt-2 pb-2 border-t border-gray-200 dark:border-gray-700">
+                  <h4 className="font-medium text-sm pt-2">{t('Access Controls')}</h4>
+                </div>
+                
+                <div className="flex items-center justify-between">
+                  <div>
+                    <Label htmlFor="readAccess" className="font-medium">{t('Read Access')}</Label>
+                    <p className="text-sm text-muted-foreground">{t('Allow retrieving data via API')}</p>
+                  </div>
+                  <Switch id="readAccess" defaultChecked />
+                </div>
+                
+                <div className="flex items-center justify-between">
+                  <div>
+                    <Label htmlFor="writeAccess" className="font-medium">{t('Write Access')}</Label>
+                    <p className="text-sm text-muted-foreground">{t('Allow modifying data via API')}</p>
+                  </div>
+                  <Switch id="writeAccess" defaultChecked />
+                </div>
+                
+                <div className="flex items-center justify-between">
+                  <div>
+                    <Label htmlFor="deleteAccess" className="font-medium">{t('Delete Access')}</Label>
+                    <p className="text-sm text-muted-foreground">{t('Allow deleting data via API')}</p>
+                  </div>
+                  <Switch id="deleteAccess" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+          
+          <Card>
+            <CardHeader>
+              <div className="flex items-center">
+                <Globe className="mr-2 h-5 w-5 text-primary" />
+                <CardTitle>{t('Webhook Configuration')}</CardTitle>
+              </div>
+              <CardDescription>{t('Configure webhook endpoints for event notifications')}</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid gap-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <Label htmlFor="webhooksEnabled" className="font-medium">{t('Enable Webhooks')}</Label>
+                    <p className="text-sm text-muted-foreground">{t('Send event notifications to external services')}</p>
+                  </div>
+                  <Switch id="webhooksEnabled" defaultChecked />
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="webhookUrl" className="font-medium">{t('Webhook URL')}</Label>
+                  <Input
+                    id="webhookUrl"
+                    placeholder={t('https://example.com/webhook')}
+                    value={webhookUrl}
+                    onChange={(e) => setWebhookUrl(e.target.value)}
+                  />
+                  <p className="text-sm text-muted-foreground">{t('URL to receive event notifications')}</p>
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="webhookEvents" className="font-medium">{t('Events to Send')}</Label>
+                  <div className="pt-2 grid grid-cols-2 gap-2">
+                    <div className="flex items-center space-x-2">
+                      <input type="checkbox" id="event-login" className="rounded" defaultChecked />
+                      <label htmlFor="event-login" className="text-sm">{t('User Login')}</label>
                     </div>
-                    
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-center">
-                      <div>
-                        <span className="font-medium">Maintenance Mode</span>
-                        <p className="text-xs text-muted-foreground mt-1">Take the site offline for maintenance</p>
-                      </div>
-                      <div className="md:col-span-2">
-                        <Switch />
-                      </div>
+                    <div className="flex items-center space-x-2">
+                      <input type="checkbox" id="event-signup" className="rounded" defaultChecked />
+                      <label htmlFor="event-signup" className="text-sm">{t('New Account')}</label>
                     </div>
-                    
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-center">
-                      <div>
-                        <span className="font-medium">Debug Mode</span>
-                        <p className="text-xs text-muted-foreground mt-1">Enable detailed error reporting</p>
-                      </div>
-                      <div className="md:col-span-2">
-                        <Switch />
-                      </div>
+                    <div className="flex items-center space-x-2">
+                      <input type="checkbox" id="event-password" className="rounded" defaultChecked />
+                      <label htmlFor="event-password" className="text-sm">{t('Password Change')}</label>
                     </div>
-                    
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-start">
-                      <div>
-                        <span className="font-medium">System Description</span>
-                        <p className="text-xs text-muted-foreground mt-1">Used in emails and system reports</p>
-                      </div>
-                      <div className="md:col-span-2">
-                        <Textarea defaultValue="Kavach is an advanced security platform for digital identity protection" />
-                      </div>
+                    <div className="flex items-center space-x-2">
+                      <input type="checkbox" id="event-security" className="rounded" defaultChecked />
+                      <label htmlFor="event-security" className="text-sm">{t('Security Alerts')}</label>
                     </div>
                   </div>
                 </div>
                 
-                <div>
-                  <h3 className="text-lg font-medium mb-4">Regional Settings</h3>
-                  
-                  <div className="space-y-4">
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-center">
-                      <div className="flex items-center">
-                        <Globe className="h-5 w-5 text-muted-foreground mr-2" />
-                        <span className="font-medium">Default Language</span>
-                      </div>
-                      <div className="md:col-span-2">
-                        <Select defaultValue="en-US">
-                          <SelectTrigger className="w-full glass-effect dark:bg-sidebar-accent/30">
-                            <SelectValue placeholder="Select language" />
-                          </SelectTrigger>
-                          <SelectContent className="glass-effect dark:bg-sidebar-accent/80 border-white/10 z-50">
-                            <SelectItem value="en-US">English (US)</SelectItem>
-                            <SelectItem value="es">Spanish</SelectItem>
-                            <SelectItem value="fr">French</SelectItem>
-                            <SelectItem value="de">German</SelectItem>
-                            <SelectItem value="ja">Japanese</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-                    </div>
-                    
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-center">
-                      <div className="flex items-center">
-                        <Clock className="h-5 w-5 text-muted-foreground mr-2" />
-                        <span className="font-medium">Time Zone</span>
-                      </div>
-                      <div className="md:col-span-2">
-                        <Select defaultValue="UTC">
-                          <SelectTrigger className="w-full glass-effect dark:bg-sidebar-accent/30">
-                            <SelectValue placeholder="Select timezone" />
-                          </SelectTrigger>
-                          <SelectContent className="glass-effect dark:bg-sidebar-accent/80 border-white/10 z-50">
-                            <SelectItem value="UTC">UTC (Coordinated Universal Time)</SelectItem>
-                            <SelectItem value="America/New_York">America/New_York (Eastern Time)</SelectItem>
-                            <SelectItem value="America/Chicago">America/Chicago (Central Time)</SelectItem>
-                            <SelectItem value="America/Denver">America/Denver (Mountain Time)</SelectItem>
-                            <SelectItem value="America/Los_Angeles">America/Los_Angeles (Pacific Time)</SelectItem>
-                            <SelectItem value="Europe/London">Europe/London (Greenwich Mean Time)</SelectItem>
-                            <SelectItem value="Asia/Tokyo">Asia/Tokyo (Japan Standard Time)</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-                    </div>
-                    
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-center">
-                      <div>
-                        <span className="font-medium">Date Format</span>
-                      </div>
-                      <div className="md:col-span-2">
-                        <Select defaultValue="MM/DD/YYYY">
-                          <SelectTrigger className="w-full glass-effect dark:bg-sidebar-accent/30">
-                            <SelectValue placeholder="Select date format" />
-                          </SelectTrigger>
-                          <SelectContent className="glass-effect dark:bg-sidebar-accent/80 border-white/10 z-50">
-                            <SelectItem value="MM/DD/YYYY">MM/DD/YYYY</SelectItem>
-                            <SelectItem value="DD/MM/YYYY">DD/MM/YYYY</SelectItem>
-                            <SelectItem value="YYYY-MM-DD">YYYY-MM-DD</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-                    </div>
-                  </div>
+                <div className="pt-2">
+                  <Button variant="outline" className="w-full">
+                    {t('Test Webhook')}
+                  </Button>
                 </div>
               </div>
-            </TabsContent>
-            
-            <TabsContent value="security" className="mt-0 space-y-6">
-              <div className="glass-card rounded-lg p-4 space-y-6">
-                <div>
-                  <h3 className="text-lg font-medium mb-4">Authentication Settings</h3>
-                  
-                  <div className="space-y-4">
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-center">
-                      <div>
-                        <span className="font-medium">Require 2FA for Admins</span>
-                        <p className="text-xs text-muted-foreground mt-1">Force two-factor authentication for admin accounts</p>
-                      </div>
-                      <div className="md:col-span-2">
-                        <Switch defaultChecked />
-                      </div>
-                    </div>
-                    
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-center">
-                      <div>
-                        <span className="font-medium">Auto-lock Timeout</span>
-                        <p className="text-xs text-muted-foreground mt-1">Automatically log users out after inactivity</p>
-                      </div>
-                      <div className="md:col-span-2">
-                        <Select defaultValue="15">
-                          <SelectTrigger className="w-full glass-effect dark:bg-sidebar-accent/30">
-                            <SelectValue placeholder="Select timeout" />
-                          </SelectTrigger>
-                          <SelectContent className="glass-effect dark:bg-sidebar-accent/80 border-white/10 z-50">
-                            <SelectItem value="15">15 minutes</SelectItem>
-                            <SelectItem value="30">30 minutes</SelectItem>
-                            <SelectItem value="60">1 hour</SelectItem>
-                            <SelectItem value="240">4 hours</SelectItem>
-                            <SelectItem value="0">Never (not recommended)</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-                    </div>
-                    
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-center">
-                      <div>
-                        <span className="font-medium">Failed Login Attempts</span>
-                        <p className="text-xs text-muted-foreground mt-1">Lock account after specified number of failed attempts</p>
-                      </div>
-                      <div className="md:col-span-2">
-                        <Input type="number" defaultValue="5" min="1" max="10" />
-                      </div>
-                    </div>
-                    
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-center">
-                      <div>
-                        <span className="font-medium">Password Complexity</span>
-                        <p className="text-xs text-muted-foreground mt-1">Enforce strong password requirements</p>
-                      </div>
-                      <div className="md:col-span-2">
-                        <Select defaultValue="high">
-                          <SelectTrigger className="w-full glass-effect dark:bg-sidebar-accent/30">
-                            <SelectValue placeholder="Select complexity" />
-                          </SelectTrigger>
-                          <SelectContent className="glass-effect dark:bg-sidebar-accent/80 border-white/10 z-50">
-                            <SelectItem value="high">High (12+ chars, special chars, numbers, mixed case)</SelectItem>
-                            <SelectItem value="medium">Medium (8+ chars, numbers, mixed case)</SelectItem>
-                            <SelectItem value="low">Low (6+ chars)</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-                
-                <div>
-                  <h3 className="text-lg font-medium mb-4">Blockchain Settings</h3>
-                  
-                  <div className="space-y-4">
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-center">
-                      <div className="flex items-center">
-                        <Network className="h-5 w-5 text-muted-foreground mr-2" />
-                        <span className="font-medium">Default Network</span>
-                      </div>
-                      <div className="md:col-span-2">
-                        <Select defaultValue="ethereum">
-                          <SelectTrigger className="w-full glass-effect dark:bg-sidebar-accent/30">
-                            <SelectValue placeholder="Select network" />
-                          </SelectTrigger>
-                          <SelectContent className="glass-effect dark:bg-sidebar-accent/80 border-white/10 z-50">
-                            <SelectItem value="ethereum">Ethereum Mainnet</SelectItem>
-                            <SelectItem value="goerli">Ethereum Testnet (Goerli)</SelectItem>
-                            <SelectItem value="polygon">Polygon</SelectItem>
-                            <SelectItem value="bsc">Binance Smart Chain</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-                    </div>
-                    
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-center">
-                      <div>
-                        <span className="font-medium">Blockchain Verification</span>
-                        <p className="text-xs text-muted-foreground mt-1">Enable blockchain for identity verification</p>
-                      </div>
-                      <div className="md:col-span-2">
-                        <Switch defaultChecked />
-                      </div>
-                    </div>
-                    
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-center">
-                      <div>
-                        <span className="font-medium">API Endpoint</span>
-                      </div>
-                      <div className="md:col-span-2">
-                        <Input defaultValue="https://mainnet.infura.io/v3/YOUR_API_KEY" />
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </TabsContent>
-            
-            <TabsContent value="api" className="mt-0 space-y-6">
-              <div className="glass-card rounded-lg p-4 space-y-6">
-                <div>
-                  <h3 className="text-lg font-medium mb-4">API Configuration</h3>
-                  
-                  <div className="space-y-4">
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-center">
-                      <div>
-                        <span className="font-medium">API Access</span>
-                        <p className="text-xs text-muted-foreground mt-1">Enable API access for third-party applications</p>
-                      </div>
-                      <div className="md:col-span-2">
-                        <Switch defaultChecked />
-                      </div>
-                    </div>
-                    
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-start">
-                      <div>
-                        <span className="font-medium">API Secret Key</span>
-                        <p className="text-xs text-muted-foreground mt-1">Used for secure API communication</p>
-                      </div>
-                      <div className="md:col-span-2">
-                        <div className="flex items-center space-x-2">
-                          <Input type="password" value="••••••••••••••••••••••••••••••" readOnly />
-                          <Button variant="outline" size="sm">
-                            Regenerate
-                          </Button>
-                        </div>
-                        <p className="text-xs text-muted-foreground mt-1">
-                          Last regenerated: 30 days ago
-                        </p>
-                      </div>
-                    </div>
-                    
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-center">
-                      <div>
-                        <span className="font-medium">Rate Limiting</span>
-                        <p className="text-xs text-muted-foreground mt-1">Maximum requests per minute</p>
-                      </div>
-                      <div className="md:col-span-2">
-                        <Input type="number" defaultValue="100" />
-                      </div>
-                    </div>
-                  </div>
-                </div>
-                
-                <div>
-                  <h3 className="text-lg font-medium mb-4">External Services</h3>
-                  
-                  <div className="space-y-4">
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-center">
-                      <div className="flex items-center">
-                        <KeyRound className="h-5 w-5 text-muted-foreground mr-2" />
-                        <span className="font-medium">AI Phishing Detection</span>
-                      </div>
-                      <div className="md:col-span-2">
-                        <div className="flex items-center space-x-2">
-                          <Input placeholder="OpenAI API Key" />
-                          <Button variant="outline" size="sm">
-                            Test
-                          </Button>
-                        </div>
-                      </div>
-                    </div>
-                    
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-center">
-                      <div className="flex items-center">
-                        <Mail className="h-5 w-5 text-muted-foreground mr-2" />
-                        <span className="font-medium">SMTP Server</span>
-                      </div>
-                      <div className="md:col-span-2">
-                        <div className="space-y-2">
-                          <Input placeholder="SMTP Host" defaultValue="smtp.example.com" />
-                          <div className="grid grid-cols-2 gap-2">
-                            <Input placeholder="Username" defaultValue="notifications@example.com" />
-                            <Input type="password" placeholder="Password" defaultValue="••••••••••" />
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                    
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-center">
-                      <div className="flex items-center">
-                        <Database className="h-5 w-5 text-muted-foreground mr-2" />
-                        <span className="font-medium">Database Backup</span>
-                      </div>
-                      <div className="md:col-span-2">
-                        <Select defaultValue="daily">
-                          <SelectTrigger className="w-full glass-effect dark:bg-sidebar-accent/30">
-                            <SelectValue placeholder="Select frequency" />
-                          </SelectTrigger>
-                          <SelectContent className="glass-effect dark:bg-sidebar-accent/80 border-white/10 z-50">
-                            <SelectItem value="daily">Daily (at midnight)</SelectItem>
-                            <SelectItem value="weekly">Weekly (Sunday at midnight)</SelectItem>
-                            <SelectItem value="monthly">Monthly (First day at midnight)</SelectItem>
-                            <SelectItem value="never">Never (not recommended)</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </TabsContent>
-            
-            <TabsContent value="notifications" className="mt-0 space-y-6">
-              <div className="glass-card rounded-lg p-4 space-y-6">
-                <div>
-                  <h3 className="text-lg font-medium mb-4">Email Notifications</h3>
-                  
-                  <div className="space-y-4">
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-center">
-                      <div>
-                        <span className="font-medium">Security Alerts</span>
-                        <p className="text-xs text-muted-foreground mt-1">Send email notifications for security events</p>
-                      </div>
-                      <div className="md:col-span-2">
-                        <Switch defaultChecked />
-                      </div>
-                    </div>
-                    
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-center">
-                      <div>
-                        <span className="font-medium">User Registration</span>
-                        <p className="text-xs text-muted-foreground mt-1">Send welcome emails to new users</p>
-                      </div>
-                      <div className="md:col-span-2">
-                        <Switch defaultChecked />
-                      </div>
-                    </div>
-                    
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-center">
-                      <div>
-                        <span className="font-medium">Password Changes</span>
-                        <p className="text-xs text-muted-foreground mt-1">Notify users when passwords are changed</p>
-                      </div>
-                      <div className="md:col-span-2">
-                        <Switch defaultChecked />
-                      </div>
-                    </div>
-                    
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-center">
-                      <div>
-                        <span className="font-medium">Admin Summary</span>
-                        <p className="text-xs text-muted-foreground mt-1">Send daily system summary to administrators</p>
-                      </div>
-                      <div className="md:col-span-2">
-                        <Switch />
-                      </div>
-                    </div>
-                  </div>
-                </div>
-                
-                <div>
-                  <h3 className="text-lg font-medium mb-4">System Alerts</h3>
-                  
-                  <div className="space-y-4">
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-center">
-                      <div>
-                        <span className="font-medium">Threat Severity Threshold</span>
-                        <p className="text-xs text-muted-foreground mt-1">Minimum severity level for alerts</p>
-                      </div>
-                      <div className="md:col-span-2">
-                        <Select defaultValue="low">
-                          <SelectTrigger className="w-full glass-effect dark:bg-sidebar-accent/30">
-                            <SelectValue placeholder="Select threshold" />
-                          </SelectTrigger>
-                          <SelectContent className="glass-effect dark:bg-sidebar-accent/80 border-white/10 z-50">
-                            <SelectItem value="low">Low (all threats)</SelectItem>
-                            <SelectItem value="medium">Medium (exclude low severity)</SelectItem>
-                            <SelectItem value="high">High (critical issues only)</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-                    </div>
-                    
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-center">
-                      <div>
-                        <span className="font-medium">Alert Recipients</span>
-                        <p className="text-xs text-muted-foreground mt-1">Email addresses for system alerts</p>
-                      </div>
-                      <div className="md:col-span-2">
-                        <Textarea defaultValue="admin@example.com, security@example.com" />
-                        <p className="text-xs text-muted-foreground mt-1">Separate multiple emails with commas</p>
-                      </div>
-                    </div>
-                    
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-center">
-                      <div className="flex items-center">
-                        <ShieldAlert className="h-5 w-5 text-muted-foreground mr-2" />
-                        <span className="font-medium">Emergency Contacts</span>
-                      </div>
-                      <div className="md:col-span-2">
-                        <Textarea defaultValue="John Doe: +1 (555) 123-4567, Security Officer: +1 (555) 987-6543" />
-                        <p className="text-xs text-muted-foreground mt-1">Contacts for critical system emergencies</p>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </TabsContent>
-            
-            <div className="mt-6 flex justify-end">
-              <Button variant="outline" className="mr-2">
-                Reset to Defaults
-              </Button>
-              <Button className="bg-security-primary hover:bg-security-primary/90" onClick={handleSave}>
-                <Save className="h-4 w-4 mr-2" />
-                Save Settings
-              </Button>
-            </div>
-          </Tabs>
-        </SecurityCard>
-      </motion.div>
-    </MainLayout>
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
+    </div>
   );
 };
 

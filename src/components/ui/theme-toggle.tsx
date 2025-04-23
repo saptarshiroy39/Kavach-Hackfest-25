@@ -1,6 +1,5 @@
 import { useTheme } from "@/hooks/use-theme";
 import { Moon, Sun } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -32,28 +31,46 @@ export function ThemeToggle() {
 
   if (!mounted) {
     // Return a placeholder with the same dimensions to prevent layout shift
-    return <Button variant="outline" size="icon" className="h-10 w-10 rounded-full glass-effect" />;
+    return <div className="p-2 rounded-full w-10 h-10" />;
   }
+
+  // Use resolvedTheme for both the icon and animation for consistency
+  const isDark = resolvedTheme === 'dark';
 
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button 
-          variant="outline" 
-          size="icon" 
-          className="h-10 w-10 rounded-full glass-effect border-white/20 dark:border-white/10 hover:scale-105 transition-transform relative"
-        >
+        <button className="relative p-2 rounded-full hover:bg-muted transition-colors overflow-hidden w-10 h-10 flex items-center justify-center">
           <motion.div
-            initial={{ rotate: 0 }}
-            animate={{ rotate: resolvedTheme === 'light' ? 0 : 180 }}
-            transition={{ duration: 0.5, type: "spring", bounce: 0.5 }}
-            className="relative flex items-center justify-center w-full h-full"
+            initial={false}
+            className="flex items-center justify-center relative w-5 h-5"
           >
-            <Sun className="absolute h-5 w-5 transition-all dark:opacity-0" />
-            <Moon className="absolute h-5 w-5 transition-all opacity-0 dark:opacity-100" />
+            <motion.div
+              animate={{ 
+                opacity: isDark ? 0 : 1,
+                scale: isDark ? 0.5 : 1,
+                y: isDark ? -20 : 0
+              }}
+              transition={{ duration: 0.4 }}
+              className="absolute inset-0 flex items-center justify-center"
+            >
+              <Sun className="w-5 h-5" />
+            </motion.div>
+            
+            <motion.div
+              animate={{ 
+                opacity: isDark ? 1 : 0,
+                scale: isDark ? 1 : 0.5,
+                y: isDark ? 0 : 20
+              }}
+              transition={{ duration: 0.4 }}
+              className="absolute inset-0 flex items-center justify-center"
+            >
+              <Moon className="w-5 h-5" />
+            </motion.div>
           </motion.div>
           <span className="sr-only">Toggle theme</span>
-        </Button>
+        </button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="glass-effect dark:bg-sidebar/80 backdrop-blur-xl border-white/10 z-50">
         <DropdownMenuItem 

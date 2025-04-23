@@ -20,7 +20,7 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
     <div className="flex h-screen bg-background/10 backdrop-blur-sm dark:bg-background/20 overflow-hidden">
       <Sidebar />
       <motion.div 
-        className="flex flex-col flex-1 overflow-hidden"
+        className="flex flex-col flex-1 overflow-hidden transition-all duration-150 ease-in-out"
         initial={{ opacity: 0, x: 20 }}
         animate={{ opacity: 1, x: 0 }}
         transition={{ duration: 0.5, type: "spring", bounce: 0.4 }}

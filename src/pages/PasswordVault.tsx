@@ -30,6 +30,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Checkbox } from '@/components/ui/checkbox';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { useLanguage } from '@/hooks/use-language';
 
 // Type for sort options
 type SortField = 'title' | 'createdAt' | 'strength';
@@ -54,6 +55,7 @@ const PasswordVault = () => {
   const [revealedPasswords, setRevealedPasswords] = useState<Set<string>>(new Set());
   const [searchTerm, setSearchTerm] = useState('');
   const [categoryFilter, setCategoryFilter] = useState<string>('all');
+  const { t } = useLanguage();
   
   // New state for sort and filter
   const [sortConfig, setSortConfig] = useState<{field: SortField, direction: SortDirection}>({
@@ -89,8 +91,8 @@ const PasswordVault = () => {
       } catch (error) {
         console.error('Failed to fetch passwords:', error);
         toast({
-          title: "Error",
-          description: "Failed to load password entries. Please try again.",
+          title: t("Error"),
+          description: t("Failed to load password entries. Please try again."),
           variant: "destructive",
         });
         setIsLoading(false);
@@ -98,7 +100,7 @@ const PasswordVault = () => {
     };
 
     fetchPasswords();
-  }, [toast]);
+  }, [toast, t]);
 
   const togglePasswordVisibility = (id: string) => {
     const newRevealedPasswords = new Set(revealedPasswords);
@@ -113,8 +115,8 @@ const PasswordVault = () => {
   const copyToClipboard = (text: string, type: string) => {
     navigator.clipboard.writeText(text);
     toast({
-      title: "Copied!",
-      description: `${type} copied to clipboard`,
+      title: t("Copied!"),
+      description: t(`${type} copied to clipboard`),
     });
   };
 
@@ -140,8 +142,8 @@ const PasswordVault = () => {
       setShowDeleteDialog(false);
       setSelectedPassword(null);
       toast({
-        title: "Password deleted",
-        description: `"${selectedPassword.title}" has been removed from your vault`,
+        title: t("Password deleted"),
+        description: t(`"${selectedPassword.title}" has been removed from your vault`),
       });
     }
   };
@@ -169,8 +171,8 @@ const PasswordVault = () => {
     resetFormData();
     
     toast({
-      title: "Password added",
-      description: `"${formData.title}" has been added to your vault`,
+      title: t("Password added"),
+      description: t(`"${formData.title}" has been added to your vault`),
     });
   };
 
@@ -260,7 +262,7 @@ const PasswordVault = () => {
       <MainLayout>
         <div className="flex flex-col items-center justify-center h-full">
           <div className="w-16 h-16 border-t-4 border-security-primary rounded-full animate-spin"></div>
-          <p className="mt-4 text-muted-foreground">Loading your password vault...</p>
+          <p className="mt-4 text-muted-foreground">{t("Loading your password vault...")}</p>
         </div>
       </MainLayout>
     );
@@ -271,29 +273,29 @@ const PasswordVault = () => {
       <div className="space-y-6">
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
           <div>
-            <h1 className="text-3xl font-bold">Password Vault</h1>
+            <h1 className="text-3xl font-bold">{t("Password Vault")}</h1>
             <p className="text-muted-foreground mt-1">
-              Manage and securely store your passwords
+              {t("Manage and securely store your passwords")}
             </p>
           </div>
           <Button className="bg-security-primary hover:bg-security-primary/90" onClick={() => setShowAddPasswordDialog(true)}>
-            <Plus className="mr-2 h-4 w-4" /> Add Password
+            <Plus className="mr-2 h-4 w-4" /> {t("Add Password")}
           </Button>
         </div>
 
         <div className="flex flex-col md:flex-row gap-4">
           <SearchInput 
-            placeholder="Search passwords..." 
+            placeholder={t("Search passwords...")} 
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            aria-label="Search passwords"
+            aria-label={t("Search passwords")}
           />
           <Select value={categoryFilter} onValueChange={setCategoryFilter}>
             <SelectTrigger className="w-full md:w-[180px]">
-              <SelectValue placeholder="Category" />
+              <SelectValue placeholder={t("Category")} />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">All Categories</SelectItem>
+              <SelectItem value="all">{t("All Categories")}</SelectItem>
               {categories.map(category => (
                 <SelectItem key={category} value={category}>{category}</SelectItem>
               ))}
@@ -302,20 +304,20 @@ const PasswordVault = () => {
         </div>
 
         <SecurityCard
-          title="Password Entries"
+          title={t("Password Entries")}
           icon={<Key className="w-5 h-5 text-security-primary" />}
-          subtitle={`${filteredPasswords.length} passwords found`}
+          subtitle={t(`${filteredPasswords.length} passwords found`)}
           action={
             <div className="flex space-x-2">
               <Popover>
                 <PopoverTrigger asChild>
                   <Button variant="outline" size="sm">
-                    <Filter className="h-4 w-4 mr-1" /> Filter
+                    <Filter className="h-4 w-4 mr-1" /> {t("Filter")}
                   </Button>
                 </PopoverTrigger>
                 <PopoverContent className="w-72" align="end">
                   <div className="space-y-4">
-                    <h4 className="font-medium">Filter Options</h4>
+                    <h4 className="font-medium">{t("Filter Options")}</h4>
                     
                     <div className="space-y-2">
                       <div className="flex items-center space-x-2">
@@ -324,12 +326,12 @@ const PasswordVault = () => {
                           checked={filterOptions.showFavorites}
                           onCheckedChange={(checked) => toggleFilterOption('showFavorites', checked as boolean)}
                         />
-                        <Label htmlFor="filter-favorites" className="text-sm">Show favorites only</Label>
+                        <Label htmlFor="filter-favorites" className="text-sm">{t("Show favorites only")}</Label>
                       </div>
                     </div>
                     
                     <div className="space-y-2">
-                      <h5 className="text-sm font-medium">Password Strength</h5>
+                      <h5 className="text-sm font-medium">{t("Password Strength")}</h5>
                       <div className="space-y-1">
                         <div className="flex items-center space-x-2">
                           <Checkbox 
@@ -337,7 +339,7 @@ const PasswordVault = () => {
                             checked={filterOptions.strengthLevels.strong}
                             onCheckedChange={(checked) => toggleStrengthFilter('strong', checked as boolean)}
                           />
-                          <Label htmlFor="filter-strong" className="text-sm">Strong</Label>
+                          <Label htmlFor="filter-strong" className="text-sm">{t("Strong")}</Label>
                         </div>
                         <div className="flex items-center space-x-2">
                           <Checkbox 
@@ -345,7 +347,7 @@ const PasswordVault = () => {
                             checked={filterOptions.strengthLevels.medium}
                             onCheckedChange={(checked) => toggleStrengthFilter('medium', checked as boolean)}
                           />
-                          <Label htmlFor="filter-medium" className="text-sm">Medium</Label>
+                          <Label htmlFor="filter-medium" className="text-sm">{t("Medium")}</Label>
                         </div>
                         <div className="flex items-center space-x-2">
                           <Checkbox 
@@ -353,7 +355,7 @@ const PasswordVault = () => {
                             checked={filterOptions.strengthLevels.weak}
                             onCheckedChange={(checked) => toggleStrengthFilter('weak', checked as boolean)}
                           />
-                          <Label htmlFor="filter-weak" className="text-sm">Weak</Label>
+                          <Label htmlFor="filter-weak" className="text-sm">{t("Weak")}</Label>
                         </div>
                       </div>
                     </div>
@@ -364,12 +366,12 @@ const PasswordVault = () => {
               <Popover>
                 <PopoverTrigger asChild>
                   <Button variant="outline" size="sm">
-                    {sortConfig.direction === 'asc' ? <SortAsc className="h-4 w-4 mr-1" /> : <SortDesc className="h-4 w-4 mr-1" />} Sort
+                    {sortConfig.direction === 'asc' ? <SortAsc className="h-4 w-4 mr-1" /> : <SortDesc className="h-4 w-4 mr-1" />} {t("Sort")}
                   </Button>
                 </PopoverTrigger>
                 <PopoverContent className="w-72" align="end">
                   <div className="space-y-4">
-                    <h4 className="font-medium">Sort By</h4>
+                    <h4 className="font-medium">{t("Sort By")}</h4>
                     <RadioGroup 
                       value={sortConfig.field}
                       onValueChange={(value) => handleSort(value as SortField)}
@@ -377,21 +379,21 @@ const PasswordVault = () => {
                       <div className="flex items-center space-x-2">
                         <RadioGroupItem value="title" id="sort-name" />
                         <Label htmlFor="sort-name" className="flex items-center">
-                          <LayoutList className="h-4 w-4 mr-2" /> Name {sortConfig.field === 'title' && 
+                          <LayoutList className="h-4 w-4 mr-2" /> {t("Name")} {sortConfig.field === 'title' && 
                             (sortConfig.direction === 'asc' ? <SortAsc className="h-4 w-4 ml-2" /> : <SortDesc className="h-4 w-4 ml-2" />)}
                         </Label>
                       </div>
                       <div className="flex items-center space-x-2">
                         <RadioGroupItem value="createdAt" id="sort-date" />
                         <Label htmlFor="sort-date" className="flex items-center">
-                          <Calendar className="h-4 w-4 mr-2" /> Date Added {sortConfig.field === 'createdAt' && 
+                          <Calendar className="h-4 w-4 mr-2" /> {t("Date Added")} {sortConfig.field === 'createdAt' && 
                             (sortConfig.direction === 'asc' ? <SortAsc className="h-4 w-4 ml-2" /> : <SortDesc className="h-4 w-4 ml-2" />)}
                         </Label>
                       </div>
                       <div className="flex items-center space-x-2">
                         <RadioGroupItem value="strength" id="sort-strength" />
                         <Label htmlFor="sort-strength" className="flex items-center">
-                          <Shield className="h-4 w-4 mr-2" /> Password Strength {sortConfig.field === 'strength' && 
+                          <Shield className="h-4 w-4 mr-2" /> {t("Password Strength")} {sortConfig.field === 'strength' && 
                             (sortConfig.direction === 'asc' ? <SortAsc className="h-4 w-4 ml-2" /> : <SortDesc className="h-4 w-4 ml-2" />)}
                         </Label>
                       </div>
@@ -422,24 +424,24 @@ const PasswordVault = () => {
                               entry.strength === 'strong' ? 'secure' : 
                               entry.strength === 'medium' ? 'warning' : 'danger'
                             }
-                            text={entry.strength}
+                            text={t(entry.strength)}
                             className="ml-2 capitalize"
                           />
                         </h3>
                         <p className="text-sm text-muted-foreground">{entry.url}</p>
                         <div className="mt-2 space-y-2">
                           <div className="flex items-center">
-                            <span className="text-sm font-medium w-20">Username:</span>
+                            <span className="text-sm font-medium w-20">{t("Username")}:</span>
                             <span className="text-sm mr-2">{entry.username}</span>
                             <button 
-                              onClick={() => copyToClipboard(entry.username, 'Username')}
+                              onClick={() => copyToClipboard(entry.username, t("Username"))}
                               className="p-1 rounded-full hover:bg-muted"
                             >
                               <Copy className="h-3 w-3" />
                             </button>
                           </div>
                           <div className="flex items-center">
-                            <span className="text-sm font-medium w-20">Password:</span>
+                            <span className="text-sm font-medium w-20">{t("Password")}:</span>
                             <span className="text-sm font-mono mr-2">
                               {revealedPasswords.has(entry.id) ? entry.password : '••••••••'}
                             </span>
@@ -454,7 +456,7 @@ const PasswordVault = () => {
                               )}
                             </button>
                             <button 
-                              onClick={() => copyToClipboard(entry.password, 'Password')}
+                              onClick={() => copyToClipboard(entry.password, t("Password"))}
                               className="p-1 rounded-full hover:bg-muted"
                             >
                               <Copy className="h-3 w-3" />
@@ -483,17 +485,17 @@ const PasswordVault = () => {
           ) : (
             <div className="py-8 text-center">
               <Key className="mx-auto h-12 w-12 text-muted-foreground opacity-50" />
-              <h3 className="mt-4 text-lg font-medium">No passwords found</h3>
+              <h3 className="mt-4 text-lg font-medium">{t("No passwords found")}</h3>
               <p className="mt-1 text-sm text-muted-foreground">
                 {searchTerm || categoryFilter !== 'all' 
-                  ? "Try adjusting your search or filters" 
-                  : "Add a new password to get started"}
+                  ? t("Try adjusting your search or filters") 
+                  : t("Add a new password to get started")}
               </p>
               <Button 
                 className="mt-4 bg-security-primary hover:bg-security-primary/90"
                 onClick={() => setShowAddPasswordDialog(true)}
               >
-                <Plus className="mr-2 h-4 w-4" /> Add Password
+                <Plus className="mr-2 h-4 w-4" /> {t("Add Password")}
               </Button>
             </div>
           )}
@@ -507,40 +509,40 @@ const PasswordVault = () => {
       }}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>Add New Password</DialogTitle>
+            <DialogTitle>{t("Add New Password")}</DialogTitle>
             <DialogDescription>
-              Add a new password to your secure vault.
+              {t("Add a new password to your secure vault.")}
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="title">Title</Label>
+              <Label htmlFor="title">{t("Title")}</Label>
               <Input 
                 id="title" 
                 name="title"
-                placeholder="e.g., Personal Email" 
+                placeholder={t("e.g., Personal Email")} 
                 value={formData.title}
                 onChange={handleInputChange}
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="username">Username/Email</Label>
+              <Label htmlFor="username">{t("Username/Email")}</Label>
               <Input 
                 id="username" 
                 name="username"
-                placeholder="username@example.com" 
+                placeholder={t("username@example.com")} 
                 value={formData.username}
                 onChange={handleInputChange}
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="password">Password</Label>
+              <Label htmlFor="password">{t("Password")}</Label>
               <div className="relative">
                 <Input 
                   id="password" 
                   name="password"
                   type={revealedPasswords.has('new') ? 'text' : 'password'}
-                  placeholder="Enter secure password" 
+                  placeholder={t("Enter secure password")} 
                   value={formData.password}
                   onChange={handleInputChange}
                 />
@@ -558,40 +560,40 @@ const PasswordVault = () => {
               </div>
             </div>
             <div className="space-y-2">
-              <Label htmlFor="url">Website URL (optional)</Label>
+              <Label htmlFor="url">{t("Website URL (optional)")}</Label>
               <Input 
                 id="url" 
                 name="url"
-                placeholder="https://example.com" 
+                placeholder={t("https://example.com")} 
                 value={formData.url}
                 onChange={handleInputChange}
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="category">Category</Label>
+              <Label htmlFor="category">{t("Category")}</Label>
               <Select 
                 value={formData.category} 
                 onValueChange={(value) => setFormData(prev => ({ ...prev, category: value }))}
               >
                 <SelectTrigger>
-                  <SelectValue placeholder="Select category" />
+                  <SelectValue placeholder={t("Select category")} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="email">Email</SelectItem>
-                  <SelectItem value="financial">Financial</SelectItem>
-                  <SelectItem value="social">Social Media</SelectItem>
-                  <SelectItem value="shopping">Shopping</SelectItem>
-                  <SelectItem value="work">Work</SelectItem>
-                  <SelectItem value="other">Other</SelectItem>
+                  <SelectItem value="email">{t("Email")}</SelectItem>
+                  <SelectItem value="financial">{t("Financial")}</SelectItem>
+                  <SelectItem value="social">{t("Social Media")}</SelectItem>
+                  <SelectItem value="shopping">{t("Shopping")}</SelectItem>
+                  <SelectItem value="work">{t("Work")}</SelectItem>
+                  <SelectItem value="other">{t("Other")}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
             <div className="space-y-2">
-              <Label htmlFor="notes">Notes (optional)</Label>
+              <Label htmlFor="notes">{t("Notes (optional)")}</Label>
               <Input 
                 id="notes"
                 name="notes" 
-                placeholder="Additional information" 
+                placeholder={t("Additional information")} 
                 value={formData.notes}
                 onChange={handleInputChange}
               />
@@ -599,10 +601,10 @@ const PasswordVault = () => {
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setShowAddPasswordDialog(false)}>
-              Cancel
+              {t("Cancel")}
             </Button>
             <Button onClick={handleAddPassword} disabled={!formData.title || !formData.username || !formData.password}>
-              Save Password
+              {t("Save Password")}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -612,9 +614,9 @@ const PasswordVault = () => {
       <Dialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Delete Password</DialogTitle>
+            <DialogTitle>{t("Delete Password")}</DialogTitle>
             <DialogDescription>
-              Are you sure you want to delete this password? This action cannot be undone.
+              {t("Are you sure you want to delete this password? This action cannot be undone.")}
             </DialogDescription>
           </DialogHeader>
           {selectedPassword && (
@@ -625,10 +627,10 @@ const PasswordVault = () => {
           )}
           <DialogFooter>
             <Button variant="outline" onClick={() => setShowDeleteDialog(false)}>
-              Cancel
+              {t("Cancel")}
             </Button>
             <Button variant="destructive" onClick={confirmDelete}>
-              Delete
+              {t("Delete")}
             </Button>
           </DialogFooter>
         </DialogContent>

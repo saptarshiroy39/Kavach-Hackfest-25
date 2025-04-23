@@ -19,6 +19,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
 import { motion } from 'framer-motion';
+import { useLanguage } from '@/hooks/use-language';
 
 const PhishingDetection = () => {
   const [emailContent, setEmailContent] = useState('');
@@ -35,12 +36,13 @@ const PhishingDetection = () => {
   } | null>(null);
   
   const { toast } = useToast();
+  const { t } = useLanguage();
 
   const handleEmailAnalysis = async () => {
     if (!emailContent.trim()) {
       toast({
-        title: "Content required",
-        description: "Please paste the email content to analyze.",
+        title: t("contentRequired"),
+        description: t("pleaseEnterEmailContent"),
         variant: "destructive",
       });
       return;
@@ -58,31 +60,31 @@ const PhishingDetection = () => {
                            emailContent.toLowerCase().includes('click here');
       
       const reasons = [];
-      if (emailContent.toLowerCase().includes('urgent')) reasons.push('Contains urgency triggers');
-      if (emailContent.toLowerCase().includes('password')) reasons.push('Asks for password or sensitive information');
-      if (emailContent.toLowerCase().includes('verify')) reasons.push('Requests account verification');
-      if (emailContent.toLowerCase().includes('click here')) reasons.push('Contains suspicious link patterns');
+      if (emailContent.toLowerCase().includes('urgent')) reasons.push(t('containsUrgencyTriggers'));
+      if (emailContent.toLowerCase().includes('password')) reasons.push(t('asksForPasswordOrSensitiveInformation'));
+      if (emailContent.toLowerCase().includes('verify')) reasons.push(t('requestsAccountVerification'));
+      if (emailContent.toLowerCase().includes('click here')) reasons.push(t('containsSuspiciousLinkPatterns'));
       
       setAnalysisResult({
         isThreat: isSuspicious,
         score: isSuspicious ? Math.floor(Math.random() * 30) + 70 : Math.floor(Math.random() * 30) + 10,
-        reasons: reasons.length ? reasons : ['No suspicious patterns detected'],
+        reasons: reasons.length ? reasons : [t('noSuspiciousPatternsDetected')],
         recommendation: isSuspicious 
-          ? 'This email shows signs of phishing. Do not click on any links or provide personal information.'
-          : 'This email appears to be legitimate, but always remain cautious.'
+          ? t('phishingEmailRecommendation')
+          : t('legitimateEmailRecommendation')
       });
       
       toast({
-        title: isSuspicious ? "Phishing detected!" : "Analysis complete",
+        title: isSuspicious ? t("phishingDetected") : t("analysisComplete"),
         description: isSuspicious 
-          ? "This email contains suspicious elements." 
-          : "No immediate threats detected in this email.",
+          ? t("emailContainsSuspiciousElements") 
+          : t("noImmediateThreatsInEmail"),
         variant: isSuspicious ? "destructive" : "default",
       });
     } catch (error) {
       toast({
-        title: "Analysis failed",
-        description: "Could not complete the analysis. Please try again.",
+        title: t("analysisFailed"),
+        description: t("couldNotCompleteAnalysis"),
         variant: "destructive",
       });
     } finally {
@@ -93,8 +95,8 @@ const PhishingDetection = () => {
   const handleSMSAnalysis = async () => {
     if (!smsContent.trim()) {
       toast({
-        title: "Content required",
-        description: "Please paste the SMS content to analyze.",
+        title: t("contentRequired"),
+        description: t("pleaseEnterSmsContent"),
         variant: "destructive",
       });
       return;
@@ -112,31 +114,31 @@ const PhishingDetection = () => {
                            smsContent.toLowerCase().includes('urgent');
       
       const reasons = [];
-      if (smsContent.toLowerCase().includes('click')) reasons.push('Contains suspicious link invitation');
-      if (smsContent.toLowerCase().includes('prize')) reasons.push('Mentions prizes (common in scams)');
-      if (smsContent.toLowerCase().includes('won')) reasons.push('Claims you have won something unexpectedly');
-      if (smsContent.toLowerCase().includes('urgent')) reasons.push('Creates false urgency');
+      if (smsContent.toLowerCase().includes('click')) reasons.push(t('containsSuspiciousLinkInvitation'));
+      if (smsContent.toLowerCase().includes('prize')) reasons.push(t('mentionsPrizes'));
+      if (smsContent.toLowerCase().includes('won')) reasons.push(t('claimsUnexpectedPrize'));
+      if (smsContent.toLowerCase().includes('urgent')) reasons.push(t('createsFalseUrgency'));
       
       setAnalysisResult({
         isThreat: isSuspicious,
         score: isSuspicious ? Math.floor(Math.random() * 30) + 70 : Math.floor(Math.random() * 30) + 10,
-        reasons: reasons.length ? reasons : ['No suspicious patterns detected'],
+        reasons: reasons.length ? reasons : [t('noSuspiciousPatternsDetected')],
         recommendation: isSuspicious 
-          ? 'This SMS shows signs of smishing (SMS phishing). Do not click on any links or respond.'
-          : 'This SMS appears to be legitimate, but always remain cautious.'
+          ? t('smishingSmsRecommendation')
+          : t('legitimateSmsRecommendation')
       });
       
       toast({
-        title: isSuspicious ? "Smishing detected!" : "Analysis complete",
+        title: isSuspicious ? t("smishingDetected") : t("analysisComplete"),
         description: isSuspicious 
-          ? "This SMS contains suspicious elements." 
-          : "No immediate threats detected in this SMS.",
+          ? t("smsContainsSuspiciousElements") 
+          : t("noImmediateThreatsInSms"),
         variant: isSuspicious ? "destructive" : "default",
       });
     } catch (error) {
       toast({
-        title: "Analysis failed",
-        description: "Could not complete the analysis. Please try again.",
+        title: t("analysisFailed"),
+        description: t("couldNotCompleteAnalysis"),
         variant: "destructive",
       });
     } finally {
@@ -147,8 +149,8 @@ const PhishingDetection = () => {
   const handleURLAnalysis = async () => {
     if (!urlToCheck.trim()) {
       toast({
-        title: "URL required",
-        description: "Please enter a URL to analyze.",
+        title: t("urlRequired"),
+        description: t("pleaseEnterUrl"),
         variant: "destructive",
       });
       return;
@@ -165,35 +167,35 @@ const PhishingDetection = () => {
       
       const reasons = [];
       if (suspiciousDomains.some(domain => urlToCheck.toLowerCase().includes(domain))) {
-        reasons.push('Uses suspicious domain or URL shortener');
+        reasons.push(t('usesSuspiciousDomainOrUrlShortener'));
       }
       if (!urlToCheck.toLowerCase().startsWith('https://')) {
-        reasons.push('Does not use secure HTTPS connection');
+        reasons.push(t('doesNotUseSecureHttps'));
       }
       if (urlToCheck.match(/\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}/)) {
-        reasons.push('Uses IP address instead of domain name');
+        reasons.push(t('usesIpAddressInsteadOfDomain'));
       }
       
       setAnalysisResult({
         isThreat: isSuspicious || reasons.length > 0,
         score: (isSuspicious || reasons.length > 0) ? Math.floor(Math.random() * 30) + 70 : Math.floor(Math.random() * 30) + 10,
-        reasons: reasons.length ? reasons : ['No suspicious patterns detected'],
+        reasons: reasons.length ? reasons : [t('noSuspiciousPatternsDetected')],
         recommendation: (isSuspicious || reasons.length > 0)
-          ? 'This URL shows signs of being malicious. Do not visit this website.'
-          : 'This URL appears to be legitimate, but always remain cautious when sharing personal information.'
+          ? t('maliciousUrlRecommendation')
+          : t('legitimateUrlRecommendation')
       });
       
       toast({
-        title: (isSuspicious || reasons.length > 0) ? "Suspicious URL detected!" : "Analysis complete",
+        title: (isSuspicious || reasons.length > 0) ? t("suspiciousUrlDetected") : t("analysisComplete"),
         description: (isSuspicious || reasons.length > 0)
-          ? "This URL may lead to a phishing website." 
-          : "No immediate threats detected in this URL.",
+          ? t("urlMayLeadToPhishingWebsite") 
+          : t("noImmediateThreatsInUrl"),
         variant: (isSuspicious || reasons.length > 0) ? "destructive" : "default",
       });
     } catch (error) {
       toast({
-        title: "Analysis failed",
-        description: "Could not complete the analysis. Please try again.",
+        title: t("analysisFailed"),
+        description: t("couldNotCompleteAnalysis"),
         variant: "destructive",
       });
     } finally {
@@ -218,8 +220,8 @@ const PhishingDetection = () => {
   const handleQRCodeAnalysis = async () => {
     if (!qrCodeFile) {
       toast({
-        title: "QR Code required",
-        description: "Please upload a QR code image to analyze.",
+        title: t("qrCodeRequired"),
+        description: t("pleaseUploadQrCode"),
         variant: "destructive",
       });
       return;
@@ -237,24 +239,24 @@ const PhishingDetection = () => {
         isThreat: isSuspicious,
         score: isSuspicious ? Math.floor(Math.random() * 30) + 70 : Math.floor(Math.random() * 30) + 10,
         reasons: isSuspicious 
-          ? ['QR code leads to suspicious domain', 'Contains obfuscated redirect links'] 
-          : ['QR code leads to legitimate domain'],
+          ? [t('qrCodeLeadsToSuspiciousDomain'), t('containsObfuscatedRedirectLinks')] 
+          : [t('qrCodeLeadsToLegitimateDomain')],
         recommendation: isSuspicious 
-          ? 'This QR code may lead to malicious content. Do not follow the link or provide any information.'
-          : 'This QR code appears to be legitimate, but always verify the destination before providing personal information.'
+          ? t('maliciousQrCodeRecommendation')
+          : t('legitimateQrCodeRecommendation')
       });
       
       toast({
-        title: isSuspicious ? "Suspicious QR Code detected!" : "Analysis complete",
+        title: isSuspicious ? t("suspiciousQrCodeDetected") : t("analysisComplete"),
         description: isSuspicious 
-          ? "This QR code may lead to malicious content." 
-          : "No immediate threats detected in this QR code.",
+          ? t("qrCodeMayLeadToMaliciousContent") 
+          : t("noImmediateThreatsInQrCode"),
         variant: isSuspicious ? "destructive" : "default",
       });
     } catch (error) {
       toast({
-        title: "Analysis failed",
-        description: "Could not complete the QR code analysis. Please try again.",
+        title: t("analysisFailed"),
+        description: t("couldNotCompleteQrCodeAnalysis"),
         variant: "destructive",
       });
     } finally {
@@ -271,36 +273,36 @@ const PhishingDetection = () => {
         transition={{ duration: 0.3 }}
       >
         <div>
-          <h1 className="text-3xl font-bold">Threat Detection</h1>
+          <h1 className="text-3xl font-bold">{t("threatDetection")}</h1>
           <p className="text-muted-foreground mt-1">
-            Scan emails, SMS, URLs, and QR codes for potential security threats
+            {t("scanForPotentialSecurityThreats")}
           </p>
         </div>
 
         <div className="grid grid-cols-1 gap-6">
           <SecurityCard
             className="mb-6"
-            title="AI-Powered Threat Detection"
+            title={t("aiPoweredThreatDetection")}
             icon={<ShieldAlert className="w-5 h-5 text-security-primary" />}
-            subtitle="Our advanced AI scans for phishing, smishing, and malicious content patterns"
+            subtitle={t("advancedAiScansDescription")}
           >
             <Tabs defaultValue="email" className="w-full">
               <TabsList className="grid w-full md:w-auto grid-cols-2 md:grid-cols-4 mb-4">
                 <TabsTrigger value="email" className="flex items-center">
                   <Mail className="w-4 h-4 mr-2" />
-                  <span>Email</span>
+                  <span>{t("email")}</span>
                 </TabsTrigger>
                 <TabsTrigger value="sms" className="flex items-center">
                   <Phone className="w-4 h-4 mr-2" />
-                  <span>SMS</span>
+                  <span>{t("sms")}</span>
                 </TabsTrigger>
                 <TabsTrigger value="url" className="flex items-center">
                   <ExternalLink className="w-4 h-4 mr-2" />
-                  <span>URL</span>
+                  <span>{t("url")}</span>
                 </TabsTrigger>
                 <TabsTrigger value="qrcode" className="flex items-center">
                   <QrCode className="w-4 h-4 mr-2" />
-                  <span>QR Code</span>
+                  <span>{t("qrCode")}</span>
                 </TabsTrigger>
               </TabsList>
 
@@ -310,14 +312,14 @@ const PhishingDetection = () => {
                     <div className="glass-card p-4 rounded-lg">
                       <h3 className="font-medium mb-2 flex items-center">
                         <Mail className="w-5 h-5 mr-2 text-security-primary" />
-                        Email Phishing Detection
+                        {t("emailPhishingDetection")}
                       </h3>
                       <p className="text-sm text-muted-foreground mb-4">
-                        Paste the suspicious email content below to check for phishing attempts.
+                        {t("pasteEmailContentDescription")}
                       </p>
                       <div className="space-y-3">
                         <Textarea
-                          placeholder="Paste email content here..."
+                          placeholder={t("pasteEmailContentHere")}
                           className="min-h-[180px]"
                           value={emailContent}
                           onChange={(e) => setEmailContent(e.target.value)}
@@ -331,10 +333,10 @@ const PhishingDetection = () => {
                             {isAnalyzing ? (
                               <>
                                 <div className="w-4 h-4 border-t-2 border-white rounded-full animate-spin mr-2"></div>
-                                Analyzing...
+                                {t("analyzing")}
                               </>
                             ) : (
-                              <>Analyze Email</>
+                              <>{t("analyzeEmail")}</>
                             )}
                           </Button>
                         </div>
@@ -346,14 +348,14 @@ const PhishingDetection = () => {
                     <div className="glass-card p-4 rounded-lg">
                       <h3 className="font-medium mb-2 flex items-center">
                         <Smartphone className="w-5 h-5 mr-2 text-security-primary" />
-                        SMS Smishing Detection
+                        {t("smsSmishingDetection")}
                       </h3>
                       <p className="text-sm text-muted-foreground mb-4">
-                        Paste the suspicious SMS content below to check for smishing attempts.
+                        {t("pasteSmsContentDescription")}
                       </p>
                       <div className="space-y-3">
                         <Textarea
-                          placeholder="Paste SMS content here..."
+                          placeholder={t("pasteSmsContentHere")}
                           className="min-h-[180px]"
                           value={smsContent}
                           onChange={(e) => setSmsContent(e.target.value)}
@@ -367,10 +369,10 @@ const PhishingDetection = () => {
                             {isAnalyzing ? (
                               <>
                                 <div className="w-4 h-4 border-t-2 border-white rounded-full animate-spin mr-2"></div>
-                                Analyzing...
+                                {t("analyzing")}
                               </>
                             ) : (
-                              <>Analyze SMS</>
+                              <>{t("analyzeSms")}</>
                             )}
                           </Button>
                         </div>
@@ -382,10 +384,10 @@ const PhishingDetection = () => {
                     <div className="glass-card p-4 rounded-lg">
                       <h3 className="font-medium mb-2 flex items-center">
                         <ExternalLink className="w-5 h-5 mr-2 text-security-primary" />
-                        URL Safety Check
+                        {t("urlSafetyCheck")}
                       </h3>
                       <p className="text-sm text-muted-foreground mb-4">
-                        Enter a URL to check if it's safe to visit.
+                        {t("enterUrlToCheck")}
                       </p>
                       <div className="space-y-3">
                         <div className="flex items-center">
@@ -403,15 +405,15 @@ const PhishingDetection = () => {
                             {isAnalyzing ? (
                               <>
                                 <div className="w-4 h-4 border-t-2 border-white rounded-full animate-spin mr-2"></div>
-                                Checking...
+                                {t("checking")}
                               </>
                             ) : (
-                              <>Check URL</>
+                              <>{t("checkUrl")}</>
                             )}
                           </Button>
                         </div>
                         <p className="text-xs text-muted-foreground">
-                          We'll analyze the URL for malicious content, redirects, and phishing indicators.
+                          {t("urlAnalysisDescription")}
                         </p>
                       </div>
                     </div>
@@ -421,10 +423,10 @@ const PhishingDetection = () => {
                     <div className="glass-card p-4 rounded-lg">
                       <h3 className="font-medium mb-2 flex items-center">
                         <QrCode className="w-5 h-5 mr-2 text-security-primary" />
-                        QR Code Scanner
+                        {t("qrCodeScanner")}
                       </h3>
                       <p className="text-sm text-muted-foreground mb-4">
-                        Upload a QR code image to scan and verify its safety.
+                        {t("uploadQrCodeDescription")}
                       </p>
                       <div className="space-y-4">
                         <div 
@@ -435,16 +437,16 @@ const PhishingDetection = () => {
                             <div className="flex flex-col items-center">
                               <img 
                                 src={qrCodePreview} 
-                                alt="QR Code Preview" 
+                                alt={t("qrCodePreview")} 
                                 className="max-h-40 object-contain mb-3"
                               />
-                              <p className="text-sm text-muted-foreground">Click to change QR code</p>
+                              <p className="text-sm text-muted-foreground">{t("clickToChangeQrCode")}</p>
                             </div>
                           ) : (
                             <div className="flex flex-col items-center cursor-pointer">
                               <Upload className="h-10 w-10 text-muted-foreground mb-2" />
-                              <p className="font-medium">Upload QR Code</p>
-                              <p className="text-sm text-muted-foreground mt-1">Click to browse or drag and drop</p>
+                              <p className="font-medium">{t("uploadQrCode")}</p>
+                              <p className="text-sm text-muted-foreground mt-1">{t("clickToBrowseOrDragAndDrop")}</p>
                             </div>
                           )}
                           <input 
@@ -464,10 +466,10 @@ const PhishingDetection = () => {
                             {isAnalyzing ? (
                               <>
                                 <div className="w-4 h-4 border-t-2 border-white rounded-full animate-spin mr-2"></div>
-                                Scanning...
+                                {t("scanning")}
                               </>
                             ) : (
-                              <>Scan QR Code</>
+                              <>{t("scanQrCode")}</>
                             )}
                           </Button>
                         </div>
@@ -484,11 +486,11 @@ const PhishingDetection = () => {
                       animate={{ opacity: 1, scale: 1 }}
                       transition={{ duration: 0.3 }}
                     >
-                      <h3 className="font-medium mb-4">Analysis Results</h3>
+                      <h3 className="font-medium mb-4">{t("analysisResults")}</h3>
                       
                       <div className="mb-6">
                         <div className="flex items-center justify-between mb-2">
-                          <span className="text-sm font-medium">Threat score</span>
+                          <span className="text-sm font-medium">{t("threatScore")}</span>
                           <span className={`text-sm font-medium ${
                             analysisResult.score >= 70 ? 'text-security-danger' : 
                             analysisResult.score >= 40 ? 'text-security-warning' : 
@@ -513,19 +515,19 @@ const PhishingDetection = () => {
                         {analysisResult.isThreat ? (
                           <div className="flex items-center text-security-danger">
                             <AlertTriangle className="h-5 w-5 mr-2" />
-                            <span className="font-medium">Potential Threat Detected</span>
+                            <span className="font-medium">{t("potentialThreatDetected")}</span>
                           </div>
                         ) : (
                           <div className="flex items-center text-security-secondary">
                             <CheckCircle2 className="h-5 w-5 mr-2" />
-                            <span className="font-medium">No Immediate Threat</span>
+                            <span className="font-medium">{t("noImmediateThreat")}</span>
                           </div>
                         )}
                       </div>
                       
                       <div className="space-y-4">
                         <div>
-                          <h4 className="text-sm font-medium mb-2">Analysis Findings:</h4>
+                          <h4 className="text-sm font-medium mb-2">{t("analysisFindings")}:</h4>
                           <ul className="space-y-2">
                             {analysisResult.reasons.map((reason, index) => (
                               <li key={index} className="text-sm flex items-start">
@@ -537,7 +539,7 @@ const PhishingDetection = () => {
                         </div>
                         
                         <div>
-                          <h4 className="text-sm font-medium mb-2">Recommendation:</h4>
+                          <h4 className="text-sm font-medium mb-2">{t("recommendation")}:</h4>
                           <p className="text-sm bg-muted p-3 rounded-lg">
                             {analysisResult.recommendation}
                           </p>
@@ -551,7 +553,7 @@ const PhishingDetection = () => {
                               className="w-full text-security-primary border-security-primary/30"
                             >
                               <Copy className="h-4 w-4 mr-2" />
-                              Report to Kavach Database
+                              {t("reportToKavachDatabase")}
                             </Button>
                           </div>
                         )}
@@ -562,9 +564,9 @@ const PhishingDetection = () => {
                   {!analysisResult && (
                     <div className="glass-card rounded-lg p-4 h-full flex flex-col items-center justify-center text-center">
                       <ShieldAlert className="h-12 w-12 text-security-primary mb-4 animate-bob" />
-                      <h3 className="font-medium mb-2">Threat Detection</h3>
+                      <h3 className="font-medium mb-2">{t("threatDetection")}</h3>
                       <p className="text-sm text-muted-foreground">
-                        Choose content to analyze and our AI will scan for potential security threats.
+                        {t("chooseContentToAnalyze")}
                       </p>
                     </div>
                   )}

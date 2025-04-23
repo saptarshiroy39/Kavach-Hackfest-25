@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Bell, Search, User, X } from 'lucide-react';
+import { ThemeToggle } from "@/components/ui/theme-toggle";
 import SearchResults from '@/components/search/SearchResults';
 import { useSearchContext } from '@/context/SearchContext';
 import { useIsMobile } from '@/hooks/use-mobile';
@@ -88,6 +89,7 @@ const Header = () => {
             <Search className="w-5 h-5" />
           </Button>
         )}
+        <ThemeToggle />
         <Link to="/notifications" className="relative p-2 rounded-full hover:bg-muted transition-colors">
           <Bell className="w-5 h-5" />
           <span className="absolute top-1 right-1 w-2 h-2 bg-security-danger rounded-full"></span>

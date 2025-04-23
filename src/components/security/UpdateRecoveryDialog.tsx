@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
@@ -7,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Mail, Phone } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { mockApi } from '@/lib/mockDb';
+import { useLanguage } from '@/hooks/use-language';
 
 interface UpdateRecoveryDialogProps {
   open: boolean;
@@ -25,12 +25,13 @@ const UpdateRecoveryDialog: React.FC<UpdateRecoveryDialogProps> = ({
   const [loading, setLoading] = useState(false);
   
   const { toast } = useToast();
+  const { t } = useLanguage();
   
   const handleUpdate = async () => {
     if (!value) {
       toast({
-        title: `${type === 'email' ? 'Email' : 'Phone number'} required`,
-        description: `Please enter a valid ${type === 'email' ? 'email address' : 'phone number'}.`,
+        title: t(`${type === 'email' ? 'Email' : 'Phone number'} required`),
+        description: t(`Please enter a valid ${type === 'email' ? 'email address' : 'phone number'}.`),
         variant: "destructive",
       });
       return;
@@ -45,21 +46,21 @@ const UpdateRecoveryDialog: React.FC<UpdateRecoveryDialogProps> = ({
       
       if (result.success) {
         toast({
-          title: "Update successful",
-          description: `Your recovery ${type} has been updated.`,
+          title: t("Update successful"),
+          description: t(`Your recovery ${type} has been updated.`),
         });
         onOpenChange(false);
       } else {
         toast({
-          title: "Update failed",
-          description: result.error || `Failed to update your recovery ${type}.`,
+          title: t("Update failed"),
+          description: t(result.error || `Failed to update your recovery ${type}.`),
           variant: "destructive",
         });
       }
     } catch (error) {
       toast({
-        title: "Error",
-        description: "An unexpected error occurred. Please try again later.",
+        title: t("Error"),
+        description: t("An unexpected error occurred. Please try again later."),
         variant: "destructive",
       });
     } finally {
@@ -72,19 +73,19 @@ const UpdateRecoveryDialog: React.FC<UpdateRecoveryDialogProps> = ({
       <DialogContent className="sm:max-w-md glass-card dark:bg-background/80">
         <DialogHeader>
           <DialogTitle>
-            Update Recovery {type === 'email' ? 'Email' : 'Phone'}
+            {t(`Update Recovery ${type === 'email' ? 'Email' : 'Phone'}`)}
           </DialogTitle>
           <DialogDescription>
             {type === 'email' 
-              ? 'This email will be used to recover your account if you lose access.' 
-              : 'This phone number will be used to verify your identity during account recovery.'}
+              ? t('This email will be used to recover your account if you lose access.')
+              : t('This phone number will be used to verify your identity during account recovery.')}
           </DialogDescription>
         </DialogHeader>
         
         <div className="space-y-4 py-4">
           <div className="space-y-2">
             <Label htmlFor="recovery-value">
-              {type === 'email' ? 'Recovery Email' : 'Recovery Phone'}
+              {t(`${type === 'email' ? 'Recovery Email' : 'Recovery Phone'}`)}
             </Label>
             <div className="relative">
               {type === 'email' ? (
@@ -103,12 +104,12 @@ const UpdateRecoveryDialog: React.FC<UpdateRecoveryDialogProps> = ({
             </div>
             {type === 'email' && (
               <p className="text-xs text-muted-foreground">
-                Make sure you have access to this email address.
+                {t('Make sure you have access to this email address.')}
               </p>
             )}
             {type === 'phone' && (
               <p className="text-xs text-muted-foreground">
-                Enter your full phone number with country code.
+                {t('Enter your full phone number with country code.')}
               </p>
             )}
           </div>
@@ -121,14 +122,14 @@ const UpdateRecoveryDialog: React.FC<UpdateRecoveryDialogProps> = ({
             disabled={loading}
             className="hover-scale"
           >
-            Cancel
+            {t("Cancel")}
           </Button>
           <Button 
             onClick={handleUpdate} 
             disabled={loading}
             className="bg-security-primary hover:bg-security-primary/90 hover-scale"
           >
-            {loading ? 'Updating...' : 'Update'}
+            {loading ? t('Updating...') : t('Update')}
           </Button>
         </DialogFooter>
       </DialogContent>

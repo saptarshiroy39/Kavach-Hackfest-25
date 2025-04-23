@@ -12,6 +12,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { mockApi } from '@/lib/mockDb';
 import { useToast } from '@/hooks/use-toast';
+import { ThemeToggle } from '@/components/ui/theme-toggle';
+import { useTheme } from '@/hooks/use-theme';
 
 const Login = () => {
   const [isLoading, setIsLoading] = useState(false);
@@ -22,16 +24,19 @@ const Login = () => {
   const [verificationCode, setVerificationCode] = useState('');
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { theme, resolvedTheme } = useTheme();
+  
+  const isLightTheme = resolvedTheme === 'light';
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
 
     try {
-      if (!showTwoFactor) {        const result = await mockApi.login(email, password);
+      if (!showTwoFactor) {
+        const result = await mockApi.login(email, password);
         if (result.success) {
           setShowTwoFactor(true);
-          // Store the email temporarily to identify the user during 2FA verification
           localStorage.setItem('user-email', email);
           toast({
             title: "Login successful",
@@ -51,14 +56,10 @@ const Login = () => {
             title: "Authentication successful",
             description: "Welcome back to Kavach.",
           });
-            // Store the authentication token and role in localStorage
           localStorage.setItem('auth-token', result.token || 'mock-jwt-token-' + Math.random().toString(36).substring(2, 15));
           localStorage.setItem('user-role', result.userRole || 'user');
-          localStorage.setItem('user-email', email); // Store email to identify the user
-          
-          // Dispatch event to notify App component about auth state change
+          localStorage.setItem('user-email', email);
           window.dispatchEvent(new Event('auth-state-changed'));
-          // Navigate programmatically using navigate function
           navigate('/');
         } else {
           toast({
@@ -85,52 +86,57 @@ const Login = () => {
 
   return (
     <div className="min-h-screen flex flex-col md:flex-row relative">
-      <div className="bg-sidebar md:w-1/2 p-8 flex items-center justify-center">
+      {/* Theme toggle in the top-right corner */}
+      <div className="absolute top-4 right-4 z-10">
+        <ThemeToggle />
+      </div>
+      
+      <div className={`${isLightTheme ? 'bg-blue-500/10' : 'bg-sidebar'} md:w-1/2 p-8 flex items-center justify-center`}>
         <div className="max-w-md w-full space-y-8">
           <div className="text-center">
             <svg 
-              className="mx-auto h-20 w-20 text-security-primary animate-shield-appear-glow"
+              className="mx-auto h-20 w-20 text-blue-500 animate-shield-appear-glow"
               viewBox="0 0 24 24" 
               fill="currentColor"
               xmlns="http://www.w3.org/2000/svg"
             >
               <path fillRule="evenodd" clipRule="evenodd" d="M3.37752 5.08241C3 5.62028 3 7.21907 3 10.4167V11.9914C3 17.6294 7.23896 20.3655 9.89856 21.5273C10.62 21.8424 10.9807 22 12 22C13.0193 22 13.38 21.8424 14.1014 21.5273C16.761 20.3655 21 17.6294 21 11.9914V10.4167C21 7.21907 21 5.62028 20.6225 5.08241C20.245 4.54454 18.7417 4.02996 15.7351 3.00079L15.1623 2.80472C13.595 2.26824 12.8114 2 12 2C11.1886 2 10.405 2.26824 8.83772 2.80472L8.26491 3.00079C5.25832 4.02996 3.75503 4.54454 3.37752 5.08241ZM10.8613 8.36335L10.7302 8.59849C10.5862 8.85677 10.5142 8.98591 10.402 9.07112C10.2897 9.15633 10.1499 9.18796 9.87035 9.25122L9.61581 9.30881C8.63194 9.53142 8.14001 9.64273 8.02297 10.0191C7.90593 10.3955 8.2413 10.7876 8.91204 11.572L9.08557 11.7749C9.27617 11.9978 9.37147 12.1092 9.41435 12.2471C9.45722 12.385 9.44281 12.5336 9.41399 12.831L9.38776 13.1018C9.28635 14.1482 9.23565 14.6715 9.54206 14.9041C9.84847 15.1367 10.3091 14.9246 11.2303 14.5005L11.4686 14.3907C11.7304 14.2702 11.8613 14.2099 12 14.2099C12.1387 14.2099 12.2696 14.2702 12.5314 14.3907L12.7697 14.5005C13.6909 14.9246 14.1515 15.1367 14.4579 14.9041C14.7644 14.6715 14.7136 14.1482 14.6122 13.1018L14.586 12.831C14.5572 12.5337 14.5428 12.385 14.5857 12.2471C14.6285 12.1092 14.7238 11.9978 14.9144 11.7749L15.088 11.572C15.7587 10.7876 16.0941 10.3955 15.977 10.0191C15.86 9.64273 15.3681 9.53142 14.3842 9.30881L14.1296 9.25122C13.8501 9.18796 13.7103 9.15633 13.598 9.07112C13.4858 8.98592 13.4138 8.85678 13.2698 8.5985L13.1387 8.36335C12.6321 7.45445 12.3787 7 12 7C11.6213 7 11.3679 7.45445 10.8613 8.36335Z" />
             </svg>
-            <h1 className="mt-4 text-3xl font-bold text-white">Kavach</h1>
-            <p className="mt-2 text-security-info">
+            <h1 className={`mt-4 text-3xl font-bold ${isLightTheme ? 'text-blue-600' : 'text-white'}`}>Kavach</h1>
+            <p className={`mt-2 ${isLightTheme ? 'text-cyan-600' : 'text-security-info'}`}>
               Advanced security for your digital identity
             </p>
           </div>
-          <div className="rounded-lg bg-sidebar-accent p-6 space-y-4">
+          <div className={`rounded-lg ${isLightTheme ? 'bg-blue-500/5 border border-blue-200' : 'bg-sidebar-accent'} p-6 space-y-4`}>
             <div className="flex items-start">
               <div className="flex-shrink-0">
-                <Lock className="h-6 w-6 text-security-primary" />
+                <Lock className={`h-6 w-6 ${isLightTheme ? 'text-blue-500' : 'text-security-primary'}`} />
               </div>
               <div className="ml-3">
-                <h3 className="text-sm font-medium text-white">End-to-End Encryption</h3>
-                <p className="mt-1 text-xs text-sidebar-foreground/70">
+                <h3 className={`text-sm font-medium ${isLightTheme ? 'text-blue-700' : 'text-white'}`}>End-to-End Encryption</h3>
+                <p className={`mt-1 text-xs ${isLightTheme ? 'text-blue-600' : 'text-sidebar-foreground/70'}`}>
                   Your data is encrypted and only accessible by you
                 </p>
               </div>
             </div>
             <div className="flex items-start">
               <div className="flex-shrink-0">
-                <Fingerprint className="h-6 w-6 text-security-secondary" />
+                <Fingerprint className={`h-6 w-6 ${isLightTheme ? 'text-green-500' : 'text-security-secondary'}`} />
               </div>
               <div className="ml-3">
-                <h3 className="text-sm font-medium text-white">Biometric Authentication</h3>
-                <p className="mt-1 text-xs text-sidebar-foreground/70">
+                <h3 className={`text-sm font-medium ${isLightTheme ? 'text-blue-700' : 'text-white'}`}>Biometric Authentication</h3>
+                <p className={`mt-1 text-xs ${isLightTheme ? 'text-blue-600' : 'text-sidebar-foreground/70'}`}>
                   Use your fingerprint or face for secure access
                 </p>
               </div>
             </div>
             <div className="flex items-start">
               <div className="flex-shrink-0">
-                <Smartphone className="h-6 w-6 text-security-warning" />
+                <Smartphone className={`h-6 w-6 ${isLightTheme ? 'text-orange-500' : 'text-security-warning'}`} />
               </div>
               <div className="ml-3">
-                <h3 className="text-sm font-medium text-white">Cross-Device Protection</h3>
-                <p className="mt-1 text-xs text-sidebar-foreground/70">
+                <h3 className={`text-sm font-medium ${isLightTheme ? 'text-blue-700' : 'text-white'}`}>Cross-Device Protection</h3>
+                <p className={`mt-1 text-xs ${isLightTheme ? 'text-blue-600' : 'text-sidebar-foreground/70'}`}>
                   Secure across all your devices and platforms
                 </p>
               </div>

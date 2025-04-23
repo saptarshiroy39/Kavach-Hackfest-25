@@ -1,25 +1,32 @@
 # 🛡️ Kavach – Hackfest '25
 
-Welcome to **Kavach**, our innovative solution developed for Hackfest '25! 🚀
+Welcome to **Kavach**, our innovative security platform developed for Hackfest '25! 🚀
 
 ## 📌 Project Overview
 
-**Kavach** is a cutting-edge platform designed to [insert a brief description of the project's purpose and functionality]. Our goal is to [insert the main objective or problem the project addresses].
+**Kavach** is a cutting-edge security platform designed to provide comprehensive digital protection for users in an increasingly vulnerable online world. Our goal is to empower users with tools to secure their digital identity, passwords, and communications through a unified dashboard.
 
 ## 🧠 Features
 
-- 🔐 **Secure Authentication**: Ensuring user data is protected with robust security measures.
-- 📊 **Real-Time Analytics**: Providing live insights and data visualization.
-- 💬 **Interactive Chatbot**: Assisting users with instant responses and support.
-- 🌐 **Responsive Design**: Seamless experience across all devices.
+- 🔐 **Password Vault**: Securely store and manage all your passwords in one place.
+- 🔒 **Multi-Factor Authentication**: Advanced security with various authentication methods.
+- 🛡️ **Security Status Monitoring**: Real-time overview of your security posture.
+- ⛓️ **Blockchain Verification**: Verify document authenticity using blockchain technology.
+- 👆 **Biometric Security**: Enhanced protection with fingerprint and biometric options.
+- 💬 **Encrypted Messaging**: End-to-end encrypted communications.
+- 🌐 **Dark Web Monitoring**: Alert system for potential data breaches.
+- 🔍 **Security Verification**: Comprehensive verification of your security settings.
+- 🌙 **Dark/Light Theme**: Customizable interface with theme options.
+- 🌍 **Multi-language Support**: Interface available in multiple languages.
 
 ## 🛠️ Tech Stack
 
-- **Frontend**: React.js, Tailwind CSS
-- **Backend**: Node.js, Express.js
-- **Database**: MongoDB
-- **Authentication**: JWT, OAuth 2.0
-- **Deployment**: Vercel
+- **Frontend**: React.js, TypeScript, Tailwind CSS, Framer Motion
+- **UI Components**: Custom component library with shadcn/ui
+- **State Management**: React Context API
+- **Styling**: Tailwind CSS with custom theming
+- **Icons**: Lucide React
+- **Package Manager**: Compatible with npm, yarn, or bun
 
 ## 🚀 Getting Started
 
@@ -33,19 +40,36 @@ To run this project locally:
    ```bash
    cd Kavach-Hackfest-25
    ```
-3. Install dependencies:
+3. Install dependencies (using your preferred package manager):
    ```bash
    npm install
+   # or
+   yarn install
+   # or
+   bun install
    ```
 4. Start the development server:
    ```bash
    npm run dev
+   # or
+   yarn dev
+   # or
+   bun dev
    ```
+5. Open your browser and visit `http://localhost:5173`
+
+## 🧩 Project Structure
+
+- `/src/components`: UI components including layout, security features
+- `/src/pages`: Main application pages and views
+- `/src/hooks`: Custom React hooks for theme, language, etc.
+- `/src/context`: Context providers for state management
+- `/src/lib`: Utility functions and mock data
 
 ## 👥 Team Members
 
-- **Saptarshi Roy** – Full Stack Developer
-- [Add other team members with their roles]
+- **Saptarshi Roy**
+- **Subhraneel Talukdar**
 
 ## 📄 License
 
