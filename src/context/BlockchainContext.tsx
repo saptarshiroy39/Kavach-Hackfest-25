@@ -1,5 +1,17 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { ethers } from 'ethers';
+// Conditionally import ethers to prevent crashes during initial load
+let ethers: any;
+try {
+  ethers = require('ethers');
+} catch (error) {
+  console.warn('Failed to import ethers:', error);
+  // Provide a dummy implementation
+  ethers = {
+    keccak256: () => '0x0000000000000000000000000000000000000000000000000000000000000000',
+    toUtf8Bytes: () => new Uint8Array()
+  };
+}
+
 import { BlockchainNetwork, DEFAULT_NETWORK, BLOCKCHAIN_SETTINGS } from '@/lib/blockchain/config';
 import { 
   BlockchainConnection, 
@@ -56,60 +68,76 @@ export const BlockchainProvider: React.FC<{children: React.ReactNode}> = ({ chil
   const [securityEvents, setSecurityEvents] = useState<SecurityEvent[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const { toast } = useToast();
+  const [isProviderAvailable, setIsProviderAvailable] = useState<boolean>(true);
 
   // Initialize connection on mount
   useEffect(() => {
-    const initConnection = async () => {
-      if (BLOCKCHAIN_SETTINGS.autoConnect) {
-        setIsLoading(true);
-        try {
-          const status = await getConnectionStatus();
-          if (status.isConnected) {
-            setConnection(status);
-            await fetchUserData(status);
+    // Check if running in an environment where blockchain features are available
+    if (typeof window === 'undefined') {
+      setIsProviderAvailable(false);
+      return;
+    }
+    
+    try {
+      const initConnection = async () => {
+        if (BLOCKCHAIN_SETTINGS.autoConnect) {
+          setIsLoading(true);
+          try {
+            const status = await getConnectionStatus();
+            if (status.isConnected) {
+              setConnection(status);
+              await fetchUserData(status);
+            }
+          } catch (error) {
+            console.error('Failed to initialize blockchain connection:', error);
+            setIsProviderAvailable(false);
+          } finally {
+            setIsLoading(false);
           }
-        } catch (error) {
-          console.error('Failed to initialize blockchain connection:', error);
-        } finally {
-          setIsLoading(false);
         }
-      }
-    };
+      };
 
-    initConnection();
+      initConnection();
 
-    // Setup event listeners for wallet
-    if (typeof window !== 'undefined' && window.ethereum) {
-      const handleAccountsChanged = async (accounts: string[]) => {
-        if (accounts.length === 0) {
-          // User disconnected wallet
-          disconnectWallet();
-        } else if (connection.account !== accounts[0]) {
-          // Account changed, update connection
+      // Setup event listeners for wallet
+      if (window.ethereum) {
+        const handleAccountsChanged = async (accounts: string[]) => {
+          if (accounts.length === 0) {
+            // User disconnected wallet
+            disconnectWallet();
+          } else if (connection.account !== accounts[0]) {
+            // Account changed, update connection
+            const status = await getConnectionStatus();
+            setConnection(status);
+            if (status.isConnected) {
+              await fetchUserData(status);
+            }
+          }
+        };
+
+        const handleChainChanged = async () => {
+          // Chain changed, refresh connection
           const status = await getConnectionStatus();
           setConnection(status);
           if (status.isConnected) {
             await fetchUserData(status);
           }
-        }
-      };
+        };
 
-      const handleChainChanged = async () => {
-        // Chain changed, refresh connection
-        const status = await getConnectionStatus();
-        setConnection(status);
-        if (status.isConnected) {
-          await fetchUserData(status);
-        }
-      };
+        window.ethereum.on('accountsChanged', handleAccountsChanged);
+        window.ethereum.on('chainChanged', handleChainChanged);
 
-      window.ethereum.on('accountsChanged', handleAccountsChanged);
-      window.ethereum.on('chainChanged', handleChainChanged);
-
-      return () => {
-        window.ethereum.removeListener('accountsChanged', handleAccountsChanged);
-        window.ethereum.removeListener('chainChanged', handleChainChanged);
-      };
+        return () => {
+          window.ethereum.removeListener('accountsChanged', handleAccountsChanged);
+          window.ethereum.removeListener('chainChanged', handleChainChanged);
+        };
+      } else {
+        console.warn('Ethereum provider not available');
+        setIsProviderAvailable(false);
+      }
+    } catch (error) {
+      console.error('Error in BlockchainProvider initialization:', error);
+      setIsProviderAvailable(false);
     }
   }, []);
 
@@ -364,6 +392,7 @@ export const BlockchainProvider: React.FC<{children: React.ReactNode}> = ({ chil
     refreshVerificationStatus
   };
 
+  // Even if provider is not available, still render children so the app can load
   return (
     <BlockchainContext.Provider value={value}>
       {children}
@@ -371,4 +400,4 @@ export const BlockchainProvider: React.FC<{children: React.ReactNode}> = ({ chil
   );
 };
 
-export default BlockchainContext; 
+export default BlockchainContext;

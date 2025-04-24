@@ -11,10 +11,29 @@ import {
   Shield,
   Ban,
   Settings,
-  Info
+  Info,
+  Loader2,
+  Check,
+  Phone,
+  Activity,
+  Newspaper,
+  MapPin,
+  History,
+  Users,
+  Smartphone
 } from "lucide-react";
 import { privacyMock as mockApi } from "@/lib/securityFeaturesMock";
 import { useToast } from "@/hooks/use-toast";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
 
 interface ConnectedApp {
   id: string;
@@ -45,6 +64,10 @@ interface PrivacyReportData {
 const PrivacyReport: React.FC = () => {
   const [reportData, setReportData] = useState<PrivacyReportData | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [selectedApp, setSelectedApp] = useState<ConnectedApp | null>(null);
+  const [manageDialogOpen, setManageDialogOpen] = useState<boolean>(false);
+  const [disconnectDialogOpen, setDisconnectDialogOpen] = useState<boolean>(false);
+  const [isProcessing, setIsProcessing] = useState<boolean>(false);
   const { toast } = useToast();
 
   const fetchPrivacyData = async () => {
@@ -97,17 +120,103 @@ const PrivacyReport: React.FC = () => {
   };
 
   const handleRevokePermission = (appId: string, permission: string) => {
+    const app = reportData?.connectedApps.find(app => app.id === appId);
+    if (!app || !reportData) return;
+    
+    // Update app permissions locally
+    const updatedApps = reportData.connectedApps.map(appItem => {
+      if (appItem.id === appId) {
+        return {
+          ...appItem,
+          permissions: appItem.permissions.filter(p => p !== permission)
+        };
+      }
+      return appItem;
+    });
+    
+    // Update report data with improved privacy score
+    setReportData({
+      ...reportData,
+      privacyScore: Math.min(100, reportData.privacyScore + 2),
+      connectedApps: updatedApps
+    });
+    
     toast({
       title: "Permission revoked",
-      description: `Revoked "${permission}" permission for ${reportData?.connectedApps.find(app => app.id === appId)?.name}.`,
+      description: `Revoked "${permission}" permission for ${app.name}.`,
     });
   };
 
-  const handleRemoveApp = (appId: string) => {
-    toast({
-      title: "App disconnected",
-      description: `Successfully disconnected ${reportData?.connectedApps.find(app => app.id === appId)?.name}.`,
-    });
+  const handleOpenManageDialog = (app: ConnectedApp) => {
+    setSelectedApp(app);
+    setManageDialogOpen(true);
+  };
+
+  const handleOpenDisconnectDialog = (app: ConnectedApp) => {
+    setSelectedApp(app);
+    setDisconnectDialogOpen(true);
+  };
+
+  const handleDisconnectApp = async () => {
+    if (!selectedApp || !reportData) return;
+    
+    setIsProcessing(true);
+    try {
+      // Simulate API call to disconnect the app
+      await new Promise(resolve => setTimeout(resolve, 1500));
+      
+      // Filter out the disconnected app
+      const updatedApps = reportData.connectedApps.filter(
+        app => app.id !== selectedApp.id
+      );
+      
+      // Update report data with improved privacy score
+      setReportData({
+        ...reportData,
+        privacyScore: Math.min(100, reportData.privacyScore + 5),
+        connectedApps: updatedApps
+      });
+      
+      toast({
+        title: "App disconnected",
+        description: `Successfully disconnected ${selectedApp.name}.`,
+      });
+      
+      setDisconnectDialogOpen(false);
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: `Failed to disconnect ${selectedApp?.name}.`,
+        variant: "destructive",
+      });
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
+  const handleSavePermissionSettings = async () => {
+    if (!selectedApp || !reportData) return;
+    
+    setIsProcessing(true);
+    try {
+      // Simulate API call to update permissions
+      await new Promise(resolve => setTimeout(resolve, 1500));
+      
+      toast({
+        title: "Settings updated",
+        description: `Successfully updated permissions for ${selectedApp.name}.`,
+      });
+      
+      setManageDialogOpen(false);
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: `Failed to update permissions for ${selectedApp?.name}.`,
+        variant: "destructive",
+      });
+    } finally {
+      setIsProcessing(false);
+    }
   };
 
   if (isLoading) {
@@ -211,80 +320,92 @@ const PrivacyReport: React.FC = () => {
             Connected Apps ({reportData.connectedApps.length})
           </h3>
           <div className="space-y-4">
-            {reportData.connectedApps.map((app) => (
-              <div key={app.id} className="border rounded-lg overflow-hidden">
-                <div className="p-4 border-b">
-                  <div className="flex justify-between items-start">
-                    <div className="flex items-center">
-                      <div className="w-10 h-10 bg-muted rounded-md flex items-center justify-center mr-3">
-                        <img 
-                          src={app.icon} 
-                          alt={`${app.name} icon`} 
-                          onError={(e) => {
-                            (e.target as HTMLImageElement).src = '/placeholder.svg';
-                          }}
-                          className="w-6 h-6" 
-                        />
+            {reportData.connectedApps.map((app) => {
+              // Determine which icon to use based on app name
+              let AppIcon;
+              if (app.name === "Social Media App") {
+                AppIcon = Phone;
+              } else if (app.name === "Fitness Tracker") {
+                AppIcon = Activity;
+              } else if (app.name === "News Reader") {
+                AppIcon = Newspaper;
+              } else {
+                AppIcon = Eye; // Default icon
+              }
+              
+              return (
+                <div key={app.id} className="border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
+                  <div className="p-4 border-b border-gray-200 dark:border-gray-700">
+                    <div className="flex justify-between items-start">
+                      <div className="flex items-center">
+                        <div className="w-10 h-10 bg-muted rounded-md flex items-center justify-center mr-3">
+                          <AppIcon className="w-5 h-5 text-primary" />
+                        </div>
+                        <div>
+                          <h4 className="font-medium">{app.name}</h4>
+                          <p className="text-xs text-muted-foreground">
+                            Last accessed: {app.lastAccess}
+                          </p>
+                        </div>
                       </div>
-                      <div>
-                        <h4 className="font-medium">{app.name}</h4>
-                        <p className="text-xs text-muted-foreground">
-                          Last accessed: {app.lastAccess}
-                        </p>
+                      {app.isSensitive && (
+                        <Badge className="bg-red-100 text-red-800 border-red-200">
+                          Sensitive Access
+                        </Badge>
+                      )}
+                    </div>
+                  </div>
+                  <div className="p-4 bg-muted/50 space-y-3">
+                    <div>
+                      <h5 className="text-sm font-medium">Permissions:</h5>
+                      <div className="flex flex-wrap gap-1 mt-1">
+                        {app.permissions.map((permission, idx) => (
+                          <Badge key={idx} variant="secondary" className="flex gap-1 items-center pl-2">
+                            {permission}
+                            <button 
+                              className="ml-1 bg-muted rounded-full w-4 h-4 inline-flex items-center justify-center hover:bg-muted-foreground/20"
+                              onClick={() => handleRevokePermission(app.id, permission)}
+                            >
+                              <Ban className="w-3 h-3" />
+                            </button>
+                          </Badge>
+                        ))}
                       </div>
                     </div>
-                    {app.isSensitive && (
-                      <Badge className="bg-red-100 text-red-800 border-red-200">
-                        Sensitive Access
-                      </Badge>
-                    )}
-                  </div>
-                </div>
-                <div className="p-4 bg-muted/50 space-y-3">
-                  <div>
-                    <h5 className="text-sm font-medium">Permissions:</h5>
-                    <div className="flex flex-wrap gap-1 mt-1">
-                      {app.permissions.map((permission, idx) => (
-                        <Badge key={idx} variant="secondary" className="flex gap-1 items-center pl-2">
-                          {permission}
-                          <button 
-                            className="ml-1 bg-muted rounded-full w-4 h-4 inline-flex items-center justify-center hover:bg-muted-foreground/20"
-                            onClick={() => handleRevokePermission(app.id, permission)}
-                          >
-                            <Ban className="w-3 h-3" />
-                          </button>
-                        </Badge>
-                      ))}
+                    <div>
+                      <h5 className="text-sm font-medium">Data accessed:</h5>
+                      <div className="flex flex-wrap gap-1 mt-1">
+                        {app.dataAccessed.map((data, idx) => (
+                          <Badge key={idx} variant="outline">
+                            {data}
+                          </Badge>
+                        ))}
+                      </div>
                     </div>
                   </div>
-                  <div>
-                    <h5 className="text-sm font-medium">Data accessed:</h5>
-                    <div className="flex flex-wrap gap-1 mt-1">
-                      {app.dataAccessed.map((data, idx) => (
-                        <Badge key={idx} variant="outline">
-                          {data}
-                        </Badge>
-                      ))}
-                    </div>
+                  <div className="p-3 bg-muted/30 flex justify-end gap-2">
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      className="gap-1"
+                      onClick={() => handleOpenManageDialog(app)}
+                    >
+                      <Settings className="w-4 h-4" />
+                      Manage
+                    </Button>
+                    <Button 
+                      variant="destructive" 
+                      size="sm" 
+                      className="gap-1"
+                      onClick={() => handleOpenDisconnectDialog(app)}
+                    >
+                      <Ban className="w-4 h-4" />
+                      Disconnect
+                    </Button>
                   </div>
                 </div>
-                <div className="p-3 bg-muted/30 flex justify-end gap-2">
-                  <Button variant="outline" size="sm" className="gap-1">
-                    <Settings className="w-4 h-4" />
-                    Manage
-                  </Button>
-                  <Button 
-                    variant="destructive" 
-                    size="sm" 
-                    className="gap-1"
-                    onClick={() => handleRemoveApp(app.id)}
-                  >
-                    <Ban className="w-4 h-4" />
-                    Disconnect
-                  </Button>
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
 
@@ -292,40 +413,62 @@ const PrivacyReport: React.FC = () => {
         <div>
           <h3 className="text-lg font-medium mb-4">Data Collection</h3>
           <div className="space-y-4">
-            {reportData.dataCollections.map((collection, index) => (
-              <div key={index} className="border rounded-lg p-4">
-                <div className="flex justify-between items-start">
-                  <div>
-                    <h4 className="font-medium">{collection.type}</h4>
-                    <p className="text-sm text-muted-foreground">{collection.purpose}</p>
-                  </div>
-                  <Badge variant={collection.collected ? "default" : "outline"}>
-                    {collection.collected ? "Collected" : "Not Collected"}
-                  </Badge>
-                </div>
-                
-                {collection.sharedWith.length > 0 && (
-                  <div className="mt-2">
-                    <p className="text-sm font-medium">Shared with:</p>
-                    <div className="flex flex-wrap gap-1 mt-1">
-                      {collection.sharedWith.map((entity, idx) => (
-                        <Badge key={idx} variant="secondary">
-                          {entity}
-                        </Badge>
-                      ))}
+            {reportData.dataCollections.map((collection, index) => {
+              // Determine which icon to use based on collection type
+              let DataIcon;
+              if (collection.type === "Location data") {
+                DataIcon = MapPin;
+              } else if (collection.type === "Browsing history") {
+                DataIcon = History;
+              } else if (collection.type === "Contact information") {
+                DataIcon = Users;
+              } else if (collection.type === "Device information") {
+                DataIcon = Smartphone;
+              } else {
+                DataIcon = Info; // Default icon
+              }
+              
+              return (
+                <div key={index} className="border border-gray-200 dark:border-gray-700 rounded-lg p-4">
+                  <div className="flex justify-between items-start">
+                    <div className="flex items-start gap-3">
+                      <div className="mt-1">
+                        <DataIcon className="w-5 h-5 text-primary" />
+                      </div>
+                      <div>
+                        <h4 className="font-medium">{collection.type}</h4>
+                        <p className="text-sm text-muted-foreground">{collection.purpose}</p>
+                      </div>
                     </div>
+                    <Badge variant={collection.collected ? "default" : "outline"}>
+                      {collection.collected ? "Collected" : "Not Collected"}
+                    </Badge>
                   </div>
-                )}
-                
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  className="mt-3"
-                >
-                  {collection.controlOption}
-                </Button>
-              </div>
-            ))}
+                  
+                  {collection.sharedWith.length > 0 && (
+                    <div className="mt-2 ml-8">
+                      <p className="text-sm font-medium">Shared with:</p>
+                      <div className="flex flex-wrap gap-1 mt-1">
+                        {collection.sharedWith.map((entity, idx) => (
+                          <Badge key={idx} variant="secondary">
+                            {entity}
+                          </Badge>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                  
+                  <div className="ml-8 mt-3">
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                    >
+                      {collection.controlOption}
+                    </Button>
+                  </div>
+                </div>
+              );
+            })}
           </div>
         </div>
 
@@ -343,6 +486,123 @@ const PrivacyReport: React.FC = () => {
         </Alert>
         
       </CardContent>
+
+      {/* Manage App Permissions Dialog */}
+      <Dialog open={manageDialogOpen} onOpenChange={setManageDialogOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Manage App Permissions</DialogTitle>
+            <DialogDescription>
+              {selectedApp && (
+                <>Adjust what data and features "{selectedApp.name}" can access.</>
+              )}
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-4 py-3">
+            <h4 className="text-sm font-medium">Permission settings:</h4>
+            <div className="space-y-3">
+              {selectedApp?.permissions.map((permission, idx) => (
+                <div key={idx} className="flex items-center justify-between p-2 border border-gray-200 dark:border-gray-700 rounded-lg">
+                  <div>
+                    <Label className="font-medium">{permission}</Label>
+                    <p className="text-xs text-muted-foreground">
+                      Allows app to {permission.toLowerCase()}
+                    </p>
+                  </div>
+                  <Switch defaultChecked id={`permission-${idx}`} />
+                </div>
+              ))}
+              
+              <div className="flex items-center justify-between p-2 border border-gray-200 dark:border-gray-700 rounded-lg">
+                <div>
+                  <Label className="font-medium">Data Collection Consent</Label>
+                  <p className="text-xs text-muted-foreground">
+                    Allow app to collect usage data
+                  </p>
+                </div>
+                <Switch id="data-collection" />
+              </div>
+              
+              <div className="flex items-center justify-between p-2 border border-gray-200 dark:border-gray-700 rounded-lg">
+                <div>
+                  <Label className="font-medium">Third-party Sharing</Label>
+                  <p className="text-xs text-muted-foreground">
+                    Allow sharing data with third parties
+                  </p>
+                </div>
+                <Switch id="third-party" />
+              </div>
+            </div>
+          </div>
+          
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setManageDialogOpen(false)}>
+              Cancel
+            </Button>
+            <Button 
+              onClick={handleSavePermissionSettings}
+              disabled={isProcessing}
+            >
+              {isProcessing ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Saving...
+                </>
+              ) : (
+                'Save Settings'
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Disconnect App Dialog */}
+      <Dialog open={disconnectDialogOpen} onOpenChange={setDisconnectDialogOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Disconnect App</DialogTitle>
+            <DialogDescription>
+              {selectedApp && (
+                <>
+                  Are you sure you want to disconnect "{selectedApp.name}"? 
+                  This will revoke all permissions and data access.
+                </>
+              )}
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-3 py-2">
+            <Alert className="border-amber-200 bg-amber-50 dark:bg-amber-900/20">
+              <AlertCircle className="h-5 w-5 text-amber-600" />
+              <AlertDescription className="text-sm">
+                Disconnecting this app will prevent it from accessing your data, 
+                but it may keep copies of data it has already collected.
+              </AlertDescription>
+            </Alert>
+          </div>
+          
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setDisconnectDialogOpen(false)}>
+              Cancel
+            </Button>
+            <Button 
+              variant="destructive"
+              onClick={handleDisconnectApp}
+              disabled={isProcessing}
+            >
+              {isProcessing ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Disconnecting...
+                </>
+              ) : (
+                'Disconnect App'
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </Card>
   );
 };

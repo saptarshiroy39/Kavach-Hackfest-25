@@ -418,7 +418,7 @@ const Settings = () => {
                   <div className="flex items-center justify-between">
                     <div className="flex items-center">
                       <Globe className="w-4 h-4 mr-2" />
-                      <span>{t('language')}</span>
+                      <span>{t('Language')}</span>
                     </div>
                     <Select 
                       value={language} 

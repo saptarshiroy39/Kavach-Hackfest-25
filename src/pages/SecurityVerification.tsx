@@ -17,7 +17,6 @@ import {
   AlertCircle,
   Plus,
   X,
-  Twitter,
   Linkedin,
   Facebook,
   Instagram,
@@ -94,7 +93,7 @@ const SecurityVerification = () => {
   const [protectedEmails, setProtectedEmails] = useState<string[]>(['user@example.com', 'work@company.com']);
   const [protectedPhones, setProtectedPhones] = useState<string[]>(['+1 (555) 123-4567']);
   const [protectedSocialAccounts, setProtectedSocialAccounts] = useState<{platform: string, username: string}[]>([
-    { platform: 'Twitter', username: '@user123' },
+    { platform: 'X', username: '@user123' },
     { platform: 'LinkedIn', username: 'username' }
   ]);
   
@@ -104,7 +103,7 @@ const SecurityVerification = () => {
   const [showAddSocialDialog, setShowAddSocialDialog] = useState(false);
   const [newEmail, setNewEmail] = useState('');
   const [newPhone, setNewPhone] = useState('');
-  const [newSocialPlatform, setNewSocialPlatform] = useState('Twitter');
+  const [newSocialPlatform, setNewSocialPlatform] = useState('X');
   const [newSocialUsername, setNewSocialUsername] = useState('');
   
   // Mock verification results
@@ -244,7 +243,7 @@ const SecurityVerification = () => {
       platform: newSocialPlatform,
       username: newSocialUsername.startsWith('@') ? newSocialUsername : `@${newSocialUsername}`
     }]);
-    setNewSocialPlatform('Twitter');
+    setNewSocialPlatform('X');
     setNewSocialUsername('');
     setShowAddSocialDialog(false);
     
@@ -768,12 +767,22 @@ const SecurityVerification = () => {
                         protectedSocialAccounts.map((account, index) => (
                           <div key={index} className="flex items-center justify-between p-2 bg-muted/50 rounded">
                             <div className="flex items-center">
-                              {account.platform === 'Twitter' && <Twitter className="w-4 h-4 mr-2 text-blue-400" />}
-                              {account.platform === 'LinkedIn' && <Linkedin className="w-4 h-4 mr-2 text-blue-600" />}
-                              {account.platform === 'Facebook' && <Facebook className="w-4 h-4 mr-2 text-blue-500" />}
-                              {account.platform === 'Instagram' && <Instagram className="w-4 h-4 mr-2 text-pink-500" />}
-                              {!['Twitter', 'LinkedIn', 'Facebook', 'Instagram'].includes(account.platform) && 
-                                <Globe className="w-4 h-4 mr-2 text-security-primary" />}
+                              {/* Replace Lucide icons with actual SVG images from public folder */}
+                              <img 
+                                src={`/app-icons/${account.platform.toLowerCase()}.svg`} 
+                                alt={`${account.platform} icon`}
+                                className="w-4 h-4 mr-2"
+                                onError={(e) => {
+                                  // Fallback to Lucide icons if image doesn't load
+                                  const target = e.target as HTMLImageElement;
+                                  if (account.platform === 'X') {
+                                    target.src = '/app-icons/x.svg';  // X (formerly Twitter)
+                                  } else {
+                                    // Use Globe icon as fallback
+                                    (e.target as HTMLElement).outerHTML = '<span class="w-4 h-4 mr-2 text-security-primary"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" x2="22" y1="12" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg></span>';
+                                  }
+                                }}
+                              />
                               <div>
                                 <span className="text-sm">{account.username}</span>
                                 <p className="text-xs text-muted-foreground">{account.platform}</p>
@@ -1053,7 +1062,7 @@ const SecurityVerification = () => {
                   <SelectValue placeholder="Select platform" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="Twitter">Twitter</SelectItem>
+                  <SelectItem value="X">X</SelectItem>
                   <SelectItem value="Facebook">Facebook</SelectItem>
                   <SelectItem value="Instagram">Instagram</SelectItem>
                   <SelectItem value="LinkedIn">LinkedIn</SelectItem>

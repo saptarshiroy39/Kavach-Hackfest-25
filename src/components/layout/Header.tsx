@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Bell, Search, User, X } from 'lucide-react';
+import { Bell, Search, User, X, Settings, ShieldCheck } from 'lucide-react';
 import { ThemeToggle } from "@/components/ui/theme-toggle";
 import SearchResults from '@/components/search/SearchResults';
 import { useSearchContext } from '@/context/SearchContext';
@@ -11,6 +11,7 @@ import { useLanguage } from '@/hooks/use-language';
 import md5 from 'md5';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
+import { ModernSearch } from '@/components/ui/modern-search';
 
 const Header = () => {
   const navigate = useNavigate();
@@ -18,6 +19,7 @@ const Header = () => {
   const searchRef = useRef<HTMLDivElement>(null);
   const { t } = useLanguage();
   const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
+  const [isSearching, setIsSearching] = useState(false);
   
   const { 
     searchTerm, 
@@ -41,8 +43,53 @@ const Header = () => {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [showResults, toggleResults]);
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    onSearchChange(e.target.value);
+  // Generate search suggestions based on search term
+  const getSearchSuggestions = () => {
+    if (!searchTerm) return [];
+    
+    // Mock suggestions - in a real app, these could come from an API
+    const suggestions = [
+      { id: '1', text: 'Security Status', type: 'Page' },
+      { id: '2', text: 'Password Vault', type: 'Page' },
+      { id: '3', text: 'Encrypted Messaging', type: 'Page' },
+      { id: '4', text: 'Two Factor Authentication', type: 'Setting' },
+      { id: '5', text: 'Dark Web Monitoring', type: 'Feature' },
+    ].filter(suggestion => 
+      suggestion.text.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+    
+    return suggestions;
+  };
+
+  const handleSearch = (term: string) => {
+    setIsSearching(true);
+    // Simulate a search delay
+    setTimeout(() => {
+      toggleResults(term.length > 0);
+      setIsSearching(false);
+    }, 300);
+  };
+
+  const handleSuggestionClick = (suggestion: any) => {
+    switch(suggestion.text) {
+      case 'Security Status':
+        navigate('/security-status');
+        break;
+      case 'Password Vault':
+        navigate('/password-vault');
+        break;
+      case 'Encrypted Messaging':
+        navigate('/messaging');
+        break;
+      default:
+        // For demonstration, we're just setting the search term
+        onSearchChange(suggestion.text);
+        toggleResults(true);
+    }
+    
+    if (isMobile) {
+      setMobileSearchOpen(false);
+    }
   };
 
   // Generate Gravatar URL from email
@@ -53,24 +100,19 @@ const Header = () => {
   return (
     <header className="flex items-center justify-between px-6 py-4 bg-background border-b border-border">
       {!isMobile && (
-        <div className="relative search-container" ref={searchRef}>
-          <Search className="search-icon" size={16} />
-          <input
-            type="search"
-            placeholder={t('search')}
-            className="security-input text-sm"
+        <div className="relative w-72" ref={searchRef}>
+          <ModernSearch
+            mode="inline"
+            placeholder={t('Search Kavach...')}
             value={searchTerm}
-            onChange={handleInputChange}
-            onFocus={() => toggleResults(searchTerm.length > 0)}
+            onChange={onSearchChange}
+            onSearch={handleSearch}
+            searching={isSearching}
+            suggestions={getSearchSuggestions()}
+            onSuggestionClick={handleSuggestionClick}
+            clearOnSearch={false}
+            wrapperClassName="w-72"
           />
-          {searchTerm && (
-            <button
-              className="absolute right-3 top-1/2 transform -translate-y-1/2 z-10"
-              onClick={clearSearch}
-            >
-              <X className="text-muted-foreground w-4 h-4" />
-            </button>
-          )}
           {showResults && (
             <div className="absolute top-full left-0 right-0 mt-1 z-50">
               <SearchResults onResultClick={() => toggleResults(false)} />
@@ -115,25 +157,20 @@ const Header = () => {
         <Dialog open={mobileSearchOpen} onOpenChange={setMobileSearchOpen}>
           <DialogContent className="p-0 gap-0 sm:max-w-lg max-h-[80vh]">
             <div className="p-4 border-b">
-              <div className="relative search-container w-full">
-                <Search className="search-icon" size={16} />
-                <input
-                  type="search"
-                  autoFocus
-                  placeholder={t('search')}
-                  className="security-input text-sm w-full"
-                  value={searchTerm}
-                  onChange={handleInputChange}
-                />
-                {searchTerm && (
-                  <button
-                    className="absolute right-3 top-1/2 transform -translate-y-1/2 z-10"
-                    onClick={clearSearch}
-                  >
-                    <X className="text-muted-foreground w-4 h-4" />
-                  </button>
-                )}
-              </div>
+              <ModernSearch
+                mode="inline"
+                autoFocus
+                placeholder={t('Search Kavach...')}
+                value={searchTerm}
+                onChange={onSearchChange}
+                onSearch={handleSearch}
+                searching={isSearching}
+                suggestions={getSearchSuggestions()}
+                onSuggestionClick={handleSuggestionClick}
+                clearOnSearch={false}
+                wrapperClassName="w-full"
+                variant="default"
+              />
             </div>
             <div className="max-h-[60vh] overflow-y-auto">
               {searchTerm ? (

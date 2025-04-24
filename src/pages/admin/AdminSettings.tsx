@@ -110,7 +110,7 @@ const AdminSettings: React.FC = () => {
             <CardHeader>
               <div className="flex items-center">
                 <Shield className="mr-2 h-5 w-5 text-primary" />
-                <CardTitle>{t('securitySettings')}</CardTitle>
+                <CardTitle>{t('Security Settings')}</CardTitle>
               </div>
               <CardDescription>{t('Configure security policies for the platform')}</CardDescription>
             </CardHeader>

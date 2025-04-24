@@ -24,6 +24,7 @@ import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { SearchInput } from '@/components/ui/search-input';
+import { ModernSearch } from '@/components/ui/modern-search';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
@@ -284,10 +285,38 @@ const PasswordVault = () => {
         </div>
 
         <div className="flex flex-col md:flex-row gap-4">
-          <SearchInput 
+          <ModernSearch 
             placeholder={t("Search passwords...")} 
             value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
+            onChange={(value) => setSearchTerm(value)}
+            onSearch={(value) => {
+              // Handle search submission if needed
+              console.log("Searching for:", value);
+            }}
+            suggestions={
+              passwordEntries
+                .filter(entry => 
+                  entry.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                  entry.username.toLowerCase().includes(searchTerm.toLowerCase())
+                )
+                .slice(0, 5)
+                .map(entry => ({
+                  id: entry.id,
+                  text: entry.title,
+                  type: entry.category,
+                  icon: <Key className="h-4 w-4 mr-2" />
+                }))
+            }
+            onSuggestionClick={(suggestion) => {
+              // Find and focus on the suggested password entry
+              const entry = passwordEntries.find(e => e.id === suggestion.id);
+              if (entry) {
+                setSearchTerm(entry.title);
+                // You could add more functionality here, like highlighting the selected entry
+              }
+            }}
+            mode="inline"
+            wrapperClassName="flex-1"
             aria-label={t("Search passwords")}
           />
           <Select value={categoryFilter} onValueChange={setCategoryFilter}>

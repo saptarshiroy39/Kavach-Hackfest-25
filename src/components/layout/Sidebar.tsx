@@ -255,7 +255,7 @@ const Sidebar = () => {
                 )} />
                 {(isOpen || isMobile) && (
                   <div className="flex items-center justify-between w-full">
-                    <span className="ml-3 normal-case font-semibold text-white uppercase tracking-wider">ADMIN</span>
+                    <span className="ml-3 normal-case font-semibold dark:text-white text-black uppercase tracking-wider">ADMIN</span>
                     <Badge className="bg-red-500 text-xs text-white">Admin</Badge>
                   </div>
                 )}

@@ -4,7 +4,7 @@ import MainLayout from '@/components/layout/MainLayout';
 import SecurityCard from '@/components/security/SecurityCard';
 import SecurityBadge from '@/components/security/SecurityBadge';
 import PasswordHealthAnalysis from '@/components/security/PasswordHealthAnalysis';
-import DarkWebMonitoring from '@/components/security/DarkWebMonitoring';
+import { DarkWebMonitoring } from '@/components/security/DarkWebMonitoring';
 import PrivacyReport from '@/components/security/PrivacyReport';
 import EncryptedMessaging from '@/components/messaging/EncryptedMessaging';
 import { 
@@ -30,7 +30,7 @@ import { motion } from 'framer-motion';
 import { useLanguage } from '@/hooks/use-language';
 import { mockApi } from '@/lib/mockDb';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog';
-import TwoFactorAuth from '@/components/security/TwoFactorAuth';
+import TwoFactorAuth, { TwoFactorAuthDialog } from '@/components/security/TwoFactorAuth';
 
 // Simple fallback components to avoid crashes
 const ErrorBoundary = ({ children, fallback }) => {
@@ -731,11 +731,19 @@ const Dashboard = () => {
         </Dialog>
 
         {/* Detailed 2FA Setup Dialog */}
-        <TwoFactorAuth 
+        <TwoFactorAuthDialog 
           open={showTwoFactorSetupDialog} 
           onOpenChange={setShowTwoFactorSetupDialog}
           userId={user?.id || 'default-user-id'}
           initialTab={twoFactorMethod as 'authenticator' | 'sms' | 'email'}
+          onComplete={(success) => {
+            if (success) {
+              toast({
+                title: "Two-factor authentication enabled",
+                description: "Your account is now more secure.",
+              });
+            }
+          }}
         />
       </MainLayout>
     </ErrorBoundary>

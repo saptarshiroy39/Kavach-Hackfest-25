@@ -1,9 +1,8 @@
 import { useState, useEffect, useRef } from 'react';
 import { useResizable } from '@/hooks/use-resizable';
 import { cn } from '@/lib/utils';
-import ResizeHandle from '@/components/ResizeHandle';
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Card as CardComponent, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -12,6 +11,7 @@ import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
+import { ContextMenu, ContextMenuContent, ContextMenuItem, ContextMenuTrigger, ContextMenuSeparator } from "@/components/ui/context-menu";
 import { 
   MessageSquare, 
   Send, 
@@ -19,7 +19,7 @@ import {
   Paperclip, 
   MoreVertical, 
   Lock, 
-  Image,
+  Image as ImageIcon,
   Loader2,
   Search,
   PlusCircle,
@@ -27,10 +27,27 @@ import {
   User,
   RefreshCw,
   Trash,
-  Trash2
+  Trash2,
+  Download,
+  Forward,
+  Share2,
+  FileText,
+  Video,
+  File as FileIcon,
+  X,
+  Play,
+  Reply,
+  Copy,
+  Star,
+  Pin,
+  AudioLines,
+  FileCode,
+  FileArchive,
+  FileSpreadsheet
 } from "lucide-react";
 import { messagingMock as mockApi } from "@/lib/securityFeaturesMock";
 import { useToast } from "@/hooks/use-toast";
+import { ModernSearch } from "@/components/ui/modern-search";
 
 interface Contact {
   id: string;
@@ -47,6 +64,15 @@ interface Message {
   content: string;
   timestamp: string;
   read: boolean;
+  mediaType?: 'image' | 'video' | 'document' | 'audio';
+  mediaUrl?: string;
+  fileData?: {
+    name: string;
+    size: number;
+    type: string;
+    url?: string; // For local preview
+    blob?: Blob; // For storing the actual file data
+  };
 }
 
 interface Conversation {
@@ -56,7 +82,7 @@ interface Conversation {
   encryptionStatus: string;
 }
 
-function EncryptedMessaging() {
+export default function EncryptedMessaging() {
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [activeConversation, setActiveConversation] = useState<string | null>(null);
   const [newMessage, setNewMessage] = useState('');
@@ -69,12 +95,29 @@ function EncryptedMessaging() {
   const [showMoreMenu, setShowMoreMenu] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [showEditContactDialog, setShowEditContactDialog] = useState(false);
-  const [activeFilter, setActiveFilter] = useState<'all' | 'unread' | 'contacts' | 'files'>('all');
+  const [activeFilter, setActiveFilter] = useState<'all' | 'unread' | 'contacts' | 'files' | 'starred'>('all');
   const [editedContactName, setEditedContactName] = useState('');
   const [showContactInfo, setShowContactInfo] = useState<string | null>(null);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [searchResults, setSearchResults] = useState<Conversation[]>([]);
+  const [isSearching, setIsSearching] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const contactsAreaRef = useRef<HTMLDivElement>(null);
   const messageEndRef = useRef<HTMLDivElement>(null);
+  
+  // New state for media previews and actions
+  const [viewingMedia, setViewingMedia] = useState<Message | null>(null);
+  const [showForwardDialog, setShowForwardDialog] = useState(false);
+  const [forwardTargets, setForwardTargets] = useState<Set<string>>(new Set());
+  const [messageToDelete, setMessageToDelete] = useState<Message | null>(null);
+  const [showDeleteMessageDialog, setShowDeleteMessageDialog] = useState(false);
+  const [showReplyToMessage, setShowReplyToMessage] = useState<Message | null>(null);
+  const [starredMessages, setStarredMessages] = useState<Set<string>>(new Set());
+  const [pinnedMessages, setPinnedMessages] = useState<Record<string, Message[]>>({});
+  const [selectedMessages, setSelectedMessages] = useState<Set<string>>(new Set());
+  const [isSelectionMode, setIsSelectionMode] = useState(false);
+  const [showShareDialog, setShowShareDialog] = useState(false);
+  const [messageToShare, setMessageToShare] = useState<Message | null>(null);
   
   // Initialize resizable functionality for contacts section
   const { isResizing, startResizing } = useResizable({
@@ -193,12 +236,12 @@ function EncryptedMessaging() {
 
   if (isLoading) {
     return (
-      <CardComponent className="w-full h-[700px] flex items-center justify-center">
+      <Card className="w-full h-[700px] flex items-center justify-center">
         <div className="flex flex-col items-center gap-2">
           <RefreshCw className="h-8 w-8 animate-spin text-primary" />
           <p className="text-muted-foreground">Loading secure messages...</p>
         </div>
-      </CardComponent>
+      </Card>
     );
   }
 
@@ -250,6 +293,11 @@ function EncryptedMessaging() {
         return conversations.filter(conv => 
           conv.messages.some(msg => msg.content.includes('📎 File:'))
         );
+      case 'starred':
+        // Filter conversations that have starred messages
+        return conversations.filter(conv => 
+          conv.messages.some(msg => starredMessages.has(msg.id))
+        );
       case 'all':
       default:
         return conversations;
@@ -259,6 +307,17 @@ function EncryptedMessaging() {
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
       const filesArray = Array.from(e.target.files);
+      
+      // Process files to create previews
+      const processedFiles = filesArray.map(file => {
+        // Create URL for previewing images and videos
+        const url = URL.createObjectURL(file);
+        return {
+          file,
+          url: file.type.startsWith('image/') || file.type.startsWith('video/') ? url : undefined
+        };
+      });
+      
       setSelectedFiles(filesArray);
       setShowFileConfirmation(true);
     }
@@ -266,7 +325,7 @@ function EncryptedMessaging() {
 
   const handleFilesConfirm = () => {
     // Here we would normally upload and send the files
-    // For demo purposes, we'll just create message objects for each file
+    // For demo purposes, we'll create message objects with media support
     if (!activeConversation || selectedFiles.length === 0) return;
     
     const currentConversation = conversations.find(conv => conv.id === activeConversation);
@@ -275,15 +334,37 @@ function EncryptedMessaging() {
     const updatedConversations = [...conversations];
     const conversationIndex = updatedConversations.findIndex(c => c.id === activeConversation);
 
-    // Create a message for each file
+    // Create a message for each file with appropriate media type and preview
     selectedFiles.forEach(file => {
+      // Determine the media type
+      let mediaType: 'image' | 'video' | 'document' | 'audio' | undefined;
+      
+      if (file.type.startsWith('image/')) {
+        mediaType = 'image';
+      } else if (file.type.startsWith('video/')) {
+        mediaType = 'video';
+      } else if (file.type.startsWith('audio/')) {
+        mediaType = 'audio';
+      } else {
+        mediaType = 'document';
+      }
+
+      // Create the message object with file data
       const newMsg: Message = {
         id: `msg_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`,
         senderId: 'current-user',
         receiverId: currentConversation.contact.id,
         content: `📎 File: ${file.name} (${(file.size / 1024).toFixed(1)} KB)`,
         timestamp: new Date().toISOString(),
-        read: false
+        read: false,
+        mediaType,
+        fileData: {
+          name: file.name,
+          size: file.size,
+          type: file.type,
+          url: URL.createObjectURL(file),
+          blob: file
+        }
       };
       
       updatedConversations[conversationIndex].messages.push(newMsg);
@@ -308,117 +389,248 @@ function EncryptedMessaging() {
     fileInputRef.current?.click();
   };
 
+  // New function to handle contact search
+  const handleSearch = (term: string) => {
+    if (!term.trim()) {
+      setSearchResults([]);
+      return;
+    }
+    
+    setIsSearching(true);
+    
+    // Simulate search delay
+    setTimeout(() => {
+      const results = conversations.filter(conv => 
+        conv.contact.name.toLowerCase().includes(term.toLowerCase()) || 
+        conv.messages.some(msg => 
+          msg.content.toLowerCase().includes(term.toLowerCase())
+        )
+      );
+      
+      setSearchResults(results);
+      setIsSearching(false);
+    }, 300);
+  };
+
+  // Define search suggestions for contacts
+  const getSearchSuggestions = () => {
+    if (!searchTerm) return [];
+    
+    return conversations
+      .filter(conv => conv.contact.name.toLowerCase().includes(searchTerm.toLowerCase()))
+      .slice(0, 5)
+      .map(conv => ({
+        id: conv.id,
+        text: conv.contact.name,
+        type: 'Contact',
+      }));
+  };
+
   return (
-    <CardComponent className="w-full h-[calc(100vh-12rem)] overflow-hidden flex flex-col rounded-xl">
+    <Card className="w-full h-[calc(100vh-12rem)] overflow-hidden flex flex-col rounded-xl">
       {/* Removing the header section to give more space for the chat */}
       <CardContent className="flex flex-1 p-0 overflow-hidden relative">
         {/* Conversations Sidebar */}
         <div 
           ref={contactsAreaRef} 
           className={cn(
-            "border-r dark:border-r border-border bg-card h-full w-[320px] transition-all duration-100 rounded-l-xl overflow-hidden flex flex-col",
+            "border-r dark:border-r border-border bg-card h-full w-[320px] transition-all duration-100 rounded-l-xl overflow-hidden flex flex-col relative",
             isResizing && "select-none user-select-none"
           )}>
           <div className="p-2 border-b">
-            <div className="relative">
-              <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-              <Input 
-                placeholder="Search contacts..." 
-                className="pl-8 rounded-full"
-              />
-            </div>
-            <div className="flex gap-1 mt-2">
-              <Button 
-                size="sm" 
-                variant={activeFilter === 'all' ? "default" : "outline"}
-                onClick={() => setActiveFilter('all')}
-                className="rounded-full"
+            <ModernSearch 
+              placeholder="Search contacts..."
+              value={searchTerm}
+              onChange={setSearchTerm}
+              onSearch={handleSearch}
+              searching={isSearching}
+              suggestions={getSearchSuggestions()}
+              onSuggestionClick={(suggestion) => {
+                // Find and set the active conversation based on the suggestion
+                const conversationId = suggestion.id;
+                setActiveConversation(conversationId);
+                setSearchTerm(''); // Clear search after selection
+              }}
+              variant="condensed"
+              mode="inline"
+              wrapperClassName="w-full"
+              aria-label="Search contacts and messages"
+            />
+            
+            {/* Horizontal scrollable tabs container */}
+            <div className="relative mt-2">
+              {/* Left scroll button */}
+              <button 
+                onClick={() => {
+                  const tabsContainer = document.getElementById('filter-tabs-container');
+                  if (tabsContainer) {
+                    tabsContainer.scrollLeft -= 100; // Scroll left by 100px
+                  }
+                }}
+                className="absolute left-0 top-1/2 -translate-y-1/2 bg-background/80 dark:bg-slate-900/80 backdrop-blur-sm z-10 rounded-full shadow-md p-1 text-muted-foreground hover:text-foreground transition-all"
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  width: '20px',
+                  height: '20px'
+                }}
+                aria-label="Scroll tabs left"
               >
-                All
-              </Button>
-              <Button 
-                size="sm" 
-                variant={activeFilter === 'unread' ? "default" : "outline"}
-                className={activeFilter === 'unread' ? "bg-red-500 hover:bg-red-600 rounded-full" : "text-red-500 border-red-500/20 rounded-full"}
-                onClick={() => setActiveFilter('unread')}
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M15 18l-6-6 6-6" />
+                </svg>
+              </button>
+              
+              {/* Scrollable container */}
+              <div 
+                id="filter-tabs-container"
+                className="overflow-x-auto flex gap-1 py-1 px-5 scrollbar-hide"
+                style={{ 
+                  scrollBehavior: 'smooth',
+                  msOverflowStyle: 'none',
+                  scrollbarWidth: 'none'
+                }}
               >
-                Unread
-              </Button>
-              <Button 
-                size="sm" 
-                variant={activeFilter === 'contacts' ? "default" : "outline"}
-                className={activeFilter === 'contacts' ? "bg-emerald-500 hover:bg-emerald-600 rounded-full" : "text-emerald-500 border-emerald-500/20 rounded-full"}
-                onClick={() => setActiveFilter('contacts')}
+                
+                <Button 
+                  size="sm" 
+                  variant={activeFilter === 'all' ? "default" : "outline"}
+                  onClick={() => setActiveFilter('all')}
+                  className="rounded-full whitespace-nowrap"
+                >
+                  All
+                </Button>
+                <Button 
+                  size="sm" 
+                  variant={activeFilter === 'unread' ? "default" : "outline"}
+                  className={activeFilter === 'unread' ? "bg-red-500 hover:bg-red-600 rounded-full whitespace-nowrap" : "text-red-500 border-red-500/20 rounded-full whitespace-nowrap"}
+                  onClick={() => setActiveFilter('unread')}
+                >
+                  Unread
+                </Button>
+                <Button 
+                  size="sm" 
+                  variant={activeFilter === 'contacts' ? "default" : "outline"}
+                  className={activeFilter === 'contacts' ? "bg-emerald-500 hover:bg-emerald-600 rounded-full whitespace-nowrap" : "text-emerald-500 border-emerald-500/20 rounded-full whitespace-nowrap"}
+                  onClick={() => setActiveFilter('contacts')}
+                >
+                  Contacts
+                </Button>
+                <Button 
+                  size="sm" 
+                  variant={activeFilter === 'files' ? "default" : "outline"}
+                  className={activeFilter === 'files' ? "bg-purple-500 hover:bg-purple-600 rounded-full whitespace-nowrap" : "text-purple-500 border-purple-500/20 rounded-full whitespace-nowrap"}
+                  onClick={() => setActiveFilter('files')}
+                >
+                  Files
+                </Button>
+                <Button 
+                  size="sm" 
+                  variant={activeFilter === 'starred' ? "default" : "outline"}
+                  className={activeFilter === 'starred' ? "bg-yellow-500 hover:bg-yellow-600 rounded-full whitespace-nowrap" : "text-yellow-500 border-yellow-500/20 rounded-full whitespace-nowrap"}
+                  onClick={() => setActiveFilter('starred')}
+                >
+                  Starred
+                </Button>
+              </div>
+              
+              {/* Right scroll button */}
+              <button 
+                onClick={() => {
+                  const tabsContainer = document.getElementById('filter-tabs-container');
+                  if (tabsContainer) {
+                    tabsContainer.scrollLeft += 100; // Scroll right by 100px
+                  }
+                }}
+                className="absolute right-0 top-1/2 -translate-y-1/2 bg-background/80 dark:bg-slate-900/80 backdrop-blur-sm z-10 rounded-full shadow-md p-1 text-muted-foreground hover:text-foreground transition-all"
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  width: '20px',
+                  height: '20px'
+                }}
+                aria-label="Scroll tabs right"
               >
-                Contacts
-              </Button>
-              <Button 
-                size="sm" 
-                variant={activeFilter === 'files' ? "default" : "outline"}
-                className={activeFilter === 'files' ? "bg-amber-500 hover:bg-amber-600 rounded-full" : "text-amber-500 border-amber-500/20 rounded-full"}
-                onClick={() => setActiveFilter('files')}
-              >
-                Files
-              </Button>
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M9 18l6-6-6-6" />
+                </svg>
+              </button>
             </div>
           </div>
-          
-          <ScrollArea className="flex-grow h-full">
-            <div className="py-3 px-2 space-y-0.5">
-              {getFilteredConversations().map((conv) => (
-                <div
-                  key={conv.id}
-                  className={cn(
-                    "flex items-center p-3 rounded-lg cursor-pointer",
-                    activeConversation === conv.id ? 
-                      "bg-primary/10 dark:bg-[#1e2b47]" : 
-                      "bg-transparent hover:bg-gray-100 dark:hover:bg-[#1e2b47]/70"
-                  )}
-                  onClick={() => setActiveConversation(conv.id)}
-                >
-                  <Avatar className="h-11 w-11 mr-3 bg-primary/20 dark:bg-slate-700 text-primary dark:text-white">
-                    <AvatarFallback className="text-xl font-semibold">
-                      {conv.contact.name.charAt(0).toUpperCase()}
-                    </AvatarFallback>
-                  </Avatar>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex justify-between items-center mb-0.5">
-                      <h4 className="text-base dark:text-white text-gray-800 font-medium truncate pr-2">
-                        {conv.contact.name}
-                      </h4>
-                      <span className="text-sm text-gray-500 dark:text-gray-400 whitespace-nowrap">
-                        {conv.messages.length > 0 ? 
-                          formatTime(conv.messages[conv.messages.length - 1].timestamp) : ''}
-                      </span>
-                    </div>
-                    <div className="flex justify-between items-center">
-                      <p className="text-sm text-gray-600 dark:text-gray-400 truncate max-w-[85%]">
-                        {conv.messages.length > 0 ? 
-                          conv.messages[conv.messages.length - 1].content : 'Start a conversation'}
-                      </p>
-                      {conv.messages.some(msg => !msg.read && msg.senderId !== 'current-user') && (
-                        <Badge className="bg-red-500 hover:bg-red-500 rounded-full h-4 min-w-[16px] px-1 flex items-center justify-center text-[10px]">
-                          {conv.messages.filter(msg => !msg.read && msg.senderId !== 'current-user').length}
-                        </Badge>
-                      )}
+          {/* Conversation List Area */}
+          <ScrollArea className="flex-1 overflow-y-auto">
+            <div className="p-2 space-y-1">
+              {(searchTerm ? searchResults : getFilteredConversations()).map((conv) => {
+                const lastMessage = conv.messages[conv.messages.length - 1];
+                const unreadCount = conv.messages.filter(msg => !msg.read && msg.senderId !== 'current-user').length;
+
+                return (
+                  <div
+                    key={conv.id}
+                    className={cn(
+                      "flex items-center p-3 rounded-lg cursor-pointer transition-colors",
+                      activeConversation === conv.id
+                        ? "bg-primary/10 dark:bg-[#1e2b47]"
+                        : "hover:bg-gray-100 dark:hover:bg-[#1e2b47]/70"
+                    )}
+                    onClick={() => setActiveConversation(conv.id)}
+                  >
+                    <Avatar className="h-10 w-10 mr-3">
+                      <AvatarFallback>{conv.contact.name.charAt(0).toUpperCase()}</AvatarFallback>
+                    </Avatar>
+                    <div className="flex-1 overflow-hidden">
+                      <div className="flex justify-between items-center">
+                        <h4 className="font-medium truncate text-sm">{conv.contact.name}</h4>
+                        {lastMessage && (
+                          <span className="text-xs text-muted-foreground whitespace-nowrap">
+                            {formatTime(lastMessage.timestamp)}
+                          </span>
+                        )}
+                      </div>
+                      <div className="flex justify-between items-center mt-1">
+                        <p className="text-xs text-muted-foreground truncate">
+                          {lastMessage ? lastMessage.content : 'No messages yet'}
+                        </p>
+                        {unreadCount > 0 && (
+                          <Badge className="h-5 px-1.5 text-xs rounded-full bg-red-500 text-white">
+                            {unreadCount}
+                          </Badge>
+                        )}
+                      </div>
                     </div>
                   </div>
+                );
+              })}
+              {(searchTerm ? searchResults : getFilteredConversations()).length === 0 && (
+                <div className="p-4 text-center text-sm text-muted-foreground">
+                  {searchTerm ? 'No results found.' : 'No conversations yet.'}
                 </div>
-              ))}
+              )}
             </div>
           </ScrollArea>
-          
-          {/* New Chat button moved to bottom of sidebar */}
-          <div className="p-3 border-t border-border mt-auto">
-            <Button
-              className="w-full bg-green-500 hover:bg-green-600 text-white flex items-center justify-center rounded-full gap-2"
-              onClick={handleNewChat}
-            >
-              <PlusCircle className="h-4 w-4" />
-              <span>New Chat</span>
+          {/* Add New Chat Button */}
+          <div className="p-2 border-t">
+            <Button className="w-full" variant="outline" onClick={handleNewChat}>
+              <PlusCircle className="h-4 w-4 mr-2" />
+              New Secure Chat
             </Button>
           </div>
         </div>
+
+        {/* Resize Handle */}
+        <div
+          className={cn(
+            "absolute h-full w-1 top-0 z-50",
+            isResizing ? "select-none" : "hover:bg-transparent"
+          )}
+          style={{
+            left: `${contactsAreaRef.current ? contactsAreaRef.current.getBoundingClientRect().width : 320}px`,
+            cursor: 'col-resize',
+          }}
+          onMouseDown={startResizing}
+        />
         
         {/* Messages Area */}
         <div className="flex-1 flex flex-col bg-background dark:bg-slate-950 rounded-r-xl overflow-hidden">
@@ -572,18 +784,312 @@ function EncryptedMessaging() {
                           </Popover>
                         )}
                         <div>
-                          <div 
-                            className={cn(
-                              "px-4 py-2 rounded-2xl max-w-md text-sm",
-                              isCurrentUser ? "bg-primary text-primary-foreground rounded-tr-none" : "bg-muted rounded-tl-none"
-                            )}
-                          >
-                            {msg.content}
-                          </div>
+                          <ContextMenu>
+                            <ContextMenuTrigger>
+                              <div 
+                                className={cn(
+                                  "px-4 py-2 rounded-2xl max-w-md text-sm",
+                                  isCurrentUser ? "bg-primary text-primary-foreground rounded-tr-none" : "bg-muted rounded-tl-none",
+                                  msg.mediaType && "overflow-hidden p-0"
+                                )}
+                              >
+                                {msg.mediaType && msg.fileData ? (
+                                  <div className="flex flex-col">
+                                    {/* Image Media Preview */}
+                                    {msg.mediaType === 'image' && msg.fileData.url && (
+                                      <div 
+                                        className="cursor-pointer relative overflow-hidden rounded-lg border border-white/20"
+                                        onClick={() => setViewingMedia(msg)}
+                                      >
+                                        {starredMessages.has(msg.id) && (
+                                          <div className="absolute top-2 right-2 z-10">
+                                            <Star className="h-4 w-4 fill-yellow-500 text-yellow-500" />
+                                          </div>
+                                        )}
+                                        <img 
+                                          src={msg.fileData.url} 
+                                          alt={msg.fileData.name} 
+                                          className="w-full max-h-64 object-cover"
+                                        />
+                                        <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 via-black/40 to-transparent backdrop-blur-[2px] text-white text-xs p-2 flex justify-between items-center">
+                                          <span className="truncate mr-2">{msg.fileData.name}</span>
+                                          <span className="whitespace-nowrap">{(msg.fileData.size / 1024).toFixed(1)} KB</span>
+                                        </div>
+                                      </div>
+                                    )}
+                                    {/* Video Media Preview */}
+                                    {msg.mediaType === 'video' && msg.fileData.url && (
+                                      <div 
+                                        className="cursor-pointer relative overflow-hidden rounded-lg border border-white/20"
+                                        onClick={() => setViewingMedia(msg)}
+                                      >
+                                        {starredMessages.has(msg.id) && (
+                                          <div className="absolute top-2 right-2 z-10">
+                                            <Star className="h-4 w-4 fill-yellow-500 text-yellow-500" />
+                                          </div>
+                                        )}
+                                        <video 
+                                          src={msg.fileData.url}
+                                          className="w-full max-h-64 object-cover"
+                                        />
+                                        <div className="absolute inset-0 flex items-center justify-center bg-black/30">
+                                          <div className="bg-white/20 backdrop-blur-sm rounded-full p-3">
+                                            <Play className="h-8 w-8 text-white" />
+                                          </div>
+                                        </div>
+                                        <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 via-black/40 to-transparent backdrop-blur-[2px] text-white text-xs p-2 flex justify-between items-center">
+                                          <span className="truncate mr-2">{msg.fileData.name}</span>
+                                          <span className="whitespace-nowrap">{(msg.fileData.size / 1024).toFixed(1)} KB</span>
+                                        </div>
+                                      </div>
+                                    )}
+                                    {/* Audio File Preview */}
+                                    {msg.mediaType === 'audio' && msg.fileData.url && (
+                                      <div 
+                                        className="cursor-pointer relative overflow-hidden rounded-lg border border-white/20"
+                                        onClick={() => setViewingMedia(msg)}
+                                      >
+                                        {starredMessages.has(msg.id) && (
+                                          <div className="absolute top-2 right-2 z-10">
+                                            <Star className="h-4 w-4 fill-yellow-500 text-yellow-500" />
+                                          </div>
+                                        )}
+                                        <div className="flex items-center gap-3 p-3">
+                                          <div className={cn(
+                                            "p-2 rounded-full",
+                                            isCurrentUser ? "bg-white/20" : "bg-primary/10"
+                                          )}>
+                                            <AudioLines className="h-6 w-6" />
+                                          </div>
+                                          <div className="flex-1 min-w-0">
+                                            <p className="text-sm font-medium truncate">
+                                              {msg.fileData.name}
+                                            </p>
+                                            <div className="flex items-center gap-2 mt-1">
+                                              <div className="h-1 bg-gray-300/30 dark:bg-gray-600/30 flex-1 rounded-full overflow-hidden">
+                                                <div className="h-full w-1/3 bg-primary/70 rounded-full"></div>
+                                              </div>
+                                              <span className="text-xs opacity-70 whitespace-nowrap">0:42</span>
+                                            </div>
+                                          </div>
+                                          <div className="p-1.5 rounded-full bg-primary/10">
+                                            <Play className="h-4 w-4" />
+                                          </div>
+                                        </div>
+                                      </div>
+                                    )}
+                                    {/* Document File Preview */}
+                                    {msg.mediaType === 'document' && (
+                                      <div className="flex items-center gap-3 p-3 relative">
+                                        {starredMessages.has(msg.id) && (
+                                          <div className="absolute top-2 right-2 z-10">
+                                            <Star className="h-4 w-4 fill-yellow-500 text-yellow-500" />
+                                          </div>
+                                        )}
+                                        <div className={cn(
+                                          "p-2 rounded-full",
+                                          isCurrentUser ? "bg-white/20" : "bg-primary/10"
+                                        )}>
+                                          {/* Show different icons based on file type */}
+                                          {msg.fileData?.type.includes('pdf') ? (
+                                            <FileText className="h-5 w-5" />
+                                          ) : msg.fileData?.type.includes('spreadsheet') || msg.fileData?.name.endsWith('.xlsx') || msg.fileData?.name.endsWith('.xls') ? (
+                                            <FileSpreadsheet className="h-5 w-5" />
+                                          ) : msg.fileData?.type.includes('zip') || msg.fileData?.name.endsWith('.zip') || msg.fileData?.name.endsWith('.rar') ? (
+                                            <FileArchive className="h-5 w-5" />
+                                          ) : msg.fileData?.type.includes('code') || (msg.fileData?.name && /\.(jsx?|tsx?|html|css|py|java|rb|php|go)$/.test(msg.fileData.name)) ? (
+                                            <FileCode className="h-5 w-5" />
+                                          ) : (
+                                            <FileText className="h-5 w-5" />
+                                          )}
+                                        </div>
+                                        <div className="flex-1 min-w-0">
+                                          <p className="text-sm font-medium truncate">
+                                            {msg.fileData?.name}
+                                          </p>
+                                          <p className="text-xs opacity-70 mt-0.5">
+                                            {msg.fileData && (msg.fileData.size / 1024).toFixed(1)} KB • {msg.fileData?.type.split('/')[1]?.toUpperCase() || 'Document'}
+                                          </p>
+                                        </div>
+                                        <div className="p-1.5 rounded-full bg-primary/10">
+                                          <Download className="h-4 w-4" />
+                                        </div>
+                                      </div>
+                                    )}
+                                    {/* Time display for all media messages */}
+                                    <div className={cn(
+                                      "flex justify-end p-1 text-xs",
+                                      isCurrentUser 
+                                        ? "text-gray-200 bg-primary" 
+                                        : "text-gray-500 bg-muted"
+                                    )}>
+                                      <span>{formatTime(msg.timestamp)}</span>
+                                    </div>
+                                  </div>
+                                ) : (
+                                  <>
+                                    {/* Regular text message with star icon if starred */}
+                                    <div className="flex items-center gap-1">
+                                      {msg.content}
+                                      {starredMessages.has(msg.id) && (
+                                        <Star className="h-3 w-3 ml-1 fill-yellow-500 text-yellow-500" />
+                                      )}
+                                    </div>
+                                    <div className="flex justify-end mt-1 -mr-2 text-xs">
+                                      <span className={isCurrentUser ? "text-primary-foreground/70" : "text-muted-foreground"}>
+                                        {formatTime(msg.timestamp)}
+                                      </span>
+                                    </div>
+                                  </>
+                                )}
+                              </div>
+                            </ContextMenuTrigger>
+                            <ContextMenuContent className="w-56 bg-slate-800 text-white border border-slate-700 shadow-xl">
+                              <ContextMenuItem 
+                                className="flex items-center gap-2 hover:bg-slate-700 focus:bg-slate-700" 
+                                onClick={() => {
+                                  setShowReplyToMessage(msg);
+                                  setNewMessage(`Replying to: "${msg.content.length > 15 ? msg.content.slice(0, 15) + '...' : msg.content}"\n`);
+                                  // Focus the input after setting the reply
+                                  setTimeout(() => {
+                                    const inputElement = document.querySelector('input[placeholder="Type a secure message..."]') as HTMLInputElement;
+                                    if (inputElement) {
+                                      inputElement.focus();
+                                    }
+                                  }, 100);
+                                }}
+                              >
+                                <Reply className="h-4 w-4" />
+                                <span>Reply</span>
+                              </ContextMenuItem>
+                              <ContextMenuItem 
+                                className="flex items-center gap-2 hover:bg-slate-700 focus:bg-slate-700" 
+                                onClick={() => {
+                                  // Copy message content to clipboard
+                                  navigator.clipboard.writeText(msg.content);
+                                  toast({
+                                    title: "Copied",
+                                    description: "Message copied to clipboard",
+                                  });
+                                }}
+                              >
+                                <Copy className="h-4 w-4" />
+                                <span>Copy</span>
+                              </ContextMenuItem>
+                              <ContextMenuItem 
+                                className="flex items-center gap-2 hover:bg-slate-700 focus:bg-slate-700"
+                                onClick={() => {
+                                  setViewingMedia(msg);
+                                  setShowForwardDialog(true);
+                                }}
+                              >
+                                <Forward className="h-4 w-4" />
+                                <span>Forward</span>
+                              </ContextMenuItem>
+                              <ContextMenuSeparator className="bg-slate-700" />
+                              <ContextMenuItem 
+                                className="flex items-center gap-2 hover:bg-slate-700 focus:bg-slate-700"
+                                onClick={() => {
+                                  const newStarredMessages = new Set(starredMessages);
+                                  if (starredMessages.has(msg.id)) {
+                                    newStarredMessages.delete(msg.id);
+                                    toast({
+                                      title: "Removed from starred",
+                                      description: "Message removed from starred messages",
+                                    });
+                                  } else {
+                                    newStarredMessages.add(msg.id);
+                                    toast({
+                                      title: "Starred",
+                                      description: "Message added to starred messages",
+                                    });
+                                  }
+                                  setStarredMessages(newStarredMessages);
+                                }}
+                              >
+                                <Star className={cn("h-4 w-4", starredMessages.has(msg.id) ? "fill-yellow-500 text-yellow-500" : "")} />
+                                <span>{starredMessages.has(msg.id) ? "Unstar" : "Star"}</span>
+                              </ContextMenuItem>
+                              <ContextMenuItem 
+                                className="flex items-center gap-2 hover:bg-slate-700 focus:bg-slate-700"
+                                onClick={() => {
+                                  if (!activeConversation) return;
+                                  
+                                  const updatedPinnedMessages = { ...pinnedMessages };
+                                  const conversationPins = updatedPinnedMessages[activeConversation] || [];
+                                  
+                                  // Check if already pinned
+                                  const isPinned = conversationPins.some(pinned => pinned.id === msg.id);
+                                  
+                                  if (isPinned) {
+                                    updatedPinnedMessages[activeConversation] = conversationPins.filter(
+                                      pinned => pinned.id !== msg.id
+                                    );
+                                    toast({
+                                      title: "Unpinned",
+                                      description: "Message has been unpinned",
+                                    });
+                                  } else {
+                                    updatedPinnedMessages[activeConversation] = [...conversationPins, msg];
+                                    toast({
+                                      title: "Pinned",
+                                      description: "Message has been pinned to this chat",
+                                    });
+                                  }
+                                  
+                                  setPinnedMessages(updatedPinnedMessages);
+                                }}
+                              >
+                                <Pin className={cn(
+                                  "h-4 w-4",
+                                  pinnedMessages[activeConversation || ""]?.some(pinned => pinned.id === msg.id) 
+                                    ? "text-blue-500 fill-blue-500" 
+                                    : ""
+                                )} />
+                                <span>{pinnedMessages[activeConversation || ""]?.some(pinned => pinned.id === msg.id) ? "Unpin" : "Pin"}</span>
+                              </ContextMenuItem>
+                              <ContextMenuSeparator className="bg-slate-700" />
+                              <ContextMenuItem 
+                                className="flex items-center gap-2 text-red-400 hover:bg-slate-700 focus:bg-slate-700 hover:text-red-400"
+                                onClick={() => {
+                                  setMessageToDelete(msg);
+                                  setShowDeleteMessageDialog(true);
+                                }}
+                              >
+                                <Trash className="h-4 w-4" />
+                                <span>Delete for me</span>
+                              </ContextMenuItem>
+                              <ContextMenuItem 
+                                className="flex items-center gap-2 hover:bg-slate-700 focus:bg-slate-700"
+                                onClick={() => {
+                                  setIsSelectionMode(true);
+                                  setSelectedMessages(new Set([msg.id]));
+                                  toast({
+                                    title: "Selection mode",
+                                    description: "You can now select multiple messages",
+                                  });
+                                }}
+                              >
+                                <CheckCircle className="h-4 w-4" />
+                                <span>Select</span>
+                              </ContextMenuItem>
+                              <ContextMenuItem 
+                                className="flex items-center gap-2 hover:bg-slate-700 focus:bg-slate-700"
+                                onClick={() => {
+                                  setMessageToShare(msg);
+                                  setShowShareDialog(true);
+                                }}
+                              >
+                                <Share2 className="h-4 w-4" />
+                                <span>Share</span>
+                              </ContextMenuItem>
+                            </ContextMenuContent>
+                          </ContextMenu>
                         </div>
                       </div>
                     );
                   })}
+                  {/* Move the messageEndRef div outside the map function */}
                   <div ref={messageEndRef} />
                 </div>
               </ScrollArea>
@@ -782,9 +1288,13 @@ function EncryptedMessaging() {
                   <div key={index} className="flex items-center p-2 border rounded-md">
                     <div className="bg-primary/10 p-2 rounded-full mr-2">
                       {file.type.startsWith('image/') ? (
-                        <Image className="h-4 w-4 text-primary" />
-                      ) : (
+                        <ImageIcon className="h-4 w-4 text-primary" />
+                      ) : file.type.startsWith('video/') ? (
+                        <Video className="h-4 w-4 text-primary" />
+                      ) : file.type.startsWith('audio/') ? (
                         <Paperclip className="h-4 w-4 text-primary" />
+                      ) : (
+                        <FileIcon className="h-4 w-4 text-primary" />
                       )}
                     </div>
                     <div className="overflow-hidden">
@@ -803,9 +1313,293 @@ function EncryptedMessaging() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </CardComponent>
+      
+      {/* Media Viewer Dialog */}
+      <Dialog 
+        open={!!viewingMedia} 
+        onOpenChange={(open) => {
+          if (!open) setViewingMedia(null);
+        }}
+      >
+        <DialogContent className="sm:max-w-2xl md:max-w-3xl rounded-xl p-1 bg-black/90">
+          <div className="absolute top-2 right-2 z-10">
+            <Button 
+              variant="ghost" 
+              size="icon"
+              className="rounded-full bg-black/50 text-white hover:bg-black/70"
+              onClick={() => setViewingMedia(null)}
+            >
+              <X className="h-4 w-4" />
+            </Button>
+          </div>
+          
+          <div className="flex flex-col h-full w-full">
+            {/* Media content */}
+            <div className="flex-1 flex items-center justify-center p-4 min-h-[300px]">
+              {viewingMedia?.mediaType === 'image' && viewingMedia.fileData?.url && (
+                <img 
+                  src={viewingMedia.fileData.url} 
+                  alt={viewingMedia.fileData.name}
+                  className="max-h-[70vh] max-w-full object-contain" 
+                />
+              )}
+              
+              {viewingMedia?.mediaType === 'video' && viewingMedia.fileData?.url && (
+                <video 
+                  src={viewingMedia.fileData.url}
+                  controls
+                  className="max-h-[70vh] max-w-full" 
+                />
+              )}
+              
+              {viewingMedia?.mediaType === 'audio' && viewingMedia.fileData?.url && (
+                <div className="w-full p-4 bg-slate-800 rounded-lg">
+                  <p className="text-white mb-2 flex items-center gap-2">
+                    <Paperclip className="h-4 w-4" />
+                    {viewingMedia.fileData.name}
+                  </p>
+                  <audio 
+                    src={viewingMedia.fileData.url}
+                    controls
+                    className="w-full" 
+                  />
+                </div>
+              )}
+              
+              {viewingMedia?.mediaType === 'document' && (
+                <div className="flex items-center justify-center p-8 bg-slate-800 rounded-lg">
+                  <div className="flex flex-col items-center">
+                    <FileIcon className="h-16 w-16 text-primary mb-4" />
+                    <p className="text-white text-center">{viewingMedia.fileData?.name}</p>
+                    <p className="text-gray-400 text-sm">
+                      {viewingMedia.fileData && (viewingMedia.fileData.size / 1024).toFixed(1)} KB
+                    </p>
+                  </div>
+                </div>
+              )}
+            </div>
+            
+            {/* Media actions */}
+            <div className="bg-slate-800 p-3 rounded-b-lg">
+              <div className="flex items-center justify-between">
+                <p className="text-white text-sm truncate max-w-[50%]">
+                  {viewingMedia?.fileData?.name}
+                </p>
+                <div className="flex gap-2">
+                  <Button 
+                    variant="ghost" 
+                    size="sm"
+                    className="text-white hover:bg-slate-700"
+                    onClick={() => {
+                      if (viewingMedia?.fileData?.url) {
+                        const a = document.createElement('a');
+                        a.href = viewingMedia.fileData.url;
+                        a.download = viewingMedia.fileData.name;
+                        document.body.appendChild(a);
+                        a.click();
+                        document.body.removeChild(a);
+                        
+                        toast({
+                          title: "Download started",
+                          description: `Downloading ${viewingMedia.fileData.name}`,
+                        });
+                      }
+                    }}
+                  >
+                    <Download className="h-4 w-4 mr-1" />
+                    Download
+                  </Button>
+                  
+                  <Button 
+                    variant="ghost" 
+                    size="sm"
+                    className="text-white hover:bg-slate-700"
+                    onClick={() => {
+                      setShowForwardDialog(true);
+                    }}
+                  >
+                    <Forward className="h-4 w-4 mr-1" />
+                    Forward
+                  </Button>
+                  
+                  <Button 
+                    variant="ghost" 
+                    size="sm"
+                    className="text-red-400 hover:bg-slate-700 hover:text-red-400"
+                    onClick={() => {
+                      setMessageToDelete(viewingMedia);
+                      setShowDeleteMessageDialog(true);
+                    }}
+                  >
+                    <Trash className="h-4 w-4 mr-1" />
+                    Delete
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+      
+      {/* Forward Media Dialog */}
+      <Dialog 
+        open={showForwardDialog} 
+        onOpenChange={setShowForwardDialog}
+      >
+        <DialogContent className="sm:max-w-md rounded-xl">
+          <DialogHeader>
+            <DialogTitle>Forward Media</DialogTitle>
+            <DialogDescription>
+              Select a contact to forward this media to.
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="py-4 max-h-60 overflow-y-auto">
+            <div className="space-y-2">
+              {conversations.map((conv) => (
+                <div
+                  key={conv.id}
+                  className={cn(
+                    "flex items-center p-3 rounded-lg cursor-pointer",
+                    forwardTargets.has(conv.id) 
+                      ? "bg-primary/10 dark:bg-[#1e2b47]" 
+                      : "bg-transparent hover:bg-gray-100 dark:hover:bg-[#1e2b47]/70"
+                  )}
+                  onClick={() => {
+                    const newForwardTargets = new Set(forwardTargets);
+                    if (newForwardTargets.has(conv.id)) {
+                      newForwardTargets.delete(conv.id);
+                    } else {
+                      newForwardTargets.add(conv.id);
+                    }
+                    setForwardTargets(newForwardTargets);
+                  }}
+                >
+                  <Avatar className="h-9 w-9 mr-3">
+                    <AvatarFallback>
+                      {conv.contact.name.charAt(0).toUpperCase()}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div className="flex-1">
+                    <p className="text-base font-medium">{conv.contact.name}</p>
+                  </div>
+                  {forwardTargets.has(conv.id) && (
+                    <CheckCircle className="h-5 w-5 text-primary" />
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+          
+          <DialogFooter>
+            <Button variant="outline" onClick={() => {
+              setShowForwardDialog(false);
+              setForwardTargets(new Set());
+            }}>Cancel</Button>
+            <Button 
+              onClick={() => {
+                if (!viewingMedia || forwardTargets.size === 0) return;
+                
+                // Create a copy of the message in the target conversation
+                const updatedConversations = conversations.map(conv => {
+                  if (forwardTargets.has(conv.id)) {
+                    // Create a new message with the same media
+                    const forwardedMsg: Message = {
+                      ...viewingMedia,
+                      id: `msg_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`,
+                      senderId: 'current-user',
+                      receiverId: conv.contact.id,
+                      timestamp: new Date().toISOString(),
+                      read: false,
+                      content: `📎 Forwarded: ${viewingMedia.fileData?.name} (${(viewingMedia.fileData?.size || 0) / 1024}KB)`
+                    };
+                    
+                    return {
+                      ...conv,
+                      messages: [...conv.messages, forwardedMsg]
+                    };
+                  }
+                  return conv;
+                });
+                
+                setConversations(updatedConversations);
+                setShowForwardDialog(false);
+                setViewingMedia(null);
+                setForwardTargets(new Set());
+                
+                toast({
+                  title: "Media forwarded",
+                  description: "The media has been forwarded successfully",
+                });
+              }}
+              disabled={forwardTargets.size === 0}
+            >
+              Forward
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+      
+      {/* Delete Message Dialog */}
+      <Dialog 
+        open={showDeleteMessageDialog} 
+        onOpenChange={setShowDeleteMessageDialog}
+      >
+        <DialogContent className="sm:max-w-md rounded-xl">
+          <DialogHeader>
+            <DialogTitle>Delete Media</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to delete this media? This action cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+          
+          <DialogFooter>
+            <Button 
+              variant="outline"
+              onClick={() => {
+                setShowDeleteMessageDialog(false);
+                setMessageToDelete(null);
+              }}
+            >
+              Cancel
+            </Button>
+            <Button 
+              variant="destructive"
+              onClick={() => {
+                if (!messageToDelete || !activeConversation) return;
+                
+                // Remove the message from the conversation
+                const updatedConversations = conversations.map(conv => {
+                  if (conv.id === activeConversation) {
+                    return {
+                      ...conv,
+                      messages: conv.messages.filter(msg => msg.id !== messageToDelete.id)
+                    };
+                  }
+                  return conv;
+                });
+                
+                setConversations(updatedConversations);
+                setShowDeleteMessageDialog(false);
+                setViewingMedia(null);
+                setMessageToDelete(null);
+                
+                toast({
+                  title: "Media deleted",
+                  description: "The media has been permanently deleted",
+                });
+              }}
+            >
+              Delete
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </Card>
   );
 };
+
+
 
 // Helper component for the empty state
 const LockIcon = (props) => {
@@ -818,5 +1612,3 @@ const LockIcon = (props) => {
     </div>
   );
 };
-
-export default EncryptedMessaging;

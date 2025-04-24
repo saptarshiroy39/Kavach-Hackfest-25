@@ -28,11 +28,13 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useToast } from '@/hooks/use-toast';
+import { ModernSearch } from '@/components/ui/modern-search';
 
 const AdminUsers: React.FC = () => {
   const { t } = useLanguage();
   const { toast } = useToast();
   const [searchTerm, setSearchTerm] = useState('');
+  const [isSearching, setIsSearching] = useState(false);
   const [showAddUserDialog, setShowAddUserDialog] = useState(false);
   const [showResetPasswordDialog, setShowResetPasswordDialog] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
@@ -141,6 +143,48 @@ const AdminUsers: React.FC = () => {
     });
   };
 
+  // Handle search functionality
+  const handleSearch = (term: string) => {
+    setIsSearching(true);
+    
+    // Simulate search delay for better UX
+    setTimeout(() => {
+      setSearchTerm(term);
+      setIsSearching(false);
+    }, 300);
+  };
+
+  // Generate search suggestions based on users data
+  const getSearchSuggestions = () => {
+    if (!searchTerm.trim()) return [];
+    
+    const nameSuggestions = users
+      .filter(user => user.name.toLowerCase().includes(searchTerm.toLowerCase()))
+      .map(user => ({
+        id: user.id.toString(),
+        text: user.name,
+        type: 'Name',
+      }));
+    
+    const emailSuggestions = users
+      .filter(user => user.email.toLowerCase().includes(searchTerm.toLowerCase()))
+      .map(user => ({
+        id: user.id.toString(),
+        text: user.email,
+        type: 'Email',
+      }));
+    
+    const roleSuggestions = ['Admin', 'User']
+      .filter(role => role.toLowerCase().includes(searchTerm.toLowerCase()))
+      .map(role => ({
+        id: role.toLowerCase(),
+        text: role,
+        type: 'Role',
+      }));
+    
+    return [...nameSuggestions, ...emailSuggestions, ...roleSuggestions].slice(0, 7);
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
@@ -155,22 +199,37 @@ const AdminUsers: React.FC = () => {
       
       <div className="flex items-center gap-2">
         <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground" size={18} />
-          <input
-            type="text"
-            placeholder={t('search_users')}
-            className="w-full pl-10 pr-4 py-2 bg-muted dark:bg-slate-700 border border-input dark:border-slate-600 rounded-md text-foreground"
+          <ModernSearch 
+            placeholder={t('Search users...')}
             value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
+            onChange={setSearchTerm}
+            onSearch={handleSearch}
+            searching={isSearching}
+            suggestions={getSearchSuggestions()}
+            onSuggestionClick={(suggestion) => {
+              // Handle suggestion click based on type
+              if (suggestion.type === 'Name' || suggestion.type === 'Email') {
+                const userId = parseInt(suggestion.id);
+                const user = users.find(u => u.id === userId);
+                if (user) {
+                  // Set search to exactly match this user
+                  setSearchTerm(suggestion.text);
+                }
+              } else if (suggestion.type === 'Role') {
+                // Set role filter
+                setRoleFilter(suggestion.id);
+                setSearchTerm('');
+                toast({
+                  title: "Filter applied",
+                  description: `Showing users with role: ${suggestion.text}`,
+                });
+              }
+            }}
+            variant="default"
+            mode="default"
+            wrapperClassName="w-full"
+            aria-label="Search users by name, email or role"
           />
-          {searchTerm && (
-            <button 
-              className="absolute right-3 top-1/2 transform -translate-y-1/2 text-muted-foreground hover:text-foreground"
-              onClick={() => setSearchTerm('')}
-            >
-              <X size={16} />
-            </button>
-          )}
         </div>
         
         <div className="relative">

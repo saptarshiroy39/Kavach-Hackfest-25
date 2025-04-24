@@ -27,6 +27,8 @@ export function useResizable({
   const [isResizing, setIsResizing] = useState(false);
   const initialXRef = useRef(0);
   const initialWidthRef = useRef(0);
+  const rafIdRef = useRef<number | null>(null);
+  const lastUpdateTimeRef = useRef(0);
 
   // Handle resize start
   const startResizing = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
@@ -51,8 +53,18 @@ export function useResizable({
     (e: MouseEvent) => {
       if (!isResizing || !sidebarRef.current) return;
       
+      const now = Date.now();
+      // Throttle updates to prevent excessive rendering
+      // Only update every 16ms (roughly 60fps)
+      if (now - lastUpdateTimeRef.current < 16) return;
+      
+      // Cancel any existing animation frame to prevent queuing
+      if (rafIdRef.current) {
+        cancelAnimationFrame(rafIdRef.current);
+      }
+      
       // Use requestAnimationFrame for smoother resizing
-      requestAnimationFrame(() => {
+      rafIdRef.current = requestAnimationFrame(() => {
         // Calculate the change in position and new width
         const deltaX = e.clientX - initialXRef.current;
         let newWidth = initialWidthRef.current + deltaX;
@@ -63,6 +75,7 @@ export function useResizable({
         
         // Apply the width directly to the element for immediate feedback
         sidebarRef.current!.style.width = `${newWidth}px`;
+        lastUpdateTimeRef.current = now;
       });
     },
     [isResizing, minWidth, maxWidth, sidebarRef]
@@ -70,7 +83,13 @@ export function useResizable({
 
   // Handle resize end
   const stopResizing = useCallback(() => {
-    if (!sidebarRef.current) return;
+    if (!isResizing || !sidebarRef.current) return;
+    
+    // Clean up any pending animation frames
+    if (rafIdRef.current) {
+      cancelAnimationFrame(rafIdRef.current);
+      rafIdRef.current = null;
+    }
     
     // Update the final width state
     const finalWidth = sidebarRef.current.getBoundingClientRect().width;
@@ -86,13 +105,13 @@ export function useResizable({
     if (storageKey && typeof window !== 'undefined') {
       localStorage.setItem(storageKey, finalWidth.toString());
     }
-  }, [sidebarRef, storageKey]);
+  }, [isResizing, sidebarRef, storageKey]);
 
   // Set up event listeners for resize
   useEffect(() => {
     if (isResizing) {
-      // Use window listeners to capture mouse movements outside the element
-      window.addEventListener('mousemove', handleResize);
+      // Use passive event listeners to improve performance
+      window.addEventListener('mousemove', handleResize, { passive: true });
       window.addEventListener('mouseup', stopResizing);
       
       // Prevent user selection during resize
@@ -107,6 +126,12 @@ export function useResizable({
       document.body.classList.remove('resize-active');
       document.body.style.cursor = '';
       document.body.style.userSelect = '';
+      
+      // Clean up any pending animation frames
+      if (rafIdRef.current) {
+        cancelAnimationFrame(rafIdRef.current);
+        rafIdRef.current = null;
+      }
     };
   }, [isResizing, handleResize, stopResizing]);
 
