@@ -1,7 +1,4 @@
-// This script replaces all component declarations in the EncryptedMessaging.tsx file
-// to use the standard React function declaration instead of arrow function syntax
-// This helps fix issues with component recognition
-
+// This script checks and fixes component declaration issues in EncryptedMessaging.tsx
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -12,36 +9,50 @@ const __dirname = path.dirname(__filename);
 
 const filePath = path.join(__dirname, 'src', 'components', 'messaging', 'EncryptedMessaging.tsx');
 
-// Read the file
-let content = fs.readFileSync(filePath, 'utf8');
+try {
+  // Check if file exists first
+  if (!fs.existsSync(filePath)) {
+    console.error(`File not found: ${filePath}`);
+    process.exit(1);
+  }
 
-// Replace the React component declaration
-content = content.replace(
-  /const EncryptedMessaging(: React\.FC)? = \(\) => {/,
-  'export default function EncryptedMessaging() {'
-);
+  // Read the file
+  let content = fs.readFileSync(filePath, 'utf8');
+  let needsUpdate = false;
+  let updatedContent = content;
 
-// Remove the export default line at the end of the file
-content = content.replace(/export default EncryptedMessaging;/, '');
+  // Check if the file is using arrow function syntax
+  if (updatedContent.includes('const EncryptedMessaging') && 
+      updatedContent.includes('= () => {')) {
+    // Replace the React component declaration
+    updatedContent = updatedContent.replace(
+      /const EncryptedMessaging(: React\.FC)? = \(\) => {/,
+      'export default function EncryptedMessaging() {'
+    );
+    // Remove the export default line at the end of the file
+    updatedContent = updatedContent.replace(/export default EncryptedMessaging;/, '');
+    needsUpdate = true;
+  }
 
-// Add proper closing tags for CardContent
-content = content.replace(
-  /<CardContent className="flex flex-1 p-0 overflow-hidden relative">/g,
-  '<CardContent className="flex flex-1 p-0 overflow-hidden relative">'
-);
+  // Check for unclosed CardContent tags if needed
+  if (updatedContent.includes('<CardContent') && 
+      !updatedContent.includes('</CardContent>')) {
+    // Add proper closing tag for CardContent before Card's closing tag
+    updatedContent = updatedContent.replace(
+      '</Card>',
+      '      </CardContent>\n    </Card>'
+    );
+    needsUpdate = true;
+  }
 
-// Fix any JSX fragment closing issues
-content = content.replace(/}\s*\)/g, '}\n            </>\n          )');
-
-// Add proper closing tag for CardContent before Card's closing tag
-if (!content.includes('</CardContent>')) {
-  content = content.replace(
-    '</Card>',
-    '      </CardContent>\n    </Card>'
-  );
+  // Only write the file if changes were made
+  if (needsUpdate) {
+    fs.writeFileSync(filePath, updatedContent, 'utf8');
+    console.log('✅ Fixed component declaration in EncryptedMessaging.tsx');
+  } else {
+    console.log('✓ No fixes needed for EncryptedMessaging.tsx');
+  }
+} catch (error) {
+  console.error('Error processing the file:', error);
+  process.exit(1);
 }
-
-// Write the file back
-fs.writeFileSync(filePath, content, 'utf8');
-
-console.log('Fixed component declaration in EncryptedMessaging.tsx');

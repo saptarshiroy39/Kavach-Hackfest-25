@@ -10,7 +10,12 @@ const __dirname = path.dirname(__filename);
 // Utility function to read a file
 const readFile = (filePath) => {
   try {
-    return fs.readFileSync(filePath, 'utf8');
+    if (fs.existsSync(filePath)) {
+      return fs.readFileSync(filePath, 'utf8');
+    } else {
+      console.error(`File not found: ${filePath}`);
+      return null;
+    }
   } catch (error) {
     console.error(`Error reading file ${filePath}:`, error.message);
     return null;
@@ -36,21 +41,33 @@ const checkIndexHtml = () => {
   
   if (!content) return;
   
+  let needsUpdate = false;
+  let updatedContent = content;
+  
   if (!content.includes('<div id="root"></div>')) {
-    console.error('❌ index.html is missing the root div. Please add <div id="root"></div> to the body.');
+    console.warn('⚠️ index.html is missing the root div. Checking for alternatives...');
+    
+    // Check if there's any div with id="root"
+    if (!content.includes('id="root"')) {
+      console.error('❌ No root element found. Add <div id="root"></div> to the body.');
+    }
   } else {
     console.log('✅ index.html has the correct root div');
   }
   
   // Check if the script tag points to the right file
   if (!content.includes('src="/src/main.tsx"') && !content.includes('src="./src/main.tsx"')) {
-    const fixedContent = content.replace(
+    updatedContent = content.replace(
       /<script type="module" src="[^"]*"><\/script>/,
       '<script type="module" src="/src/main.tsx"></script>'
     );
-    writeFile(indexPath, fixedContent);
+    needsUpdate = true;
   } else {
     console.log('✅ index.html has the correct script import');
+  }
+  
+  if (needsUpdate) {
+    writeFile(indexPath, updatedContent);
   }
 };
 
@@ -65,16 +82,19 @@ const checkMainTsx = () => {
   if (!content.includes('createRoot')) {
     console.error('❌ main.tsx should use createRoot from react-dom/client');
     
+    // Determine if BlockchainProvider is used
+    const hasBlockchainProvider = content.includes('BlockchainProvider');
+    
     // Add proper React 18 rendering code
     const fixedContent = `import { createRoot } from 'react-dom/client'
 import { StrictMode } from 'react'
 import App from './App.tsx'
 import './index.css'
-${content.includes('BlockchainProvider') ? "import { BlockchainProvider } from '@/context/BlockchainContext'" : ''}
+${hasBlockchainProvider ? "import { BlockchainProvider } from '@/context/BlockchainContext'" : ''}
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
-    ${content.includes('BlockchainProvider') ? '<BlockchainProvider>\n    <App />\n    </BlockchainProvider>' : '<App />'}
+    ${hasBlockchainProvider ? '<BlockchainProvider>\n    <App />\n    </BlockchainProvider>' : '<App />'}
   </StrictMode>
 );`;
     
@@ -98,9 +118,10 @@ const checkAppTsx = () => {
     console.log('✅ App.tsx exports App correctly');
   }
   
-  // Add a basic error boundary if not present
+  // Only add ErrorBoundary if it doesn't exist and we need it
   if (!content.includes('componentDidCatch') && !content.includes('ErrorBoundary')) {
     console.log('ℹ️ Adding ErrorBoundary component to catch rendering errors');
+    
     const errorBoundary = `
 // Add ErrorBoundary at the top of your App component to catch rendering errors
 import { Component, ErrorInfo, ReactNode } from 'react';
@@ -147,62 +168,30 @@ class ErrorBoundary extends Component<{ children: ReactNode }, { hasError: boole
 }
 
 `;
+    // Insert ErrorBoundary at the beginning of the file
+    const fixedContent = content.replace(/^(import .+)/, `${errorBoundary}$1`);
     
-    // Insert ErrorBoundary at the beginning of the file and wrap App's return with it
-    const fixedContent = content.replace(
-      /^(import .+)/,
-      `${errorBoundary}$1`
-    );
+    // Find the App component return statement and wrap with ErrorBoundary
+    let withErrorBoundary = fixedContent;
     
-    // Find return statement of App and wrap with ErrorBoundary
-    const withErrorBoundary = fixedContent.replace(
-      /(return\s*\(\s*)/,
-      '$1<ErrorBoundary>\n      '
-    ).replace(
-      /(\s*\)\s*;\s*}\s*;\s*export default App)/,
-      '\n      </ErrorBoundary>$1'
-    );
-    
-    writeFile(appPath, withErrorBoundary);
-  }
-};
-
-// Check for empty components that might cause blank renders
-const checkComponents = () => {
-  const componentsDir = path.join(__dirname, 'src', 'components');
-  
-  try {
-    // Check if components directory exists
-    if (!fs.existsSync(componentsDir)) {
-      console.log('ℹ️ Components directory not found, skipping component checks');
-      return;
+    // Only wrap if not already wrapped
+    if (!fixedContent.includes('<ErrorBoundary>')) {
+      withErrorBoundary = fixedContent.replace(/(return\s*\(\s*)/, '$1<ErrorBoundary>\n      ');
+      withErrorBoundary = withErrorBoundary.replace(/(\s*\)\s*;\s*}\s*;\s*export default App)/, '\n      </ErrorBoundary>$1');
     }
     
-    // List of components to check
-    const criticalComponents = ['MainLayout.tsx', 'Header.tsx', 'Sidebar.tsx'];
-    
-    criticalComponents.forEach(component => {
-      const componentPath = path.join(componentsDir, 'layout', component);
-      
-      if (fs.existsSync(componentPath)) {
-        const content = readFile(componentPath);
-        
-        if (content && !content.includes('return')) {
-          console.error(`❌ ${component} doesn't have a return statement, which could cause blank rendering`);
-        } else if (content) {
-          console.log(`✅ ${component} has a return statement`);
-        }
-      }
-    });
-  } catch (error) {
-    console.error('Error checking components:', error.message);
+    if (withErrorBoundary !== content) {
+      writeFile(appPath, withErrorBoundary);
+    }
+  } else {
+    console.log('✅ App.tsx already has an ErrorBoundary');
   }
 };
 
+// Only check critical files instead of all components
 console.log('🔍 Checking for common issues that cause blank pages in React applications...');
 checkIndexHtml();
 checkMainTsx();
 checkAppTsx();
-checkComponents();
 console.log('✨ Done checking for issues!');
 console.log('🚀 Try running the app with: npm run dev');

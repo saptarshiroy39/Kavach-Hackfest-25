@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { 
   Mail, 
   Lock, 
@@ -14,6 +14,7 @@ import { mockApi } from '@/lib/mockDb';
 import { useToast } from '@/hooks/use-toast';
 import { ThemeToggle } from '@/components/ui/theme-toggle';
 import { useTheme } from '@/hooks/use-theme';
+import { motion } from 'framer-motion';
 
 const Login = () => {
   const [isLoading, setIsLoading] = useState(false);
@@ -85,7 +86,13 @@ const Login = () => {
   };
 
   return (
-    <div className="min-h-screen flex flex-col md:flex-row relative">
+    <motion.div
+      initial={{ opacity: 0, x: 40 }}
+      animate={{ opacity: 1, x: 0 }}
+      exit={{ opacity: 0, x: -40 }}
+      transition={{ duration: 0.35, ease: 'easeInOut' }}
+      className="min-h-screen flex flex-col md:flex-row relative"
+    >
       {/* Theme toggle in the top-right corner */}
       <div className="absolute top-4 right-4 z-10">
         <ThemeToggle />
@@ -281,9 +288,9 @@ const Login = () => {
           <div className="mt-6">
             <p className="text-center text-sm text-muted-foreground">
               Don't have an account?{' '}
-              <a href="#" className="text-security-primary hover:underline">
+              <Link to="/signup" className="text-security-primary hover:underline">
                 Create an account
-              </a>
+              </Link>
             </p>
           </div>
         </div>
@@ -292,7 +299,7 @@ const Login = () => {
       <div className="absolute bottom-0 left-0 right-0 py-4 text-center text-sm text-muted-foreground">
         <p>🌀 Made with ❤️ by Team Code Crafters</p>
       </div>
-    </div>
+    </motion.div>
   );
 };
 
