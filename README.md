@@ -1,8 +1,6 @@
 # 🛡️ Kavach Security Platform
 
-![Kavach](public/app-icons/icon.svg)
-
-Kavach (meaning "armor" in Hindi) is an advanced security platform for digital identity protection and secure online experiences. 🌐
+**Kavach** (meaning "armor" in Hindi) is an advanced security platform for digital identity protection and secure online experiences. 🌐
 
 ## ✨ Features
 
