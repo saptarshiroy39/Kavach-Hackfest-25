@@ -42,16 +42,12 @@ class ErrorBoundary extends Component<{ children: ReactNode }, { hasError: boole
   }
 }
 
-import { Toaster } from "@/components/ui/toaster";
-import { Toaster as Sonner } from "@/components/ui/sonner";
-import { TooltipProvider } from "@/components/ui/tooltip";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { useState, useEffect, Suspense, lazy } from "react";
-import { ThemeProvider } from '@/context/ThemeProvider';
-import { SearchProvider } from '@/context/SearchContext';
-import { LanguageProvider } from '@/hooks/use-language';
 import { AnimatePresence } from 'framer-motion';
+import { useAuth } from '@/context/AuthContext';
+import { AppProviders } from '@/context';
+import { APP_CONFIG } from '@/config';
 
 // Layouts
 import AdminLayout from './components/layout/admin/AdminLayout';
@@ -68,6 +64,7 @@ import Login from "./pages/Login";
 import NotFound from "./pages/NotFound";
 import SecurityScanner from "./pages/SecurityScanner";
 import SecurityVerification from "./pages/SecurityVerification";
+import ComponentDemo from "./pages/ComponentDemo";
 
 // Admin Pages
 import AdminDashboard from './pages/admin/AdminDashboard';
@@ -80,46 +77,12 @@ const PhishingDetection = lazy(() => import('./pages/PhishingDetection'));
 const PaymentScanner = lazy(() => import('./pages/PaymentScanner'));
 const EncryptedMessaging = lazy(() => import('./pages/EncryptedMessaging'));
 
-const queryClient = new QueryClient();
-
-const App = () => {
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [isAdmin, setIsAdmin] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
-
-  // Auth check
-  useEffect(() => {
-    const checkAuth = () => {
-      // In a real app, this would check for a valid token
-      const token = localStorage.getItem('auth-token');
-      const userRole = localStorage.getItem('user-role');
-      
-      console.log('Auth check:', { token, userRole });
-      
-      if (token) {
-        setIsAuthenticated(true);
-        setIsAdmin(userRole === 'admin');
-      } else {
-        setIsAuthenticated(false);
-        setIsAdmin(false);
-      }
-      setIsLoading(false);
-    };
-    
-    checkAuth();
-    
-    // Add an event listener for storage changes to detect login/logout in other tabs
-    window.addEventListener('storage', checkAuth);
-    
-    // Add custom event listener for immediate auth updates
-    window.addEventListener('auth-state-changed', checkAuth);
-    
-    return () => {
-      window.removeEventListener('storage', checkAuth);
-      window.removeEventListener('auth-state-changed', checkAuth);
-    };
-  }, []);
-
+/**
+ * App Routes Component - Separated from main App component for cleaner structure
+ */
+const AppRoutes = () => {
+  const { isAuthenticated, isAdmin, isLoading } = useAuth();
+  
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
@@ -132,69 +95,70 @@ const App = () => {
   }
 
   return (
+    <AnimatePresence mode="wait">
+      <Suspense fallback={
+        <div className="min-h-screen flex items-center justify-center bg-background">
+          <div className="flex flex-col items-center">
+            <div className="w-16 h-16 border-t-4 border-primary rounded-full animate-spin"></div>
+            <p className="mt-4 text-muted-foreground">Loading...</p>
+          </div>
+        </div>
+      }>
+        <Routes>
+          {isAuthenticated ? (
+            <>
+              <Route path={APP_CONFIG.routes.dashboard} element={<Dashboard />} />
+              <Route path={APP_CONFIG.routes.passwordVault} element={<PasswordVault />} />
+              <Route path={APP_CONFIG.routes.authentication} element={<Authentication />} />
+              <Route path={APP_CONFIG.routes.securityStatus} element={<SecurityStatus />} />
+              <Route path={APP_CONFIG.routes.blockchainVerify} element={<BlockchainVerify />} />
+              <Route path="/security-verification" element={<SecurityVerification />} />
+              <Route path={APP_CONFIG.routes.encryptedMessaging} element={<EncryptedMessaging />} />
+              <Route path={APP_CONFIG.routes.notifications} element={<Notifications />} />
+              <Route path={APP_CONFIG.routes.settings} element={<Settings />} />
+              <Route path="/phishing-detection" element={<PhishingDetection />} />
+              <Route path="/payment-scanner" element={<PaymentScanner />} />
+              <Route path="/security-scanner" element={<SecurityScanner />} />
+              <Route path="/component-demo" element={<ComponentDemo />} />
+              
+              {/* Admin routes with nested structure and top navigation */}
+              {isAdmin && (
+                <Route path={APP_CONFIG.routes.admin.root} element={<AdminLayout />}>
+                  <Route index element={<AdminDashboard />} />
+                  <Route path="users" element={<AdminUsers />} />
+                  <Route path="settings" element={<AdminSettings />} />
+                </Route>
+              )}
+              
+              <Route path={APP_CONFIG.routes.login} element={<Navigate to={APP_CONFIG.routes.dashboard} replace />} />
+              <Route path={APP_CONFIG.routes.signup} element={<SignUp />} />
+              <Route path="*" element={<NotFound />} />
+            </>
+          ) : (
+            <>
+              <Route path={APP_CONFIG.routes.login} element={<Login />} />
+              <Route path={APP_CONFIG.routes.signup} element={<SignUp />} />
+              <Route path="/component-demo" element={<ComponentDemo />} />
+              <Route path="*" element={<Login />} />
+            </>
+          )}
+        </Routes>
+      </Suspense>
+    </AnimatePresence>
+  );
+};
+
+/**
+ * Main App Component
+ */
+const App = () => {
+  return (
     <ErrorBoundary>
-      <ThemeProvider defaultTheme="system">
-        <LanguageProvider>
-          <QueryClientProvider client={queryClient}>
-            <SearchProvider>
-              <TooltipProvider>
-                <Toaster />
-                <Sonner />
-                <BrowserRouter>
-                  <AnimatePresence mode="wait">
-                    <Suspense fallback={
-                      <div className="min-h-screen flex items-center justify-center bg-background">
-                        <div className="flex flex-col items-center">
-                          <div className="w-16 h-16 border-t-4 border-primary rounded-full animate-spin"></div>
-                          <p className="mt-4 text-muted-foreground">Loading...</p>
-                        </div>
-                      </div>
-                    }>
-                      <Routes>
-                        {isAuthenticated ? (
-                          <>
-                            <Route path="/" element={<Dashboard />} />
-                            <Route path="/password-vault" element={<PasswordVault />} />
-                            <Route path="/authentication" element={<Authentication />} />
-                            <Route path="/security-status" element={<SecurityStatus />} />
-                            <Route path="/blockchain-verify" element={<BlockchainVerify />} />
-                            <Route path="/security-verification" element={<SecurityVerification />} />
-                            <Route path="/encrypted-messaging" element={<EncryptedMessaging />} />
-                            <Route path="/notifications" element={<Notifications />} />
-                            <Route path="/settings" element={<Settings />} />
-                            <Route path="/phishing-detection" element={<PhishingDetection />} />
-                            <Route path="/payment-scanner" element={<PaymentScanner />} />
-                            <Route path="/security-scanner" element={<SecurityScanner />} />
-                            
-                            {/* Admin routes with nested structure and top navigation */}
-                            {isAdmin && (
-                              <Route path="/admin" element={<AdminLayout />}>
-                                <Route index element={<AdminDashboard />} />
-                                <Route path="users" element={<AdminUsers />} />
-                                <Route path="settings" element={<AdminSettings />} />
-                              </Route>
-                            )}
-                            
-                            <Route path="/login" element={<Navigate to="/" replace />} />
-                            <Route path="/signup" element={<SignUp />} />
-                            <Route path="*" element={<NotFound />} />
-                          </>
-                        ) : (
-                          <>
-                            <Route path="/login" element={<Login />} />
-                            <Route path="/signup" element={<SignUp />} />
-                            <Route path="*" element={<Login />} />
-                          </>
-                        )}
-                      </Routes>
-                    </Suspense>
-                  </AnimatePresence>
-                </BrowserRouter>
-              </TooltipProvider>
-            </SearchProvider>
-          </QueryClientProvider>
-        </LanguageProvider>
-      </ThemeProvider>
+      <AppProviders>
+        <BrowserRouter>
+          <AppRoutes />
+        </BrowserRouter>
+      </AppProviders>
     </ErrorBoundary>
   );
 };

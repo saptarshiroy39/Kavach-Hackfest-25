@@ -25,7 +25,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { currentUser } from '@/lib/mockDb';
 import { useToast } from '@/hooks/use-toast';
 import { motion } from 'framer-motion';
-import { ThemeToggle } from '@/components/ui/theme-toggle';
+import { ThemeToggleGroup } from '@/components/ui/theme-toggle-group';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { useLanguage, Language, languageNames } from '@/hooks/use-language';
 
@@ -395,19 +395,21 @@ const Settings = () => {
               variants={cardVariants}
             >
               <SecurityCard
-                title={t('applicationSettings')}
+                title={t('Application Settings')}
                 icon={<SettingsIcon className="w-5 h-5 text-security-primary" />}
               >
                 <div className="space-y-4">
-                  <div className="flex items-center justify-between">
+                  <div className="flex flex-col space-y-2">
+                    <h4 className="font-medium mb-1">{t('Theme Mode')}</h4>
+                    <p className="text-xs text-muted-foreground mb-2">
+                      {t('Choose your preferred theme for the application')}
+                    </p>
                     <div className="flex items-center">
-                      <Moon className="w-4 h-4 mr-2" />
-                      <span>{t('Theme Mode')}</span>
+                      <ThemeToggleGroup />
                     </div>
-                    <ThemeToggle />
                   </div>
 
-                  <div className="flex items-center justify-between">
+                  <div className="flex items-center justify-between pt-4">
                     <div className="flex items-center">
                       <Bell className="w-4 h-4 mr-2" />
                       <span>{t('notifications')}</span>
@@ -447,7 +449,7 @@ const Settings = () => {
               variants={cardVariants}
             >
               <SecurityCard
-                title={t('connectedDevices')}
+                title={t('Connected Devices')}
                 icon={<Smartphone className="w-5 h-5 text-security-primary" />}
               >
                 <div className="space-y-4">

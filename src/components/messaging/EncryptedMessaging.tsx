@@ -48,6 +48,8 @@ import {
 import { messagingMock as mockApi } from "@/lib/securityFeaturesMock";
 import { useToast } from "@/hooks/use-toast";
 import { ModernSearch } from "@/components/ui/modern-search";
+import { DiagramMessagePreview } from './DiagramMessagePreview';
+import { WhatsAppDocumentPreview } from './WhatsAppDocumentPreview';
 
 interface Contact {
   id: string;
@@ -426,6 +428,14 @@ export default function EncryptedMessaging() {
       }));
   };
 
+  // Add a function to detect if an image is a diagram based on its name or content
+  const isDiagram = (fileName: string): boolean => {
+    const diagramKeywords = ['gate', 'circuit', 'diagram', 'logic', 'nand', 'schema', 'block'];
+    return diagramKeywords.some(keyword => 
+      fileName.toLowerCase().includes(keyword)
+    );
+  };
+
   return (
     <Card className="w-full h-[calc(100vh-12rem)] overflow-hidden flex flex-col rounded-xl">
       {/* Removing the header section to give more space for the chat */}
@@ -786,149 +796,133 @@ export default function EncryptedMessaging() {
                         <div>
                           <ContextMenu>
                             <ContextMenuTrigger>
-                              <div 
+                              <div
                                 className={cn(
-                                  "px-4 py-2 rounded-2xl max-w-md text-sm",
-                                  isCurrentUser ? "bg-primary text-primary-foreground rounded-tr-none" : "bg-muted rounded-tl-none",
-                                  msg.mediaType && "overflow-hidden p-0"
+                                  "px-4 py-2 rounded-xl max-w-[70%] break-words",
+                                  isCurrentUser
+                                    ? "bg-gradient-to-r from-blue-600 to-indigo-600 text-white ml-auto shadow-md"
+                                    : "bg-muted text-muted-foreground border border-border/50 shadow-sm"
                                 )}
                               >
                                 {msg.mediaType && msg.fileData ? (
-                                  <div className="flex flex-col">
-                                    {/* Image Media Preview */}
+                                  <div className="flex flex-col relative">
+                                    {/* Image Media Preview - Simple Style */}
                                     {msg.mediaType === 'image' && msg.fileData.url && (
-                                      <div 
-                                        className="cursor-pointer relative overflow-hidden rounded-lg border border-white/20"
-                                        onClick={() => setViewingMedia(msg)}
-                                      >
-                                        {starredMessages.has(msg.id) && (
-                                          <div className="absolute top-2 right-2 z-10">
-                                            <Star className="h-4 w-4 fill-yellow-500 text-yellow-500" />
-                                          </div>
-                                        )}
-                                        <img 
-                                          src={msg.fileData.url} 
-                                          alt={msg.fileData.name} 
-                                          className="w-full max-h-64 object-cover"
+                                      isDiagram(msg.fileData.name) ? (
+                                        <DiagramMessagePreview
+                                          imgSrc={msg.fileData.url}
+                                          fileName={msg.fileData.name}
+                                          fileSize={msg.fileData.size}
+                                          onClick={() => setViewingMedia(msg)}
+                                          className={isCurrentUser ? "bg-primary/5" : "bg-muted"}
+                                          timestamp={formatTime(msg.timestamp)}
                                         />
-                                        <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 via-black/40 to-transparent backdrop-blur-[2px] text-white text-xs p-2 flex justify-between items-center">
-                                          <span className="truncate mr-2">{msg.fileData.name}</span>
-                                          <span className="whitespace-nowrap">{(msg.fileData.size / 1024).toFixed(1)} KB</span>
+                                      ) : (
+                                        <div 
+                                          className="cursor-pointer relative overflow-hidden rounded-lg border border-border"
+                                          onClick={() => setViewingMedia(msg)}
+                                        >
+                                          <img 
+                                            src={msg.fileData.url} 
+                                            alt={msg.fileData.name} 
+                                            className="w-full max-h-96 object-contain rounded-md"
+                                          />
+                                          <div className="absolute bottom-1 right-1.5 flex items-center text-xs bg-black/60 text-white px-1.5 py-0.5 rounded">
+                                            {formatTime(msg.timestamp)}
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="ml-1 h-3 w-3">
+                                              <path d="M20 6L9 17l-5-5" />
+                                            </svg>
+                                          </div>
+                                          {starredMessages.has(msg.id) && (
+                                            <div className="absolute top-1.5 left-1.5 z-10 bg-black/60 rounded-full p-1">
+                                              <Star className="h-3 w-3 fill-yellow-400 text-yellow-500" />
+                                            </div>
+                                          )}
                                         </div>
-                                      </div>
+                                      )
                                     )}
-                                    {/* Video Media Preview */}
+                                    {/* Video Media Preview - Simple Style */}
                                     {msg.mediaType === 'video' && msg.fileData.url && (
                                       <div 
-                                        className="cursor-pointer relative overflow-hidden rounded-lg border border-white/20"
+                                        className="cursor-pointer relative overflow-hidden rounded-lg border border-border"
                                         onClick={() => setViewingMedia(msg)}
                                       >
-                                        {starredMessages.has(msg.id) && (
-                                          <div className="absolute top-2 right-2 z-10">
-                                            <Star className="h-4 w-4 fill-yellow-500 text-yellow-500" />
-                                          </div>
-                                        )}
                                         <video 
                                           src={msg.fileData.url}
-                                          className="w-full max-h-64 object-cover"
+                                          className="w-full max-h-96 object-cover rounded-md"
                                         />
-                                        <div className="absolute inset-0 flex items-center justify-center bg-black/30">
+                                        <div className="absolute inset-0 flex items-center justify-center bg-black/40">
                                           <div className="bg-white/20 backdrop-blur-sm rounded-full p-3">
                                             <Play className="h-8 w-8 text-white" />
                                           </div>
                                         </div>
-                                        <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 via-black/40 to-transparent backdrop-blur-[2px] text-white text-xs p-2 flex justify-between items-center">
-                                          <span className="truncate mr-2">{msg.fileData.name}</span>
-                                          <span className="whitespace-nowrap">{(msg.fileData.size / 1024).toFixed(1)} KB</span>
+                                        <div className="absolute bottom-1 right-1.5 flex items-center text-xs bg-black/60 text-white px-1.5 py-0.5 rounded">
+                                          {formatTime(msg.timestamp)}
+                                          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="ml-1 h-3 w-3">
+                                            <path d="M20 6L9 17l-5-5" />
+                                          </svg>
                                         </div>
+                                        {starredMessages.has(msg.id) && (
+                                            <div className="absolute top-1.5 left-1.5 z-10 bg-black/60 rounded-full p-1">
+                                              <Star className="h-3 w-3 fill-yellow-400 text-yellow-500" />
+                                            </div>
+                                          )}
                                       </div>
                                     )}
-                                    {/* Audio File Preview */}
+                                    {/* Audio Media Preview - Simple Style */}
                                     {msg.mediaType === 'audio' && msg.fileData.url && (
                                       <div 
-                                        className="cursor-pointer relative overflow-hidden rounded-lg border border-white/20"
-                                        onClick={() => setViewingMedia(msg)}
+                                        className="relative overflow-hidden rounded-lg bg-card border border-border p-3"
                                       >
-                                        {starredMessages.has(msg.id) && (
-                                          <div className="absolute top-2 right-2 z-10">
-                                            <Star className="h-4 w-4 fill-yellow-500 text-yellow-500" />
-                                          </div>
-                                        )}
-                                        <div className="flex items-center gap-3 p-3">
-                                          <div className={cn(
-                                            "p-2 rounded-full",
-                                            isCurrentUser ? "bg-white/20" : "bg-primary/10"
-                                          )}>
-                                            <AudioLines className="h-6 w-6" />
+                                        <div className="flex items-center gap-3">
+                                          <div className="p-2 rounded-full bg-primary/10">
+                                            <AudioLines className="h-6 w-6 text-primary" />
                                           </div>
                                           <div className="flex-1 min-w-0">
-                                            <p className="text-sm font-medium truncate">
+                                            <p className="text-sm font-medium truncate text-card-foreground">
                                               {msg.fileData.name}
                                             </p>
                                             <div className="flex items-center gap-2 mt-1">
-                                              <div className="h-1 bg-gray-300/30 dark:bg-gray-600/30 flex-1 rounded-full overflow-hidden">
+                                              <div className="h-1 bg-muted/50 flex-1 rounded-full overflow-hidden">
                                                 <div className="h-full w-1/3 bg-primary/70 rounded-full"></div>
                                               </div>
-                                              <span className="text-xs opacity-70 whitespace-nowrap">0:42</span>
+                                              <span className="text-xs text-muted-foreground whitespace-nowrap">0:42</span>
                                             </div>
                                           </div>
-                                          <div className="p-1.5 rounded-full bg-primary/10">
-                                            <Play className="h-4 w-4" />
+                                          <div className="p-1.5 rounded-full bg-primary/10 cursor-pointer" onClick={() => setViewingMedia(msg)}>
+                                            <Play className="h-4 w-4 text-primary" />
                                           </div>
                                         </div>
-                                      </div>
-                                    )}
-                                    {/* Document File Preview */}
-                                    {msg.mediaType === 'document' && (
-                                      <div className="flex items-center gap-3 p-3 relative">
+                                        <div className="flex justify-end text-xs mt-2 pr-1">
+                                          <span className={cn("flex items-center text-muted-foreground")}>
+                                            {formatTime(msg.timestamp)}
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="ml-1 h-3 w-3">
+                                              <path d="M20 6L9 17l-5-5" />
+                                            </svg>
+                                          </span>
+                                        </div>
                                         {starredMessages.has(msg.id) && (
-                                          <div className="absolute top-2 right-2 z-10">
-                                            <Star className="h-4 w-4 fill-yellow-500 text-yellow-500" />
-                                          </div>
-                                        )}
-                                        <div className={cn(
-                                          "p-2 rounded-full",
-                                          isCurrentUser ? "bg-white/20" : "bg-primary/10"
-                                        )}>
-                                          {/* Show different icons based on file type */}
-                                          {msg.fileData?.type.includes('pdf') ? (
-                                            <FileText className="h-5 w-5" />
-                                          ) : msg.fileData?.type.includes('spreadsheet') || msg.fileData?.name.endsWith('.xlsx') || msg.fileData?.name.endsWith('.xls') ? (
-                                            <FileSpreadsheet className="h-5 w-5" />
-                                          ) : msg.fileData?.type.includes('zip') || msg.fileData?.name.endsWith('.zip') || msg.fileData?.name.endsWith('.rar') ? (
-                                            <FileArchive className="h-5 w-5" />
-                                          ) : msg.fileData?.type.includes('code') || (msg.fileData?.name && /\.(jsx?|tsx?|html|css|py|java|rb|php|go)$/.test(msg.fileData.name)) ? (
-                                            <FileCode className="h-5 w-5" />
-                                          ) : (
-                                            <FileText className="h-5 w-5" />
+                                            <div className="absolute top-1.5 left-1.5 z-10 bg-black/60 rounded-full p-1">
+                                              <Star className="h-3 w-3 fill-yellow-400 text-yellow-500" />
+                                            </div>
                                           )}
-                                        </div>
-                                        <div className="flex-1 min-w-0">
-                                          <p className="text-sm font-medium truncate">
-                                            {msg.fileData?.name}
-                                          </p>
-                                          <p className="text-xs opacity-70 mt-0.5">
-                                            {msg.fileData && (msg.fileData.size / 1024).toFixed(1)} KB • {msg.fileData?.type.split('/')[1]?.toUpperCase() || 'Document'}
-                                          </p>
-                                        </div>
-                                        <div className="p-1.5 rounded-full bg-primary/10">
-                                          <Download className="h-4 w-4" />
-                                        </div>
                                       </div>
                                     )}
-                                    {/* Time display for all media messages */}
-                                    <div className={cn(
-                                      "flex justify-end p-1 text-xs",
-                                      isCurrentUser 
-                                        ? "text-gray-200 bg-primary" 
-                                        : "text-gray-500 bg-muted"
-                                    )}>
-                                      <span>{formatTime(msg.timestamp)}</span>
-                                    </div>
+                                    {/* Document Media Preview - Use WhatsAppDocumentPreview */}
+                                    {msg.mediaType === 'document' && msg.fileData.url && (
+                                      <WhatsAppDocumentPreview
+                                        fileName={msg.fileData.name}
+                                        fileSize={msg.fileData.size}
+                                        fileType={msg.fileData?.type.split('/')[1]?.toUpperCase() || 'Document'}
+                                        fileUrl={msg.fileData.url}
+                                        timestamp={formatTime(msg.timestamp)}
+                                        onClick={() => setViewingMedia(msg)}
+                                        isStarred={starredMessages.has(msg.id)}
+                                      />
+                                    )}
                                   </div>
                                 ) : (
                                   <>
-                                    {/* Regular text message with star icon if starred */}
                                     <div className="flex items-center gap-1">
                                       {msg.content}
                                       {starredMessages.has(msg.id) && (
@@ -936,7 +930,9 @@ export default function EncryptedMessaging() {
                                       )}
                                     </div>
                                     <div className="flex justify-end mt-1 -mr-2 text-xs">
-                                      <span className={isCurrentUser ? "text-primary-foreground/70" : "text-muted-foreground"}>
+                                      <span className={cn("flex items-center", 
+                                        isCurrentUser ? "text-white/80" : "text-muted-foreground/80")}>
+                                        <Clock className="h-3 w-3 mr-1" />
                                         {formatTime(msg.timestamp)}
                                       </span>
                                     </div>
@@ -1111,7 +1107,7 @@ export default function EncryptedMessaging() {
                     className="rounded-full"
                     onClick={openFileSelector}
                   >
-                    <Paperclip className="h-5 w-5 text-muted-foreground" />
+                    <Paperclip className="h-6 w-6 text-muted-foreground" />
                   </Button>
                   <Input
                     value={newMessage}
@@ -1272,8 +1268,22 @@ export default function EncryptedMessaging() {
       </Dialog>
       
       {/* File Confirmation Dialog */}
-      <Dialog open={showFileConfirmation} onOpenChange={setShowFileConfirmation}>
-        <DialogContent className="sm:max-w-md rounded-xl">
+      <Dialog 
+        open={showFileConfirmation} 
+        onOpenChange={setShowFileConfirmation}
+      >
+        <DialogContent 
+          className="sm:max-w-md rounded-xl"
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') {
+              e.preventDefault();
+              handleFilesConfirm();
+            } else if (e.key === 'Escape') {
+              e.preventDefault();
+              handleCancelFiles();
+            }
+          }}
+        >
           <DialogHeader>
             <DialogTitle>Confirm File Attachment</DialogTitle>
             <DialogDescription>
@@ -1321,12 +1331,12 @@ export default function EncryptedMessaging() {
           if (!open) setViewingMedia(null);
         }}
       >
-        <DialogContent className="sm:max-w-2xl md:max-w-3xl rounded-xl p-1 bg-black/90">
+        <DialogContent className="sm:max-w-2xl md:max-w-3xl rounded-xl p-1 bg-card border border-border">
           <div className="absolute top-2 right-2 z-10">
             <Button 
               variant="ghost" 
               size="icon"
-              className="rounded-full bg-black/50 text-white hover:bg-black/70"
+              className="rounded-full bg-background/50 hover:bg-background/70 text-foreground"
               onClick={() => setViewingMedia(null)}
             >
               <X className="h-4 w-4" />
@@ -1337,26 +1347,39 @@ export default function EncryptedMessaging() {
             {/* Media content */}
             <div className="flex-1 flex items-center justify-center p-4 min-h-[300px]">
               {viewingMedia?.mediaType === 'image' && viewingMedia.fileData?.url && (
-                <img 
-                  src={viewingMedia.fileData.url} 
-                  alt={viewingMedia.fileData.name}
-                  className="max-h-[70vh] max-w-full object-contain" 
-                />
+                <div className="relative group">
+                  <img 
+                    src={viewingMedia.fileData.url} 
+                    alt={viewingMedia.fileData.name}
+                    className="max-h-[70vh] max-w-full object-contain rounded-xl" 
+                  />
+                  <div className="absolute bottom-0 left-0 right-0 opacity-0 group-hover:opacity-100 transition-opacity duration-200 bg-gradient-to-t from-black/70 to-transparent text-white text-xs p-3 flex justify-between items-center rounded-b-xl">
+                    <span className="truncate mr-2 text-sm font-medium">{viewingMedia.fileData.name}</span>
+                    <span className="whitespace-nowrap">{(viewingMedia.fileData.size / 1024).toFixed(1)} KB</span>
+                  </div>
+                </div>
               )}
               
               {viewingMedia?.mediaType === 'video' && viewingMedia.fileData?.url && (
-                <video 
-                  src={viewingMedia.fileData.url}
-                  controls
-                  className="max-h-[70vh] max-w-full" 
-                />
+                <div className="relative group rounded-xl overflow-hidden">
+                  <video 
+                    src={viewingMedia.fileData.url}
+                    controls
+                    className="max-h-[70vh] max-w-full rounded-xl" 
+                  />
+                  <div className="absolute bottom-12 left-0 right-0 opacity-0 group-hover:opacity-100 transition-opacity duration-200 bg-gradient-to-t from-black/70 to-transparent text-white text-xs p-3 flex justify-between items-center">
+                    <span className="truncate mr-2 text-sm font-medium">{viewingMedia.fileData.name}</span>
+                    <span className="whitespace-nowrap">{(viewingMedia.fileData.size / 1024).toFixed(1)} KB</span>
+                  </div>
+                </div>
               )}
               
               {viewingMedia?.mediaType === 'audio' && viewingMedia.fileData?.url && (
-                <div className="w-full p-4 bg-slate-800 rounded-lg">
-                  <p className="text-white mb-2 flex items-center gap-2">
-                    <Paperclip className="h-4 w-4" />
-                    {viewingMedia.fileData.name}
+                <div className="w-full p-5 bg-muted rounded-xl shadow-sm">
+                  <p className="text-foreground mb-3 flex items-center gap-2">
+                    <AudioLines className="h-5 w-5 text-primary" />
+                    <span className="text-sm font-medium">{viewingMedia.fileData.name}</span>
+                    <span className="text-xs text-muted-foreground">{(viewingMedia.fileData.size / 1024).toFixed(1)} KB</span>
                   </p>
                   <audio 
                     src={viewingMedia.fileData.url}
@@ -1367,11 +1390,21 @@ export default function EncryptedMessaging() {
               )}
               
               {viewingMedia?.mediaType === 'document' && (
-                <div className="flex items-center justify-center p-8 bg-slate-800 rounded-lg">
+                <div className="flex items-center justify-center p-10 bg-muted rounded-xl shadow-sm">
                   <div className="flex flex-col items-center">
-                    <FileIcon className="h-16 w-16 text-primary mb-4" />
-                    <p className="text-white text-center">{viewingMedia.fileData?.name}</p>
-                    <p className="text-gray-400 text-sm">
+                    {viewingMedia.fileData?.type?.includes('pdf') ? (
+                      <FileText className="h-20 w-20 text-primary mb-4" />
+                    ) : viewingMedia.fileData?.type?.includes('spreadsheet') || viewingMedia.fileData?.type?.includes('excel') ? (
+                      <FileSpreadsheet className="h-20 w-20 text-primary mb-4" />
+                    ) : viewingMedia.fileData?.type?.includes('zip') || viewingMedia.fileData?.type?.includes('rar') ? (
+                      <FileArchive className="h-20 w-20 text-primary mb-4" />
+                    ) : viewingMedia.fileData?.type?.includes('javascript') || viewingMedia.fileData?.type?.includes('html') || viewingMedia.fileData?.type?.includes('css') ? (
+                      <FileCode className="h-20 w-20 text-primary mb-4" />
+                    ) : (
+                      <FileIcon className="h-20 w-20 text-primary mb-4" />
+                    )}
+                    <p className="text-foreground text-center font-medium text-lg">{viewingMedia.fileData?.name}</p>
+                    <p className="text-muted-foreground text-sm mt-1">
                       {viewingMedia.fileData && (viewingMedia.fileData.size / 1024).toFixed(1)} KB
                     </p>
                   </div>
@@ -1379,63 +1412,55 @@ export default function EncryptedMessaging() {
               )}
             </div>
             
-            {/* Media actions */}
-            <div className="bg-slate-800 p-3 rounded-b-lg">
-              <div className="flex items-center justify-between">
-                <p className="text-white text-sm truncate max-w-[50%]">
-                  {viewingMedia?.fileData?.name}
-                </p>
-                <div className="flex gap-2">
-                  <Button 
-                    variant="ghost" 
-                    size="sm"
-                    className="text-white hover:bg-slate-700"
-                    onClick={() => {
-                      if (viewingMedia?.fileData?.url) {
-                        const a = document.createElement('a');
-                        a.href = viewingMedia.fileData.url;
-                        a.download = viewingMedia.fileData.name;
-                        document.body.appendChild(a);
-                        a.click();
-                        document.body.removeChild(a);
-                        
-                        toast({
-                          title: "Download started",
-                          description: `Downloading ${viewingMedia.fileData.name}`,
-                        });
-                      }
-                    }}
-                  >
-                    <Download className="h-4 w-4 mr-1" />
-                    Download
-                  </Button>
-                  
-                  <Button 
-                    variant="ghost" 
-                    size="sm"
-                    className="text-white hover:bg-slate-700"
-                    onClick={() => {
-                      setShowForwardDialog(true);
-                    }}
-                  >
-                    <Forward className="h-4 w-4 mr-1" />
-                    Forward
-                  </Button>
-                  
-                  <Button 
-                    variant="ghost" 
-                    size="sm"
-                    className="text-red-400 hover:bg-slate-700 hover:text-red-400"
-                    onClick={() => {
-                      setMessageToDelete(viewingMedia);
-                      setShowDeleteMessageDialog(true);
-                    }}
-                  >
-                    <Trash className="h-4 w-4 mr-1" />
-                    Delete
-                  </Button>
-                </div>
-              </div>
+            {/* Media actions - always visible toolbar with improved colors */}
+            <div className="p-4 rounded-b-lg flex items-center justify-center gap-3 bg-muted/30">
+              <Button 
+                variant="secondary" 
+                size="sm"
+                className="rounded-full shadow-sm px-4"
+                onClick={() => {
+                  if (viewingMedia?.fileData?.url) {
+                    const a = document.createElement('a');
+                    a.href = viewingMedia.fileData.url;
+                    a.download = viewingMedia.fileData.name;
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                    
+                    toast({
+                      title: "Download started",
+                      description: `Downloading ${viewingMedia.fileData.name}`,
+                    });
+                  }
+                }}
+              >
+                <Download className="h-4 w-4 mr-2" />
+                Download
+              </Button>
+              
+              <Button 
+                size="sm"
+                className="rounded-full bg-amber-500 hover:bg-amber-600 text-white shadow-sm px-4"
+                onClick={() => {
+                  setShowForwardDialog(true);
+                }}
+              >
+                <Forward className="h-4 w-4 mr-2" />
+                Forward
+              </Button>
+              
+              <Button 
+                variant="destructive" 
+                size="sm"
+                className="rounded-full shadow-sm px-4"
+                onClick={() => {
+                  setMessageToDelete(viewingMedia);
+                  setShowDeleteMessageDialog(true);
+                }}
+              >
+                <Trash className="h-4 w-4 mr-2" />
+                Delete
+              </Button>
             </div>
           </div>
         </DialogContent>

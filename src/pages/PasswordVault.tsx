@@ -52,6 +52,7 @@ const PasswordVault = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [showAddPasswordDialog, setShowAddPasswordDialog] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [showEditPasswordDialog, setShowEditPasswordDialog] = useState(false);
   const [selectedPassword, setSelectedPassword] = useState<PasswordEntry | null>(null);
   const [revealedPasswords, setRevealedPasswords] = useState<Set<string>>(new Set());
   const [searchTerm, setSearchTerm] = useState('');
@@ -257,6 +258,50 @@ const PasswordVault = () => {
   });
 
   const categories = Array.from(new Set(passwordEntries.map(entry => entry.category)));
+
+  const handleEditClick = (password: PasswordEntry) => {
+    setSelectedPassword(password);
+    setFormData({
+      title: password.title,
+      username: password.username,
+      password: password.password,
+      url: password.url || '',
+      notes: password.notes || '',
+      category: password.category,
+    });
+    setShowEditPasswordDialog(true);
+  };
+
+  const handleUpdatePassword = () => {
+    if (selectedPassword) {
+      const updatedEntries = passwordEntries.map(entry => {
+        if (entry.id === selectedPassword.id) {
+          return {
+            ...entry,
+            title: formData.title,
+            username: formData.username,
+            password: formData.password,
+            url: formData.url,
+            notes: formData.notes,
+            category: formData.category,
+            strength: formData.password.length >= 12 ? 'strong' : formData.password.length >= 8 ? 'medium' : 'weak',
+            updatedAt: new Date().toISOString(),
+          };
+        }
+        return entry;
+      });
+      
+      setPasswordEntries(updatedEntries);
+      setShowEditPasswordDialog(false);
+      setSelectedPassword(null);
+      resetFormData();
+      
+      toast({
+        title: t("Password updated"),
+        description: t(`"${formData.title}" has been updated in your vault`),
+      });
+    }
+  };
 
   if (isLoading) {
     return (
@@ -495,7 +540,12 @@ const PasswordVault = () => {
                       </div>
                     </div>
                     <div className="flex space-x-1">
-                      <Button variant="outline" size="sm" className="h-8 w-8 p-0">
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        className="h-8 w-8 p-0"
+                        onClick={() => handleEditClick(entry)}
+                      >
                         <Edit className="h-4 w-4" />
                       </Button>
                       <Button 
@@ -660,6 +710,114 @@ const PasswordVault = () => {
             </Button>
             <Button variant="destructive" onClick={confirmDelete}>
               {t("Delete")}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit Password Dialog */}
+      <Dialog open={showEditPasswordDialog} onOpenChange={(open) => {
+        setShowEditPasswordDialog(open);
+        if (!open) resetFormData();
+      }}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>{t("Edit Password")}</DialogTitle>
+            <DialogDescription>
+              {t("Update your password details.")}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="edit-title">{t("Title")}</Label>
+              <Input 
+                id="edit-title" 
+                name="title"
+                placeholder={t("e.g., Personal Email")} 
+                value={formData.title}
+                onChange={handleInputChange}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="edit-username">{t("Username/Email")}</Label>
+              <Input 
+                id="edit-username" 
+                name="username"
+                placeholder={t("username@example.com")} 
+                value={formData.username}
+                onChange={handleInputChange}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="edit-password">{t("Password")}</Label>
+              <div className="relative">
+                <Input 
+                  id="edit-password" 
+                  name="password"
+                  type={revealedPasswords.has('edit') ? 'text' : 'password'}
+                  placeholder={t("Enter secure password")} 
+                  value={formData.password}
+                  onChange={handleInputChange}
+                />
+                <button
+                  type="button"
+                  onClick={() => togglePasswordVisibility('edit')}
+                  className="absolute right-2 top-1/2 transform -translate-y-1/2"
+                >
+                  {revealedPasswords.has('edit') ? (
+                    <EyeOff className="h-4 w-4 text-muted-foreground" />
+                  ) : (
+                    <Eye className="h-4 w-4 text-muted-foreground" />
+                  )}
+                </button>
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="edit-url">{t("Website URL (optional)")}</Label>
+              <Input 
+                id="edit-url" 
+                name="url"
+                placeholder={t("https://example.com")} 
+                value={formData.url}
+                onChange={handleInputChange}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="edit-category">{t("Category")}</Label>
+              <Select 
+                value={formData.category} 
+                onValueChange={(value) => setFormData(prev => ({ ...prev, category: value }))}
+              >
+                <SelectTrigger id="edit-category">
+                  <SelectValue placeholder={t("Select category")} />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="email">{t("Email")}</SelectItem>
+                  <SelectItem value="financial">{t("Financial")}</SelectItem>
+                  <SelectItem value="social">{t("Social Media")}</SelectItem>
+                  <SelectItem value="shopping">{t("Shopping")}</SelectItem>
+                  <SelectItem value="work">{t("Work")}</SelectItem>
+                  <SelectItem value="other">{t("Other")}</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="edit-notes">{t("Notes (optional)")}</Label>
+              <Input 
+                id="edit-notes"
+                name="notes" 
+                placeholder={t("Additional information")} 
+                value={formData.notes}
+                onChange={handleInputChange}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowEditPasswordDialog(false)}>
+              {t("Cancel")}
+            </Button>
+            <Button onClick={handleUpdatePassword} disabled={!formData.title || !formData.username || !formData.password}>
+              {t("Update Password")}
             </Button>
           </DialogFooter>
         </DialogContent>

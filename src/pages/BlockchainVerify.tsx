@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import MainLayout from '@/components/layout/MainLayout';
 import { 
   Shield, 
@@ -10,9 +10,15 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import BlockchainVerifyComponent from '@/components/security/BlockchainVerify';
 import { getCurrentUser } from '@/lib/mockDb';
+import { BlockchainTabs, BlockchainTabContent } from '@/components/security/BlockchainTabs';
 
 const BlockchainVerifyPage = () => {
   const user = getCurrentUser();
+  const [activeTab, setActiveTab] = useState('verify');
+  
+  const handleTabChange = (tabId: string) => {
+    setActiveTab(tabId);
+  };
   
   return (
     <MainLayout>
@@ -26,23 +32,14 @@ const BlockchainVerifyPage = () => {
           </div>
         </div>
         
-        <Tabs defaultValue="verify" className="space-y-6">
-          <TabsList className="grid grid-cols-3 max-w-md">
-            <TabsTrigger value="verify" className="flex items-center gap-2">
-              <Shield className="h-4 w-4" />
-              <span>Verify</span>
-            </TabsTrigger>
-            <TabsTrigger value="events" className="flex items-center gap-2">
-              <History className="h-4 w-4" />
-              <span>Events</span>
-            </TabsTrigger>
-            <TabsTrigger value="explorer" className="flex items-center gap-2">
-              <FileText className="h-4 w-4" />
-              <span>Explorer</span>
-            </TabsTrigger>
-          </TabsList>
-          
-          <TabsContent value="verify" className="space-y-6">
+        <BlockchainTabs 
+          defaultTab="verify" 
+          onTabChange={handleTabChange}
+          className="max-w-md mb-6"
+        />
+        
+        <BlockchainTabContent activeTab={activeTab}>
+          {activeTab === 'verify' && (
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               <div className="md:col-span-2">
                 <BlockchainVerifyComponent userId={user.id} />
@@ -100,26 +97,26 @@ const BlockchainVerifyPage = () => {
                 </div>
               </div>
             </div>
-          </TabsContent>
+          )}
           
-          <TabsContent value="events" className="space-y-4">
+          {activeTab === 'events' && (
             <div className="border rounded-lg p-6">
               <h3 className="font-medium mb-4">Security Events on Blockchain</h3>
               <p className="text-muted-foreground">
                 No security events have been recorded on the blockchain yet. Verify your identity first.
               </p>
             </div>
-          </TabsContent>
+          )}
           
-          <TabsContent value="explorer" className="space-y-4">
+          {activeTab === 'explorer' && (
             <div className="border rounded-lg p-6">
               <h3 className="font-medium mb-4">Blockchain Explorer</h3>
               <p className="text-muted-foreground">
                 Connect your wallet to view your blockchain transactions.
               </p>
             </div>
-          </TabsContent>
-        </Tabs>
+          )}
+        </BlockchainTabContent>
       </div>
     </MainLayout>
   );

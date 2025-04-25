@@ -2,12 +2,10 @@ import { createRoot } from 'react-dom/client'
 import { StrictMode } from 'react'
 import App from './App.tsx'
 import './index.css'
-import { BlockchainProvider } from '@/context/BlockchainContext'
 
+// Render the application
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
-    <BlockchainProvider>
-      <App />
-    </BlockchainProvider>
+    <App />
   </StrictMode>
 );

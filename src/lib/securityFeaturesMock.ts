@@ -19,6 +19,179 @@ export const twoFactorMock = {
   },
 };
 
+// Mock password data for security service
+export const mockPasswords = [
+  {
+    id: 'pwd1',
+    website: 'example.com',
+    username: 'user@example.com',
+    password: 'P@ssw0rd123!',
+    strength: 5,
+    lastUpdated: new Date().toISOString(),
+    notes: 'Main account',
+    category: 'Work',
+    isFavorite: true,
+  },
+  {
+    id: 'pwd2',
+    website: 'social-media.com',
+    username: 'socialuser',
+    password: 'S0cialP@ss!',
+    strength: 4,
+    lastUpdated: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString(),
+    notes: 'Personal account',
+    category: 'Social',
+    isFavorite: false,
+  },
+  {
+    id: 'pwd3',
+    website: 'banking.com',
+    username: 'bankuser',
+    password: 'B@nkingS3cure!',
+    strength: 5,
+    lastUpdated: new Date(Date.now() - 15 * 24 * 60 * 60 * 1000).toISOString(),
+    notes: 'Main banking account',
+    category: 'Financial',
+    isFavorite: true,
+  },
+];
+
+// Mock security score data
+export const mockSecurityScore = {
+  overall: 85,
+  passwordStrength: 90,
+  authenticationSecurity: 80,
+  darkWebExposure: 95,
+  deviceSecurity: 75,
+  browserSecurity: 85,
+};
+
+// Mock security alerts
+export const mockSecurityAlerts = [
+  {
+    id: 'alert1',
+    severity: 'high',
+    message: 'Suspicious login attempt detected from unknown location',
+    timestamp: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
+    resolved: false,
+    category: 'login',
+    details: 'IP: 123.456.789.0, Location: Unknown',
+  },
+  {
+    id: 'alert2',
+    severity: 'medium',
+    message: 'Password reused across multiple sites',
+    timestamp: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
+    resolved: false,
+    category: 'password',
+    details: 'Same password used for social-media.com and example.com',
+  },
+  {
+    id: 'alert3',
+    severity: 'low',
+    message: 'Browser extension requesting excessive permissions',
+    timestamp: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(),
+    resolved: true,
+    category: 'browser',
+    details: 'Extension "WebHelper" requesting access to all sites and data',
+  },
+];
+
+// Mock blockchain documents
+export const mockBlockchainDocuments = [
+  {
+    id: 'doc1',
+    name: 'Important Contract.pdf',
+    hash: '8a5da52ed126447d39bee5b3439d7dbceb3',
+    timestamp: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(),
+    verified: true,
+    blockchain: 'Ethereum',
+    transactionId: '0x5da19175de33d13254842d4d493a77ddf3ce547b66dc3a0850d3cbd676c8ecab',
+  },
+  {
+    id: 'doc2',
+    name: 'Certificate of Ownership.pdf',
+    hash: '2c26b46b68ffc68ff99b453c1d30413413422d706483bfa0f98a5e886266e7ae',
+    timestamp: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString(),
+    verified: true,
+    blockchain: 'Ethereum',
+    transactionId: '0xd67a447fd0acc8364687e176ea38a2b435202da5a52362c249d143d6c82a0f22',
+  },
+  {
+    id: 'doc3',
+    name: 'Digital Signature.sig',
+    hash: 'fcde2b2edba56bf408601fb721fe9b5c338d10ee429ea04fae5511b68fbf8fb9',
+    timestamp: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
+    verified: false,
+    blockchain: 'Ethereum',
+  },
+];
+
+// Mock phishing checks
+export const mockPhishingChecks = [
+  {
+    url: 'https://legitimate-bank.com',
+    status: 'safe',
+    score: 10,
+    details: [
+      'Domain age: 15 years',
+      'SSL certificate valid',
+      'No suspicious redirects',
+    ],
+    timestamp: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(),
+  },
+  {
+    url: 'https://suspicious-banking.site',
+    status: 'suspicious',
+    score: 60,
+    details: [
+      'Domain registered recently',
+      'Similar to legitimate banking site',
+      'Unusual TLD (.site)',
+    ],
+    timestamp: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(),
+  },
+  {
+    url: 'https://obvious-phishing-attempt.xyz',
+    status: 'dangerous',
+    score: 95,
+    details: [
+      'Known phishing domain',
+      'Reported by multiple users',
+      'Contains malicious code',
+    ],
+    timestamp: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(),
+  },
+];
+
+// Mock payment methods
+export const mockPaymentMethods = [
+  {
+    id: 'payment1',
+    type: 'card',
+    name: 'Visa ending in 4242',
+    lastChecked: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(),
+    status: 'secure',
+    alerts: [],
+  },
+  {
+    id: 'payment2',
+    type: 'bank',
+    name: 'Checking Account ****1234',
+    lastChecked: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(),
+    status: 'secure',
+    alerts: [],
+  },
+  {
+    id: 'payment3',
+    type: 'wallet',
+    name: 'Digital Wallet',
+    lastChecked: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(),
+    status: 'at-risk',
+    alerts: ['Recent data breach reported for this provider'],
+  },
+];
+
 // Password Health mocks
 export const passwordHealthMock = {
   getPasswordHealth: async () => {

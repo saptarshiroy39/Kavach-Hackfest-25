@@ -68,13 +68,13 @@ export default {
 				},
 				// Security-themed colors
 				security: {
-					primary: '#0a84ff',
-					secondary: '#30d158',
-					warning: '#ff9f0a',
-					danger: '#ff453a',
-					info: '#64d2ff',
-					dark: '#1c1c1e',
-					light: '#f2f2f7',
+					primary: 'var(--security-primary)',
+					secondary: 'var(--security-secondary)',
+					warning: 'var(--security-warning)',
+					danger: 'var(--security-danger)',
+					info: 'var(--security-info)',
+					dark: 'var(--security-dark)',
+					light: 'var(--security-light)',
 				}
 			},
 			borderRadius: {
@@ -105,19 +105,19 @@ export default {
 				},
 				'shield-glow': {
 					'0%': {
-						filter: 'drop-shadow(0 0 0.5rem rgba(10, 132, 255, 0.3))'
+						filter: 'drop-shadow(0 0 0.5rem rgba(0, 112, 243, 0.3))'
 					},
 					'25%': {
-						filter: 'drop-shadow(0 0 1rem rgba(10, 132, 255, 0.5))'
+						filter: 'drop-shadow(0 0 1rem rgba(0, 112, 243, 0.5))'
 					},
 					'50%': {
-						filter: 'drop-shadow(0 0 2rem rgba(10, 132, 255, 0.9))'
+						filter: 'drop-shadow(0 0 2rem rgba(0, 112, 243, 0.9))'
 					},
 					'75%': {
-						filter: 'drop-shadow(0 0 1rem rgba(10, 132, 255, 0.5))'
+						filter: 'drop-shadow(0 0 1rem rgba(0, 112, 243, 0.5))'
 					},
 					'100%': {
-						filter: 'drop-shadow(0 0 0.5rem rgba(10, 132, 255, 0.3))'
+						filter: 'drop-shadow(0 0 0.5rem rgba(0, 112, 243, 0.3))'
 					}
 				},
         'bounce': {
@@ -149,6 +149,41 @@ export default {
             opacity: '1',
             transform: 'scale(1)'
           }
+        },
+        'slide-up-fade': {
+          '0%': { 
+            opacity: '0',
+            transform: 'translateY(10px)'
+          },
+          '100%': {
+            opacity: '1',
+            transform: 'translateY(0)'
+          }
+        },
+        'slide-down-fade': {
+          '0%': { 
+            opacity: '0',
+            transform: 'translateY(-10px)'
+          },
+          '100%': {
+            opacity: '1',
+            transform: 'translateY(0)'
+          }
+        },
+        'zoom-in': {
+          '0%': { 
+            opacity: '0',
+            transform: 'scale(0.95)'
+          },
+          '100%': {
+            opacity: '1',
+            transform: 'scale(1)'
+          }
+        },
+        'subtle-shake': {
+          '0%, 100%': { transform: 'translateX(0)' },
+          '25%': { transform: 'translateX(-2px)' },
+          '75%': { transform: 'translateX(2px)' }
         }
 			},
 			animation: {
@@ -160,21 +195,54 @@ export default {
         'bounce': 'bounce 2s infinite ease-in-out',
         'float': 'float 3s infinite ease-in-out',
         'spin-slow': 'spin-slow 8s linear infinite',
-        'bob': 'bob 2s infinite ease-in-out'
+        'bob': 'bob 2s infinite ease-in-out',
+        'slide-up-fade': 'slide-up-fade 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards',
+        'slide-down-fade': 'slide-down-fade 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards',
+        'zoom-in': 'zoom-in 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) forwards',
+        'subtle-shake': 'subtle-shake 0.5s ease-in-out'
 			},
       transitionProperty: {
         'width': 'width',
         'spacing': 'margin, padding',
+        'height': 'height',
+        'colors': 'color, background-color, border-color, text-decoration-color, fill, stroke',
+        'opacity': 'opacity',
+        'shadow': 'box-shadow, filter',
+        'transform': 'transform',
+      },
+      transitionTimingFunction: {
+        'bounce': 'cubic-bezier(0.34, 1.56, 0.64, 1)',
+        'soft': 'cubic-bezier(0.16, 1, 0.3, 1)',
+        'fancy': 'cubic-bezier(0.76, 0, 0.24, 1)'
       },
 			backgroundImage: {
-				'security-gradient': 'linear-gradient(to right, #0a84ff, #30d158)',
-				'dark-gradient': 'linear-gradient(to right, #1c1c1e, #2c2c2e)',
-        'glass-gradient': 'linear-gradient(to right bottom, rgba(255, 255, 255, 0.8), rgba(255, 255, 255, 0.2))',
+				'security-gradient': 'linear-gradient(to right, var(--security-primary), var(--security-secondary))',
+				'dark-gradient': 'linear-gradient(to right, var(--security-dark), #2c2c2e)',
+        'glass-gradient': 'linear-gradient(to right bottom, rgba(255, 255, 255, 0.85), rgba(255, 255, 255, 0.3))',
         'dark-glass-gradient': 'linear-gradient(to right bottom, rgba(0, 0, 0, 0.8), rgba(0, 0, 0, 0.2))',
-        'cool-blue': 'linear-gradient(135deg, #00c6ff 0%, #0072ff 100%)',
-        'cool-green': 'linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)',
-        'cool-purple': 'linear-gradient(135deg, #7028e4 0%, #e5b2ca 100%)',
-			}
+        'cool-blue': 'linear-gradient(135deg, #0070f3 0%, #60a5fa 100%)',
+        'cool-green': 'linear-gradient(135deg, #10b981 0%, #34d399 100%)',
+        'cool-purple': 'linear-gradient(135deg, #6366f1 0%, #a78bfa 100%)',
+        'modern-card': 'linear-gradient(120deg, rgba(255, 255, 255, 0.8), rgba(255, 255, 255, 0.4))',
+        'modern-card-dark': 'linear-gradient(120deg, rgba(40, 40, 50, 0.8), rgba(20, 20, 30, 0.4))',
+        'subtle-pattern': 'repeating-linear-gradient(45deg, rgba(255, 255, 255, 0.03) 0px, rgba(255, 255, 255, 0.03) 1px, transparent 1px, transparent 4px)',
+        'subtle-pattern-dark': 'repeating-linear-gradient(45deg, rgba(255, 255, 255, 0.02) 0px, rgba(255, 255, 255, 0.02) 1px, transparent 1px, transparent 4px)',
+        'blur-background': 'linear-gradient(135deg, rgba(255, 255, 255, 0.5) 0%, rgba(255, 255, 255, 0.1) 100%)',
+        'blur-background-dark': 'linear-gradient(135deg, rgba(20, 20, 30, 0.5) 0%, rgba(10, 10, 15, 0.1) 100%)'
+			},
+      boxShadow: {
+        'soft-sm': '0 2px 10px 0 rgba(0, 0, 0, 0.05)',
+        'soft': '0 5px 30px 0 rgba(0, 0, 0, 0.1)',
+        'soft-lg': '0 10px 50px 0 rgba(0, 0, 0, 0.1)',
+        'soft-xl': '0 15px 60px 0 rgba(0, 0, 0, 0.1)',
+        'glass': '0 8px 32px 0 rgba(0, 0, 0, 0.05)',
+        'inner-glow': 'inset 0 0 10px 0 rgba(255, 255, 255, 0.5)',
+        'inner-glow-dark': 'inset 0 0 10px 0 rgba(0, 0, 0, 0.3)',
+        'button-glow': '0 0 15px 5px rgba(0, 112, 243, 0.3)',
+        'button-glow-dark': '0 0 15px 5px rgba(59, 130, 246, 0.3)',
+        'sidebar': '5px 0 30px 0 rgba(0, 0, 0, 0.05)',
+        'sidebar-dark': '5px 0 30px 0 rgba(0, 0, 0, 0.2)'
+      }
 		}
 	},
 	plugins: [require("tailwindcss-animate")],

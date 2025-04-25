@@ -21,12 +21,13 @@ import {
   Loader2,
   Eye,
   MessageSquare,
-  Clock
+  Clock,
+  Mail
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { useToast } from '@/hooks/use-toast';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useLanguage } from '@/hooks/use-language';
 import { mockApi } from '@/lib/mockDb';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog';
@@ -49,25 +50,62 @@ const ErrorBoundary = ({ children, fallback }) => {
   return hasError ? fallback : children;
 };
 
-// Simple Tabs Implementation
-const SimpleTabs = ({ tabs, activeTab, setActiveTab }) => {
+// Enhance the SecurityTabs component
+const SecurityTabs = ({ tabs, activeTab, setActiveTab }) => {
   return (
-    <div className="border-b mb-6">
-      <div className="flex overflow-x-auto space-x-2">
-        {tabs.map((tab) => (
-          <button 
-            key={tab.value}
-            className={`px-6 py-3 font-medium text-sm whitespace-nowrap rounded-t-lg transition-colors ${
-              activeTab === tab.value 
-                ? 'border-b-2 border-security-primary text-security-primary bg-muted/50' 
-                : 'text-muted-foreground hover:bg-muted/30'
-            }`}
-            onClick={() => setActiveTab(tab.value)}
-          >
-            {tab.label}
-          </button>
-        ))}
+    <div className="relative mb-6">
+      <div className="border-0 rounded-xl overflow-hidden bg-glass-gradient dark:bg-dark-glass-gradient shadow-soft backdrop-blur-sm">
+        <div className="flex overflow-x-auto scrollbar-hide px-1 py-1.5">
+          {tabs.map((tab) => (
+            <button 
+              key={tab.value}
+              className={`
+                px-5 py-3 font-medium text-sm whitespace-nowrap rounded-lg transition-all duration-300 mx-1 first:ml-0 last:mr-0
+                flex items-center gap-2 flex-shrink-0 relative
+                ${
+                  activeTab === tab.value 
+                    ? 'bg-security-primary text-white shadow-button-glow dark:shadow-button-glow-dark transform-gpu hover:scale-[1.02] active:scale-[0.98] active-tab' 
+                    : 'text-muted-foreground hover:bg-white/20 dark:hover:bg-white/10 hover:text-foreground'
+                }
+              `}
+              onClick={() => setActiveTab(tab.value)}
+              style={
+                activeTab === tab.value 
+                  ? { 
+                      background: `linear-gradient(90deg, var(--security-primary) 0%, var(--security-primary) 100%)`,
+                      backgroundSize: '200% 100%',
+                      backgroundPosition: 'right',
+                      overflow: 'hidden',
+                      position: 'relative',
+                    } 
+                  : {}
+              }
+            >
+              {tab.icon && (
+                <span className={activeTab === tab.value ? 'animate-pulse-slow' : ''}>
+                  {tab.icon}
+                </span>
+              )}
+              {tab.label}
+              {activeTab === tab.value && (
+                <motion.span
+                  layoutId="activeTabIndicator"
+                  className="absolute -bottom-0.5 left-1/2 transform -translate-x-1/2 w-1.5 h-1.5 bg-white rounded-full"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ duration: 0.3 }}
+                />
+              )}
+              {activeTab === tab.value && (
+                <span className="absolute inset-0 overflow-hidden">
+                  <span className="absolute inset-0 bg-gradient-to-r from-transparent via-white/25 to-transparent animate-shimmer" style={{ transform: 'translateX(-100%)' }}></span>
+                </span>
+              )}
+            </button>
+          ))}
+        </div>
       </div>
+      <div className="w-full h-4 bg-modern-card dark:bg-modern-card-dark blur-md opacity-40 absolute -bottom-2 left-0 rounded-full z-[-1]"></div>
     </div>
   );
 };
@@ -240,11 +278,31 @@ const Dashboard = () => {
   };
 
   const tabs = [
-    { value: 'overview', label: 'Overview' },
-    { value: 'password-health', label: 'Password Health' },
-    { value: 'dark-web', label: 'Dark Web' },
-    { value: 'privacy', label: 'Privacy Report' },
-    { value: 'messaging', label: 'Encrypted Messaging' }
+    { 
+      value: 'overview', 
+      label: 'Overview',
+      icon: <Shield className="w-4 h-4" />
+    },
+    { 
+      value: 'password-health', 
+      label: 'Password Health',
+      icon: <Lock className="w-4 h-4" />
+    },
+    { 
+      value: 'dark-web', 
+      label: 'Dark Web',
+      icon: <Eye className="w-4 h-4" />
+    },
+    { 
+      value: 'privacy', 
+      label: 'Privacy Report',
+      icon: <UserIcon className="w-4 h-4" />
+    },
+    { 
+      value: 'messaging', 
+      label: 'Encrypted Messaging',
+      icon: <Mail className="w-4 h-4" />
+    }
   ];
 
   if (isLoading) {
@@ -389,196 +447,235 @@ const Dashboard = () => {
           </SecurityCard>
 
           {/* Tabs for Security Features */}
-          <div className="mb-4 border p-2 rounded-lg bg-background shadow-sm">
-            <SimpleTabs 
-              tabs={tabs}
-              activeTab={activeTab}
-              setActiveTab={setActiveTab}
-            />
-          </div>
+          <SecurityTabs
+            tabs={tabs}
+            activeTab={activeTab}
+            setActiveTab={setActiveTab}
+          />
 
           {/* Tab Content */}
           <div>
-            {activeTab === 'overview' && (
-              <div className="space-y-6">
-                {/* Security overview cards */}
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  <SecurityCard
-                    title="Authentication"
-                    icon={<Lock className="w-5 h-5 text-security-primary" />}
-                    status="warning"
-                  >
-                    <div className="space-y-4">
-                      <div className="flex items-center justify-between">
-                        <span className="text-sm">Two-Factor Auth</span>
-                        <SecurityBadge 
-                          status="danger" 
-                          text="Disabled"
-                        />
+            <AnimatePresence mode="wait">
+              {activeTab === 'overview' && (
+                <motion.div 
+                  key="overview-tab"
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -10 }}
+                  transition={{ duration: 0.3, ease: [0.34, 1.56, 0.64, 1] }}
+                  className="space-y-6"
+                >
+                  {/* Security overview cards */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <SecurityCard
+                      title="Authentication"
+                      icon={<Lock className="w-5 h-5 text-security-primary" />}
+                      status="warning"
+                    >
+                      <div className="space-y-4">
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm">Two-Factor Auth</span>
+                          <SecurityBadge 
+                            status="danger" 
+                            text="Disabled"
+                          />
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm">Biometric</span>
+                          <SecurityBadge 
+                            status="warning" 
+                            text="Disabled"
+                          />
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm">Blockchain Verify</span>
+                          <SecurityBadge 
+                            status="warning" 
+                            text="Disabled"
+                          />
+                        </div>
+                        <Button 
+                          className="w-full mt-2" 
+                          variant="outline" 
+                          size="sm"
+                          onClick={() => navigate('/authentication')}
+                        >
+                          <span>Manage</span>
+                          <ArrowRight className="ml-2 w-4 h-4" />
+                        </Button>
                       </div>
-                      <div className="flex items-center justify-between">
-                        <span className="text-sm">Biometric</span>
-                        <SecurityBadge 
-                          status="warning" 
-                          text="Disabled"
-                        />
-                      </div>
-                      <div className="flex items-center justify-between">
-                        <span className="text-sm">Blockchain Verify</span>
-                        <SecurityBadge 
-                          status="warning" 
-                          text="Disabled"
-                        />
-                      </div>
-                      <Button 
-                        className="w-full mt-2" 
-                        variant="outline" 
-                        size="sm"
-                        onClick={() => navigate('/authentication')}
-                      >
-                        <span>Manage</span>
-                        <ArrowRight className="ml-2 w-4 h-4" />
-                      </Button>
-                    </div>
-                  </SecurityCard>
+                    </SecurityCard>
 
-                  <SecurityCard
-                    title="Password Vault"
-                    icon={<Key className="w-5 h-5 text-security-primary" />}
-                    status={securityStatus?.passwordHealth && securityStatus.passwordHealth >= 80 ? 'secure' : 'warning'}
-                  >
-                    <div className="space-y-4">
-                      <div className="flex items-center justify-between">
-                        <span className="text-sm">Total Passwords</span>
-                        <span className="font-medium">5</span>
+                    <SecurityCard
+                      title="Password Vault"
+                      icon={<Key className="w-5 h-5 text-security-primary" />}
+                      status={securityStatus?.passwordHealth && securityStatus.passwordHealth >= 80 ? 'secure' : 'warning'}
+                    >
+                      <div className="space-y-4">
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm">Total Passwords</span>
+                          <span className="font-medium">5</span>
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm">Weak Passwords</span>
+                          <span className="text-security-danger font-medium">{securityStatus?.weakPasswords || 0}</span>
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm">Last Updated</span>
+                          <span className="text-xs text-muted-foreground">2 days ago</span>
+                        </div>
+                        <Button 
+                          className="w-full mt-2" 
+                          variant="outline" 
+                          size="sm"
+                          onClick={() => navigate('/password-vault')}
+                        >
+                          <span>Open Vault</span>
+                          <ArrowRight className="ml-2 w-4 h-4" />
+                        </Button>
                       </div>
-                      <div className="flex items-center justify-between">
-                        <span className="text-sm">Weak Passwords</span>
-                        <span className="text-security-danger font-medium">{securityStatus?.weakPasswords || 0}</span>
-                      </div>
-                      <div className="flex items-center justify-between">
-                        <span className="text-sm">Last Updated</span>
-                        <span className="text-xs text-muted-foreground">2 days ago</span>
-                      </div>
-                      <Button 
-                        className="w-full mt-2" 
-                        variant="outline" 
-                        size="sm"
-                        onClick={() => navigate('/password-vault')}
-                      >
-                        <span>Open Vault</span>
-                        <ArrowRight className="ml-2 w-4 h-4" />
-                      </Button>
-                    </div>
-                  </SecurityCard>
+                    </SecurityCard>
 
-                  <SecurityCard
-                    title="Account Settings"
-                    icon={<UserIcon className="w-5 h-5 text-security-primary" />}
+                    <SecurityCard
+                      title="Account Settings"
+                      icon={<UserIcon className="w-5 h-5 text-security-primary" />}
+                      status="secure"
+                    >
+                      <div className="space-y-4">
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm">Email Verification</span>
+                          <SecurityBadge 
+                            status="secure" 
+                            text="Verified"
+                          />
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm">Recovery Email</span>
+                          <SecurityBadge 
+                            status="secure" 
+                            text="Set"
+                          />
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm">Account Activity</span>
+                          <span className="text-xs text-muted-foreground">Normal</span>
+                        </div>
+                        <Button 
+                          className="w-full mt-2" 
+                          variant="outline" 
+                          size="sm"
+                          onClick={() => navigate('/settings')}
+                        >
+                          <span>Manage Settings</span>
+                          <ArrowRight className="ml-2 w-4 h-4" />
+                        </Button>
+                      </div>
+                    </SecurityCard>
+                  </div>
+
+                  <SecurityCard 
+                    title="Recent Events"
+                    icon={<Bell className="w-5 h-5 text-security-primary" />}
                     status="secure"
                   >
                     <div className="space-y-4">
-                      <div className="flex items-center justify-between">
-                        <span className="text-sm">Email Verification</span>
-                        <SecurityBadge 
-                          status="secure" 
-                          text="Verified"
-                        />
-                      </div>
-                      <div className="flex items-center justify-between">
-                        <span className="text-sm">Recovery Email</span>
-                        <SecurityBadge 
-                          status="secure" 
-                          text="Set"
-                        />
-                      </div>
-                      <div className="flex items-center justify-between">
-                        <span className="text-sm">Account Activity</span>
-                        <span className="text-xs text-muted-foreground">Normal</span>
-                      </div>
+                      {recentEvents.map((event, index) => (
+                        <div key={index} className="flex items-start">
+                          <div className={`w-8 h-8 rounded-full flex items-center justify-center mr-3 ${
+                            event.severity === 'medium' 
+                              ? 'bg-security-warning/10' 
+                              : event.severity === 'high' 
+                              ? 'bg-security-danger/10' 
+                              : 'bg-security-success/10'
+                          }`}>
+                            {event.severity === 'medium' ? (
+                              <AlertCircle className="w-4 h-4 text-security-warning" />
+                            ) : event.severity === 'high' ? (
+                              <AlertCircle className="w-4 h-4 text-security-danger" />
+                            ) : (
+                              <CheckCircle2 className="w-4 h-4 text-security-success" />
+                            )}
+                          </div>
+                          <div className="flex-1">
+                            <p className="text-sm font-medium">{formatEventType(event.type)}</p>
+                            <p className="text-xs text-muted-foreground">{event.description}</p>
+                            <div className="flex items-center mt-1">
+                              <span className="text-xs text-muted-foreground">{formatDate(event.timestamp)}</span>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
                       <Button 
                         className="w-full mt-2" 
                         variant="outline" 
                         size="sm"
-                        onClick={() => navigate('/settings')}
+                        onClick={() => navigate('/notifications')}
                       >
-                        <span>Manage Settings</span>
+                        <span>View All Events</span>
                         <ArrowRight className="ml-2 w-4 h-4" />
                       </Button>
                     </div>
                   </SecurityCard>
-                </div>
-
-                <SecurityCard 
-                  title="Recent Events"
-                  icon={<Bell className="w-5 h-5 text-security-primary" />}
-                  status="secure"
+                </motion.div>
+              )}
+              
+              {activeTab === 'password-health' && (
+                <motion.div
+                  key="password-health-tab"
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -10 }}
+                  transition={{ duration: 0.3, ease: [0.34, 1.56, 0.64, 1] }}
                 >
-                  <div className="space-y-4">
-                    {recentEvents.map((event, index) => (
-                      <div key={index} className="flex items-start">
-                        <div className={`w-8 h-8 rounded-full flex items-center justify-center mr-3 ${
-                          event.severity === 'medium' 
-                            ? 'bg-security-warning/10' 
-                            : event.severity === 'high' 
-                            ? 'bg-security-danger/10' 
-                            : 'bg-security-success/10'
-                        }`}>
-                          {event.severity === 'medium' ? (
-                            <AlertCircle className="w-4 h-4 text-security-warning" />
-                          ) : event.severity === 'high' ? (
-                            <AlertCircle className="w-4 h-4 text-security-danger" />
-                          ) : (
-                            <CheckCircle2 className="w-4 h-4 text-security-success" />
-                          )}
-                        </div>
-                        <div className="flex-1">
-                          <p className="text-sm font-medium">{formatEventType(event.type)}</p>
-                          <p className="text-xs text-muted-foreground">{event.description}</p>
-                          <div className="flex items-center mt-1">
-                            <span className="text-xs text-muted-foreground">{formatDate(event.timestamp)}</span>
-                          </div>
-                        </div>
+                  <PasswordHealthAnalysis />
+                </motion.div>
+              )}
+
+              {activeTab === 'dark-web' && (
+                <motion.div
+                  key="dark-web-tab"
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -10 }}
+                  transition={{ duration: 0.3, ease: [0.34, 1.56, 0.64, 1] }}
+                >
+                  <DarkWebMonitoring />
+                </motion.div>
+              )}
+
+              {activeTab === 'privacy' && (
+                <motion.div
+                  key="privacy-tab"
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -10 }}
+                  transition={{ duration: 0.3, ease: [0.34, 1.56, 0.64, 1] }}
+                >
+                  <PrivacyReport />
+                </motion.div>
+              )}
+
+              {activeTab === 'messaging' && (
+                <motion.div
+                  key="messaging-tab"
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -10 }}
+                  transition={{ duration: 0.3, ease: [0.34, 1.56, 0.64, 1] }}
+                >
+                  <ErrorBoundary
+                    fallback={
+                      <div className="p-6 text-center">
+                        <h2 className="text-xl font-medium mb-4">Encrypted Messaging</h2>
+                        <p className="text-muted-foreground mb-4">This feature is currently unavailable.</p>
                       </div>
-                    ))}
-                    <Button 
-                      className="w-full mt-2" 
-                      variant="outline" 
-                      size="sm"
-                      onClick={() => navigate('/notifications')}
-                    >
-                      <span>View All Events</span>
-                      <ArrowRight className="ml-2 w-4 h-4" />
-                    </Button>
-                  </div>
-                </SecurityCard>
-              </div>
-            )}
-            
-            {activeTab === 'password-health' && (
-              <PasswordHealthAnalysis />
-            )}
-
-            {activeTab === 'dark-web' && (
-              <DarkWebMonitoring />
-            )}
-
-            {activeTab === 'privacy' && (
-              <PrivacyReport />
-            )}
-
-            {activeTab === 'messaging' && (
-              <ErrorBoundary
-                fallback={
-                  <div className="p-6 text-center">
-                    <h2 className="text-xl font-medium mb-4">Encrypted Messaging</h2>
-                    <p className="text-muted-foreground mb-4">This feature is currently unavailable.</p>
-                  </div>
-                }
-              >
-                <EncryptedMessaging />
-              </ErrorBoundary>
-            )}
+                    }
+                  >
+                    <EncryptedMessaging />
+                  </ErrorBoundary>
+                </motion.div>
+              )}
+            </AnimatePresence>
           </div>
         </div>
 

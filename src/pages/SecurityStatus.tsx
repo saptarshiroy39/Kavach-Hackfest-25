@@ -122,11 +122,13 @@ export default function SecurityStatus() {
         currentProgress = 100;
         setTimeout(() => {
           setIsScanningDialogOpen(false);
+          setSecurityCheckProgress(100);
           setShowSecurityCheckDialog(true);
           toast({
             title: "Scan Complete",
             description: "Your security status has been updated.",
           });
+          setIsRunningCheck(false);
         }, 500);
       }
       
@@ -587,8 +589,17 @@ export default function SecurityStatus() {
           <div className="py-4">
             <Progress value={securityCheckProgress} className="h-2 mb-2" />
             <div className="flex justify-between text-xs text-muted-foreground mt-1">
-              <span>Checking security features...</span>
-              <span>{securityCheckProgress}%</span>
+              {securityCheckProgress === 100 ? (
+                <>
+                  <span>Security features Checked...</span>
+                  <span>100%</span>
+                </>
+              ) : (
+                <>
+                  <span>Checking security features...</span> 
+                  <span>{Math.min(Math.round(securityCheckProgress), 100)}%</span>
+                </>
+              )}
             </div>
 
             {securityCheckProgress === 100 && (
@@ -612,13 +623,6 @@ export default function SecurityStatus() {
             )}
           </div>
           <DialogFooter>
-            <Button 
-              variant="outline" 
-              onClick={() => setShowSecurityCheckDialog(false)}
-              disabled={securityCheckProgress < 100 && isRunningCheck}
-            >
-              {securityCheckProgress < 100 ? 'Close' : 'Done'}
-            </Button>
             {securityCheckProgress === 100 && (
               <Button onClick={() => navigate('/security-verification')}>
                 View Detailed Report

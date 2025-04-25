@@ -4,6 +4,7 @@
 
 @layer base {
   :root {
+    /* Modern color palette - Light Mode */
     --background: 210 100% 98%;
     --foreground: 222.2 84% 4.9%;
 
@@ -13,16 +14,19 @@
     --popover: 0 0% 100%;
     --popover-foreground: 222.2 84% 4.9%;
 
-    --primary: 212 100% 47%;
+    /* More vibrant primary blue */
+    --primary: 214 100% 52%;
     --primary-foreground: 210 40% 98%;
 
-    --secondary: 142 52% 50%;
+    /* Richer secondary green */
+    --secondary: 142 76% 45%;
     --secondary-foreground: 222.2 47.4% 11.2%;
 
     --muted: 210 40% 96.1%;
     --muted-foreground: 215.4 16.3% 46.9%;
 
-    --accent: 200 98% 39%;
+    /* Deeper accent blue */
+    --accent: 200 98% 42%;
     --accent-foreground: 222.2 47.4% 11.2%;
 
     --destructive: 0 84.2% 60.2%;
@@ -30,53 +34,59 @@
 
     --border: 214.3 31.8% 91.4%;
     --input: 214.3 31.8% 91.4%;
-    --ring: 212 100% 47%;
+    --ring: 214 100% 52%;
 
     --radius: 0.75rem;
 
     /* Updated sidebar colors for light mode */
     --sidebar-background: 0 0% 100%;
     --sidebar-foreground: 222.2 84% 4.9%;
-    --sidebar-primary: 212 100% 47%;
+    --sidebar-primary: 214 100% 52%;
     --sidebar-primary-foreground: 0 0% 98%;
     --sidebar-accent: 210 40% 96.1%;
     --sidebar-accent-foreground: 222.2 47.4% 11.2%;
     --sidebar-border: 214.3 31.8% 91.4%;
-    --sidebar-ring: 212 100% 47%;
+    --sidebar-ring: 214 100% 52%;
     
-    --security-primary: #0a84ff;
-    --security-secondary: #30d158;
-    --security-warning: #ff9f0a;
-    --security-danger: #ff453a;
-    --security-info: #64d2ff;
-    --security-dark: #1c1c1e;
-    --security-light: #f2f2f7;
+    /* More vibrant security colors */
+    --security-primary: #0070f3;
+    --security-secondary: #10b981;
+    --security-warning: #f59e0b;
+    --security-danger: #ef4444;
+    --security-info: #3b82f6;
+    --security-dark: #111827;
+    --security-light: #f9fafb;
     
-    --shadow-color: rgba(10, 132, 255, 0.1);
-    --border-color: rgba(10, 132, 255, 0.2);
-    --focus-ring: rgba(10, 132, 255, 0.5);
+    --shadow-color: rgba(0, 112, 243, 0.15);
+    --border-color: rgba(0, 112, 243, 0.25);
+    --focus-ring: rgba(0, 112, 243, 0.5);
   }
 
   .dark {
-    --background: 214 37% 10%;
+    /* Modern color palette - Dark Mode */
+    --background: 220 40% 8%;
     --foreground: 210 40% 98%;
 
-    --card: 217 33% 18%;
+    /* Richer card background */
+    --card: 222 35% 12%;
     --card-foreground: 210 40% 98%;
 
-    --popover: 217 33% 18%;
+    --popover: 222 35% 12%;
     --popover-foreground: 210 40% 98%;
 
-    --primary: 212 100% 47%;
+    /* More vibrant primary blue in dark mode */
+    --primary: 214 100% 57%;
     --primary-foreground: 210 40% 98%;
 
-    --secondary: 142 52% 50%;
+    /* Richer secondary green in dark mode */
+    --secondary: 142 76% 45%;
     --secondary-foreground: 210 40% 98%;
 
     --muted: 217.2 32.6% 17.5%;
     --muted-foreground: 215 20.2% 65.1%;
 
-    --accent: 200 98% 39%;
+    /* Deeper accent blue in dark mode */
+    --accent: 200 98% 50%;
     --accent-foreground: 210 40% 98%;
 
     --destructive: 0 62.8% 30.6%;
@@ -84,21 +94,30 @@
 
     --border: 217.2 32.6% 17.5%;
     --input: 217.2 32.6% 17.5%;
-    --ring: 212 100% 47%;
+    --ring: 214 100% 57%;
     
-    /* Keep dark sidebar colors for dark mode */
-    --sidebar-background: 214 37% 10%;
+    /* Updated sidebar colors for dark mode */
+    --sidebar-background: 222 40% 10%;
     --sidebar-foreground: 210 40% 98%;
-    --sidebar-primary: 212 100% 47%;
+    --sidebar-primary: 214 100% 57%;
     --sidebar-primary-foreground: 0 0% 98%;
-    --sidebar-accent: 217 33% 18%;
+    --sidebar-accent: 222 35% 18%;
     --sidebar-accent-foreground: 210 40% 98%;
-    --sidebar-border: 217 33% 18%;
-    --sidebar-ring: 212 100% 47%;
+    --sidebar-border: 225 30% 15%;
+    --sidebar-ring: 214 100% 57%;
     
-    --shadow-color: rgba(0, 0, 0, 0.2);
+    /* More vibrant security colors for dark mode */
+    --security-primary: #3b82f6;
+    --security-secondary: #10b981;
+    --security-warning: #f59e0b;
+    --security-danger: #ef4444;
+    --security-info: #60a5fa;
+    --security-dark: #111827;
+    --security-light: #f9fafb;
+    
+    --shadow-color: rgba(0, 0, 0, 0.3);
     --border-color: rgba(255, 255, 255, 0.1);
-    --focus-ring: rgba(10, 132, 255, 0.6);
+    --focus-ring: rgba(59, 130, 246, 0.6);
   }
 }
 
@@ -110,6 +129,7 @@
   body {
     @apply bg-background text-foreground bg-gradient-to-br from-background to-background/70 font-montserrat;
     font-feature-settings: "ss01", "ss02", "cv01", "cv02", "cv03";
+    transition: background-color 0.3s ease, color 0.3s ease;
   }
   
   html {
@@ -119,23 +139,27 @@
 
 @layer components {
   .security-card {
-    @apply relative backdrop-blur-xl bg-white/80 dark:bg-card/50 rounded-xl shadow-lg overflow-hidden border border-white/20 dark:border-white/5 hover:shadow-xl transition-all duration-300 hover:translate-y-[-5px];
+    @apply relative backdrop-blur-xl bg-white/90 dark:bg-card/60 rounded-xl shadow-lg overflow-hidden border border-white/20 dark:border-white/5 hover:shadow-xl transition-all duration-300 hover:translate-y-[-5px];
+    transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
   }
   
   .security-button {
-    @apply flex items-center justify-center gap-2 rounded-lg font-medium transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-security-primary/50 active:scale-95 hover:scale-105;
+    @apply flex items-center justify-center gap-2 rounded-lg font-medium transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-primary/50 active:scale-95 hover:scale-105;
   }
   
   .security-button-primary {
     @apply security-button bg-security-primary text-white hover:bg-security-primary/90;
+    box-shadow: 0 4px 14px 0 rgba(0, 112, 243, 0.25);
   }
   
   .security-button-secondary {
     @apply security-button bg-security-secondary text-white hover:bg-security-secondary/90;
+    box-shadow: 0 4px 14px 0 rgba(16, 185, 129, 0.25);
   }
   
   .security-button-danger {
     @apply security-button bg-security-danger text-white hover:bg-security-danger/90;
+    box-shadow: 0 4px 14px 0 rgba(239, 68, 68, 0.25);
   }
   
   .security-button-outline {
@@ -143,7 +167,7 @@
   }
   
   .security-input {
-    @apply block w-full rounded-lg border border-white/20 bg-white/20 dark:bg-white/5 backdrop-blur-xl px-4 py-2 text-foreground shadow-sm focus:outline-none focus:ring-2 focus:ring-security-primary/50;
+    @apply block w-full rounded-lg border border-white/20 bg-white/20 dark:bg-white/5 backdrop-blur-xl px-4 py-2 text-foreground shadow-sm focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all duration-200;
   }
 
   .security-gradient-text {
@@ -151,11 +175,11 @@
   }
   
   .glass-card {
-    @apply backdrop-blur-xl bg-white/20 dark:bg-black/20 border border-white/10 dark:border-white/5 shadow-lg;
+    @apply backdrop-blur-xl bg-white/30 dark:bg-black/30 border border-white/10 dark:border-white/5 shadow-lg transition-all duration-300 hover:shadow-xl;
   }
   
   .glass-effect {
-    @apply backdrop-blur-xl bg-white/50 dark:bg-black/30 border border-white/20 dark:border-white/10 shadow-lg;
+    @apply backdrop-blur-xl bg-white/70 dark:bg-black/40 border border-white/20 dark:border-white/10 shadow-lg transition-all duration-300;
   }
   
   .floating {
@@ -164,34 +188,59 @@
   
   .bounce-hover {
     @apply transition-transform duration-300 hover:scale-105 active:scale-95;
+    transition-timing-function: cubic-bezier(0.34, 1.56, 0.64, 1);
   }
 
   .pop-in {
-    animation: pop-in 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+    animation: pop-in 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
   }
 
   .slide-in {
-    animation: slide-in 0.5s ease-out forwards;
+    animation: slide-in 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
   }
 
   .fade-in {
-    animation: fade-in 0.5s ease-out forwards;
+    animation: fade-in 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
   }
 
   .bobble {
     animation: bobble 2s infinite ease-in-out;
     transform-origin: center bottom;
   }
+  
+  /* Modern button hover effect */
+  .hover-glow {
+    transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+  
+  .hover-glow:hover {
+    box-shadow: 0 0 15px 5px var(--shadow-color);
+  }
+  
+  /* Elegant card hover effect */
+  .card-hover {
+    transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), 
+                box-shadow 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+  
+  .card-hover:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 25px -5px var(--shadow-color);
+  }
+
+  .animate-shimmer {
+    animation: shimmer 2s infinite;
+  }
 }
 
 @keyframes pop-in {
   0% {
     opacity: 0;
-    transform: scale(0.8);
+    transform: scale(0.8) translateY(10px);
   }
   100% {
     opacity: 1;
-    transform: scale(1);
+    transform: scale(1) translateY(0);
   }
 }
 
@@ -209,9 +258,11 @@
 @keyframes fade-in {
   0% {
     opacity: 0;
+    transform: translateY(10px);
   }
   100% {
     opacity: 1;
+    transform: translateY(0);
   }
 }
 
@@ -286,10 +337,6 @@
 
 .theme-transition {
   @apply transition-colors duration-300;
-}
-
-.card-hover {
-  @apply transition-all duration-300 hover:translate-y-[-5px] hover:shadow-lg;
 }
 
 /* Mobile Optimizations */
@@ -593,4 +640,45 @@ input[type="search"] {
 
 .resize-handle.active {
   background-color: rgba(var(--security-primary), 0.5);
+}
+
+@keyframes shimmer {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+@keyframes gradient-slow {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+.animate-gradient-slow {
+  background-size: 200% 200%;
+  animation: gradient-slow 8s ease infinite;
+}
+
+@keyframes page-transition {
+  0% {
+    opacity: 0;
+    transform: translateX(-10px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.animate-page-transition {
+  animation: page-transition 0.4s ease-out forwards;
 }
