@@ -122,8 +122,6 @@ Project Link: [https://github.com/saptarshiroy39/Kavach-Hackfest-25](https://git
 
 - **Saptarshi Roy**
 - **Subhraneel Talukdar**
-- **Tarasankar Kundu**
-- **Arghadip Ghosh**
 
 ---
 
