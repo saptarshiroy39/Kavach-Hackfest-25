@@ -97,39 +97,89 @@ export const BlockchainProvider: React.FC<{children: React.ReactNode}> = ({ chil
         }
       };
 
-      initConnection();
-
-      // Setup event listeners for wallet
+      initConnection();      // Setup event listeners for wallet
       if (window.ethereum) {
         const handleAccountsChanged = async (accounts: string[]) => {
-          if (accounts.length === 0) {
-            // User disconnected wallet
-            disconnectWallet();
-          } else if (connection.account !== accounts[0]) {
-            // Account changed, update connection
+          try {
+            if (accounts.length === 0) {
+              // User disconnected wallet
+              disconnectWallet();
+              toast({
+                title: 'Wallet Disconnected',
+                description: 'Your wallet has been disconnected',
+              });
+            } else if (connection.account !== accounts[0].toLowerCase()) {
+              // Account changed, update connection
+              const status = await getConnectionStatus();
+              setConnection(status);
+              if (status.isConnected) {
+                await fetchUserData(status);
+                toast({
+                  title: 'Account Changed',
+                  description: `Switched to ${abbreviateAddress(accounts[0])}`,
+                });
+              }
+            }
+          } catch (error) {
+            console.error('Error handling account change:', error);
+          }
+        };
+
+        const handleChainChanged = async (chainId: string) => {
+          try {
+            // Chain changed, refresh connection
+            console.log('Chain changed to:', chainId);
             const status = await getConnectionStatus();
             setConnection(status);
             if (status.isConnected) {
               await fetchUserData(status);
+              toast({
+                title: 'Network Changed',
+                description: `Switched to chain ${chainId}`,
+              });
             }
+          } catch (error) {
+            console.error('Error handling chain change:', error);
+            toast({
+              title: 'Network Change Error',
+              description: 'Please refresh the page and reconnect your wallet',
+              variant: 'destructive',
+            });
           }
         };
 
-        const handleChainChanged = async () => {
-          // Chain changed, refresh connection
-          const status = await getConnectionStatus();
-          setConnection(status);
-          if (status.isConnected) {
-            await fetchUserData(status);
+        const handleConnect = async (connectInfo: any) => {
+          console.log('Wallet connected:', connectInfo);
+          try {
+            const status = await getConnectionStatus();
+            if (status.isConnected) {
+              setConnection(status);
+              await fetchUserData(status);
+            }
+          } catch (error) {
+            console.error('Error handling wallet connect:', error);
           }
         };
 
+        const handleDisconnect = async () => {
+          console.log('Wallet disconnected');
+          disconnectWallet();
+        };
+
+        // Add event listeners
         window.ethereum.on('accountsChanged', handleAccountsChanged);
         window.ethereum.on('chainChanged', handleChainChanged);
+        window.ethereum.on('connect', handleConnect);
+        window.ethereum.on('disconnect', handleDisconnect);
 
         return () => {
-          window.ethereum.removeListener('accountsChanged', handleAccountsChanged);
-          window.ethereum.removeListener('chainChanged', handleChainChanged);
+          // Cleanup event listeners
+          if (window.ethereum?.removeListener) {
+            window.ethereum.removeListener('accountsChanged', handleAccountsChanged);
+            window.ethereum.removeListener('chainChanged', handleChainChanged);
+            window.ethereum.removeListener('connect', handleConnect);
+            window.ethereum.removeListener('disconnect', handleDisconnect);
+          }
         };
       } else {
         console.warn('Ethereum provider not available');
@@ -157,7 +207,6 @@ export const BlockchainProvider: React.FC<{children: React.ReactNode}> = ({ chil
       console.error('Failed to fetch user blockchain data:', error);
     }
   };
-
   // Connect to wallet
   const connectToWallet = async (): Promise<boolean> => {
     setIsLoading(true);
@@ -183,6 +232,31 @@ export const BlockchainProvider: React.FC<{children: React.ReactNode}> = ({ chil
       }
 
       const conn = await connectWallet();
+      
+      if (conn.error) {
+        // Handle specific error cases
+        if (conn.error.includes('rejected')) {
+          toast({
+            title: 'Connection Rejected',
+            description: 'Please approve the connection request in your wallet',
+            variant: 'destructive',
+          });
+        } else if (conn.error.includes('pending')) {
+          toast({
+            title: 'Connection Pending',
+            description: 'Please check your wallet for a pending connection request',
+            variant: 'destructive',
+          });
+        } else {
+          toast({
+            title: 'Connection Failed',
+            description: conn.error,
+            variant: 'destructive',
+          });
+        }
+        return false;
+      }
+      
       setConnection(conn);
 
       if (conn.isConnected && conn.account) {
@@ -193,27 +267,19 @@ export const BlockchainProvider: React.FC<{children: React.ReactNode}> = ({ chil
         });
         return true;
       } else {
-        // Display specific error message if available
-        if (conn.error) {
-          toast({
-            title: 'Connection Failed',
-            description: conn.error,
-            variant: 'destructive',
-          });
-        } else {
-          toast({
-            title: 'Connection Failed',
-            description: 'Could not connect to wallet. Please try again.',
-            variant: 'destructive',
-          });
-        }
+        toast({
+          title: 'Connection Failed',
+          description: 'Could not connect to wallet. Please try again.',
+          variant: 'destructive',
+        });
         return false;
       }
     } catch (error) {
       console.error('Failed to connect wallet:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Could not connect to wallet';
       toast({
         title: 'Connection Error',
-        description: error instanceof Error ? error.message : 'Could not connect to wallet',
+        description: errorMessage,
         variant: 'destructive',
       });
       return false;
@@ -372,8 +438,8 @@ export const BlockchainProvider: React.FC<{children: React.ReactNode}> = ({ chil
     }
   };
 
-  // Helper to abbreviate addresses
-  const abbreviateAddress = (address: string | null): string => {
+  // Helper function to abbreviate address
+  const abbreviateAddress = (address: string): string => {
     if (!address) return '';
     return `${address.substring(0, 6)}...${address.substring(address.length - 4)}`;
   };

@@ -77,43 +77,56 @@ export const connectWallet = async (): Promise<BlockchainConnection> => {
       throw new Error('No Ethereum wallet found. Please install MetaMask or another web3 wallet.');
     }
     
+    // Request account access with better error handling
+    let accounts: string[];
     try {
-      // Request account access
-      const accounts = await window.ethereum.request({ 
+      accounts = await window.ethereum.request({ 
         method: 'eth_requestAccounts',
         params: []
       });
-      
-      if (!accounts || accounts.length === 0) {
-        throw new Error('No accounts returned from wallet');
+    } catch (requestError: any) {
+      if (requestError.code === 4001) {
+        throw new Error('User rejected the wallet connection request');
+      } else if (requestError.code === -32002) {
+        throw new Error('Wallet connection request is already pending. Please check your wallet.');
+      } else {
+        throw new Error(`Wallet connection failed: ${requestError.message || 'Unknown error'}`);
       }
-      
-      // Get provider and signer
-      const provider = new ethers.BrowserProvider(window.ethereum);
-      
-      try {
-        const signer = await provider.getSigner();
-        const network = await provider.getNetwork();
-        const chainId = network.chainId;
-        
-        // Return connected state
-        return {
-          provider,
-          signer,
-          network: DEFAULT_NETWORK, // We'll need to map the chainId to our network enum
-          account: accounts[0],
-          chainId: '0x' + chainId.toString(16),
-          isConnected: true,
-          isTestnet: BLOCKCHAIN_SETTINGS.useTestnet
-        };
-      } catch (signerError) {
-        console.error('Failed to get signer:', signerError);
-        throw new Error('Could not access wallet. Please check your permissions.');
-      }
-    } catch (requestError) {
-      console.error('Failed to request accounts:', requestError);
-      throw new Error('User rejected wallet connection request');
     }
+    
+    if (!accounts || accounts.length === 0) {
+      throw new Error('No accounts available in wallet');
+    }
+    
+    // Get provider and signer with retry logic
+    let provider: ethers.BrowserProvider;
+    let signer: ethers.Signer;
+    let network: ethers.Network;
+      try {
+      provider = new ethers.BrowserProvider(window.ethereum);
+      network = await provider.getNetwork(); // This will also detect the network
+      signer = await provider.getSigner();
+    } catch (providerError) {
+      console.error('Failed to initialize provider:', providerError);
+      throw new Error('Could not initialize wallet connection. Please refresh and try again.');
+    }
+    
+    const chainId = network.chainId;
+    const chainIdHex = '0x' + chainId.toString(16);
+    
+    // Map chainId to our network enum
+    const detectedNetwork = getNetworkFromChainId(chainIdHex);
+    
+    // Return connected state
+    return {
+      provider,
+      signer,
+      network: detectedNetwork,
+      account: accounts[0].toLowerCase(), // Normalize to lowercase
+      chainId: chainIdHex,
+      isConnected: true,
+      isTestnet: BLOCKCHAIN_SETTINGS.useTestnet
+    };
   } catch (error) {
     console.error('Failed to connect wallet:', error);
     // Return meaningful error information
@@ -131,18 +144,19 @@ export const getConnectionStatus = async (): Promise<BlockchainConnection> => {
   try {
     if (typeof window !== 'undefined' && typeof window.ethereum !== 'undefined') {
       const accounts = await window.ethereum.request({ method: 'eth_accounts' });
-      
-      if (accounts.length > 0) {
+        if (accounts.length > 0) {
         const provider = new ethers.BrowserProvider(window.ethereum);
+        const network = await provider.getNetwork(); // This will also detect the network
         const signer = await provider.getSigner();
-        const { chainId } = await provider.getNetwork();
+        const chainId = network.chainId;
+        const chainIdHex = '0x' + chainId.toString(16);
         
         return {
           provider,
           signer,
-          network: DEFAULT_NETWORK,
-          account: accounts[0],
-          chainId: '0x' + chainId.toString(16),
+          network: getNetworkFromChainId(chainIdHex),
+          account: accounts[0].toLowerCase(),
+          chainId: chainIdHex,
           isConnected: true,
           isTestnet: BLOCKCHAIN_SETTINGS.useTestnet
         };
@@ -165,21 +179,30 @@ export const switchNetwork = async (network: BlockchainNetwork): Promise<boolean
       const networkConfig = NETWORK_CONFIG[network];
       const chainId = BLOCKCHAIN_SETTINGS.useTestnet ? networkConfig.testnetChainId : networkConfig.chainId;
       
-      await window.ethereum.request({
-        method: 'wallet_switchEthereumChain',
-        params: [{ chainId }]
-      });
-      
-      return true;
+      try {
+        await window.ethereum.request({
+          method: 'wallet_switchEthereumChain',
+          params: [{ chainId }]
+        });
+        
+        return true;
+      } catch (switchError: any) {
+        // Error code 4902 means the network is not added to MetaMask
+        if (switchError.code === 4902) {
+          console.log('Network not found, attempting to add it...');
+          return await addNetwork(network);
+        } else if (switchError.code === 4001) {
+          console.log('User rejected network switch');
+          return false;
+        } else {
+          console.error('Failed to switch network:', switchError);
+          throw switchError;
+        }
+      }
     }
     
     return false;
   } catch (error) {
-    // Error code 4902 means the network is not added to MetaMask
-    if (error.code === 4902) {
-      return await addNetwork(network);
-    }
-    
     console.error('Failed to switch network:', error);
     return false;
   }
@@ -223,9 +246,28 @@ export const addNetwork = async (network: BlockchainNetwork): Promise<boolean> =
   }
 };
 
+/**
+ * Map chain ID to network enum
+ */
+export const getNetworkFromChainId = (chainId: string): BlockchainNetwork => {
+  switch (chainId.toLowerCase()) {
+    case '0x1': // Ethereum Mainnet
+    case '0xaa36a7': // Sepolia Testnet
+      return BlockchainNetwork.ETHEREUM;
+    case '0x89': // Polygon Mainnet
+    case '0x13881': // Mumbai Testnet
+      return BlockchainNetwork.POLYGON;
+    case '0xa86a': // Avalanche Mainnet
+    case '0xa869': // Avalanche Fuji Testnet
+      return BlockchainNetwork.AVALANCHE;
+    default:
+      return DEFAULT_NETWORK; // Fallback to default
+  }
+};
+
 // Define the window.ethereum property
 declare global {
   interface Window {
     ethereum: any;
   }
-} 
+}

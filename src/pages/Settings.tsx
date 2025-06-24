@@ -175,7 +175,7 @@ const Settings = () => {
         >
           <h1 className="text-3xl font-bold">{t('Settings')}</h1>
           <p className="text-muted-foreground mt-1">
-            {t('settingsSubtitle')}
+            {t('User settings and preferences')}
           </p>
         </motion.div>
 
@@ -385,20 +385,20 @@ const Settings = () => {
                 </div>
               </SecurityCard>
             </motion.div>
-          </div>
-
-          <div className="space-y-6">
+          </div>          <div className="grid grid-rows-3 gap-6 h-fit">
             <motion.div
               custom={3}
               initial="hidden"
               animate="visible"
               variants={cardVariants}
+              className="h-full"
             >
               <SecurityCard
                 title={t('Application Settings')}
                 icon={<SettingsIcon className="w-5 h-5 text-security-primary" />}
+                className="h-full"
               >
-                <div className="space-y-4">
+                <div className="space-y-4 h-full flex flex-col">
                   <div className="flex flex-col space-y-2">
                     <h4 className="font-medium mb-1">{t('Theme Mode')}</h4>
                     <p className="text-xs text-muted-foreground mb-2">
@@ -447,56 +447,60 @@ const Settings = () => {
               initial="hidden"
               animate="visible"
               variants={cardVariants}
+              className="h-full"
             >
               <SecurityCard
                 title={t('Connected Devices')}
                 icon={<Smartphone className="w-5 h-5 text-security-primary" />}
+                className="h-full"
               >
-                <div className="space-y-4">
-                  {connectedDevices.map(device => (
-                    <motion.div 
-                      key={device.id}
-                      className="p-3 border border-muted rounded-lg glass-effect dark:bg-sidebar-accent/10"
-                      whileHover={{ scale: 1.02 }}
-                      transition={{ type: "spring", stiffness: 400 }}
-                    >
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center">
-                          {device.type === 'desktop' ? (
-                            <Monitor className="w-5 h-5 text-security-primary mr-2" />
-                          ) : device.type === 'laptop' ? (
-                            <Laptop className="w-5 h-5 text-security-primary mr-2" />
-                          ) : (
-                            <Smartphone className="w-5 h-5 text-security-primary mr-2" />
-                          )}
-                          <div>
-                            <p className="text-sm font-medium">{device.name}</p>
-                            <p className="text-xs text-muted-foreground">
-                              {device.lastActive === 'current' ? t('currentDevice') : `Last active: ${device.lastActive}`}
-                            </p>
+                <div className="space-y-4 h-full flex flex-col">
+                  <div className="flex-1 space-y-4">
+                    {connectedDevices.map(device => (
+                      <motion.div 
+                        key={device.id}
+                        className="p-3 border border-muted rounded-lg glass-effect dark:bg-sidebar-accent/10"
+                        whileHover={{ scale: 1.02 }}
+                        transition={{ type: "spring", stiffness: 400 }}
+                      >
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center">
+                            {device.type === 'desktop' ? (
+                              <Monitor className="w-5 h-5 text-security-primary mr-2" />
+                            ) : device.type === 'laptop' ? (
+                              <Laptop className="w-5 h-5 text-security-primary mr-2" />
+                            ) : (
+                              <Smartphone className="w-5 h-5 text-security-primary mr-2" />
+                            )}
+                            <div>
+                              <p className="text-sm font-medium">{device.name}</p>
+                              <p className="text-xs text-muted-foreground">
+                                {device.lastActive === 'current' ? t('currentDevice') : `Last active: ${device.lastActive}`}
+                              </p>
+                            </div>
                           </div>
+                          {device.lastActive === 'current' ? (
+                            <Button variant="outline" size="sm" disabled className="glass-effect dark:bg-sidebar-accent/30">
+                              {t('active')}
+                            </Button>
+                          ) : (
+                            <Button 
+                              variant="outline" 
+                              size="sm" 
+                              className="glass-effect dark:bg-sidebar-accent/30"
+                              onClick={() => handleRemoveDevice(device.id)}
+                            >
+                              {t('remove')}
+                            </Button>
+                          )}
                         </div>
-                        {device.lastActive === 'current' ? (
-                          <Button variant="outline" size="sm" disabled className="glass-effect dark:bg-sidebar-accent/30">
-                            {t('active')}
-                          </Button>
-                        ) : (
-                          <Button 
-                            variant="outline" 
-                            size="sm" 
-                            className="glass-effect dark:bg-sidebar-accent/30"
-                            onClick={() => handleRemoveDevice(device.id)}
-                          >
-                            {t('remove')}
-                          </Button>
-                        )}
-                      </div>
-                    </motion.div>
-                  ))}
+                      </motion.div>
+                    ))}
+                  </div>
                   
                   <Button 
                     variant="outline" 
-                    className="w-full mt-2 glass-effect dark:bg-sidebar-accent/30"
+                    className="w-full mt-auto glass-effect dark:bg-sidebar-accent/30"
                     onClick={handleAddDevice}
                   >
                     <Plus className="h-4 w-4 mr-2" />
@@ -511,22 +515,24 @@ const Settings = () => {
               initial="hidden"
               animate="visible"
               variants={cardVariants}
+              className="h-full"
             >
               <SecurityCard
                 title={t('accountManagement')}
                 icon={<User className="w-5 h-5 text-security-primary" />}
+                className="h-full"
               >
-                <div className="space-y-4">
+                <div className="space-y-4 h-full flex flex-col">
                   <motion.div 
-                    className="p-3 border border-security-secondary/20 bg-security-secondary/5 rounded-lg glass-effect dark:bg-sidebar-accent/10"
+                    className="p-3 border border-security-secondary/20 bg-security-secondary/5 rounded-lg glass-effect dark:bg-sidebar-accent/10 flex-1"
                     whileHover={{ scale: 1.02 }}
                     transition={{ type: "spring", stiffness: 400 }}
                   >
-                    <div className="flex items-start">
+                    <div className="flex items-start h-full">
                       <Shield className="w-5 h-5 text-security-secondary mt-0.5 mr-3" />
-                      <div>
+                      <div className="flex flex-col h-full">
                         <p className="font-medium">{t('premiumPlan')}</p>
-                        <p className="text-sm text-muted-foreground">{t('planRenews')}</p>
+                        <p className="text-sm text-muted-foreground mb-auto">{t('planRenews')}</p>
                         <Button variant="outline" size="sm" className="mt-2 glass-effect dark:bg-sidebar-accent/30">
                           {t('manageSubscription')}
                         </Button>
@@ -534,22 +540,24 @@ const Settings = () => {
                     </div>
                   </motion.div>
 
-                  <Button 
-                    className="w-full glass-effect dark:bg-sidebar-accent/30" 
-                    variant="outline"
-                    onClick={handleSignOut}
-                  >
-                    <LogOut className="mr-2 h-4 w-4" />
-                    {t('signOut')}
-                  </Button>
+                  <div className="space-y-2">
+                    <Button 
+                      className="w-full glass-effect dark:bg-sidebar-accent/30" 
+                      variant="outline"
+                      onClick={handleSignOut}
+                    >
+                      <LogOut className="mr-2 h-4 w-4" />
+                      {t('signOut')}
+                    </Button>
 
-                  <Button 
-                    className="w-full text-security-danger glass-effect dark:bg-sidebar-accent/30" 
-                    variant="outline"
-                    onClick={() => setShowDeleteDialog(true)}
-                  >
-                    {t('deleteAccount')}
-                  </Button>
+                    <Button 
+                      className="w-full text-security-danger glass-effect dark:bg-sidebar-accent/30" 
+                      variant="outline"
+                      onClick={() => setShowDeleteDialog(true)}
+                    >
+                      {t('deleteAccount')}
+                    </Button>
+                  </div>
                 </div>
               </SecurityCard>
             </motion.div>

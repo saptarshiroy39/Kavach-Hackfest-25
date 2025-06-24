@@ -8,6 +8,7 @@ export { default as AuthContext, AuthProvider, useAuth } from './AuthContext';
 export { default as SecurityContext, SecurityProvider, useSecurity } from './SecurityContext';
 export { ThemeProvider, useTheme } from './ThemeProvider';
 export { SearchProvider, useSearchContext as useSearch } from './SearchContext';
+export { BlockchainProvider, useBlockchain } from './BlockchainContext';
 
 // Root provider component that wraps all providers
 import React, { ReactNode } from 'react';
@@ -15,6 +16,7 @@ import { ThemeProvider } from './ThemeProvider';
 import { AuthProvider } from './AuthContext';
 import { SecurityProvider } from './SecurityContext';
 import { SearchProvider } from './SearchContext';
+import { BlockchainProvider } from './BlockchainContext';
 import { LanguageProvider } from '@/hooks/use-language';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import { Toaster } from '@/components/ui/toaster';
@@ -41,17 +43,18 @@ export interface AppProvidersProps {
 export const AppProviders: React.FC<AppProvidersProps> = ({ children }) => {
   return (
     <ThemeProvider defaultTheme="system" storageKey="kavach-theme">
-      <LanguageProvider>
-        <QueryClientProvider client={queryClient}>
+      <LanguageProvider>        <QueryClientProvider client={queryClient}>
           <AuthProvider>
             <SecurityProvider>
-              <SearchProvider>
-                <TooltipProvider>
-                  <Toaster />
-                  <Sonner />
-                  {children}
-                </TooltipProvider>
-              </SearchProvider>
+              <BlockchainProvider>
+                <SearchProvider>
+                  <TooltipProvider>
+                    <Toaster />
+                    <Sonner />
+                    {children}
+                  </TooltipProvider>
+                </SearchProvider>
+              </BlockchainProvider>
             </SecurityProvider>
           </AuthProvider>
         </QueryClientProvider>
